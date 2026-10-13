@@ -80,6 +80,10 @@ dependencies {
     compileOnly('org.projectlombok:lombok:1.18.46')
     annotationProcessor('org.projectlombok:lombok:1.18.46')
 
+    // Optional second window (mod id offscreen). Compile against the dev jar only; the class that
+    // calls it is loaded when that mod is installed. Players add the release jar themselves.
+    compileOnly(files("libs/offscreen-0.3-alpha-dev.jar"))
+
     // ILP solver
     shadowImplementation('org.ojalgo:ojalgo:57.3.1')
 

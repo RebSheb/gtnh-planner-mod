@@ -237,6 +237,7 @@ gtnhplanner.summary.help.nei=[R/U] open NEI
 gtnhplanner.summary.help.add_recipe=[+ in NEI GUI] add recipe
 
 key.neiflowchart.open=Open the planner
+key.gtnhplanner.secondscreen=Open the planner in another window
 key.categories.neiflowchart=GTNH Planner
 key.gtnhplanner.minimap=Show or hide the minimap
 key.gtnhplanner.minimapZoomIn=Minimap: zoom in

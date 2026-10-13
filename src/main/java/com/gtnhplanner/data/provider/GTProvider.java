@@ -247,31 +247,34 @@ public class GTProvider implements PropertyProvider {
 
         // Copies, never GT's own stacks: Node.deduplicate merges ports by writing the summed amount
         // into the first one, which on an aliased stack rewrites the recipe itself (and grows it
-        // again on every refresh).
-        for (int i = 0; i < r.mInputs.length; i++) {
-            if (r.mInputs[i].stackSize <= 0) continue;
+        // again on every refresh). Empty and missing slots are skipped: a null entry in the recipe
+        // arrays is a hole, not an ingredient, and reading its size crashes the card.
+        if (r.mInputs != null) for (int i = 0; i < r.mInputs.length; i++) {
+            if (!present(r.mInputs[i])) continue;
             node.inputs.add(
                 new Port<>(
                     RecipePropertyAPI.ITEM,
                     copyOf(r.mInputs[i]),
                     r.mInputChances != null ? r.mInputChances[i] / GT_CHANCE_SCALE : 1.f));
         }
-        for (int i = 0; i < r.mOutputs.length; i++) {
+        if (r.mOutputs != null) for (int i = 0; i < r.mOutputs.length; i++) {
+            if (!present(r.mOutputs[i])) continue;
             node.outputs.add(
                 new Port<>(
                     RecipePropertyAPI.ITEM,
                     copyOf(r.mOutputs[i]),
                     r.mOutputChances != null ? r.mOutputChances[i] / GT_CHANCE_SCALE : 1.f));
         }
-        for (int i = 0; i < r.mFluidInputs.length; i++) {
-            if (r.mFluidInputs[i].amount <= 0) continue;
+        if (r.mFluidInputs != null) for (int i = 0; i < r.mFluidInputs.length; i++) {
+            if (!present(r.mFluidInputs[i])) continue;
             node.inputs.add(
                 new Port<>(
                     RecipePropertyAPI.FLUID,
                     copyOf(r.mFluidInputs[i]),
                     r.mFluidInputChances != null ? r.mFluidInputChances[i] / GT_CHANCE_SCALE : 1.f));
         }
-        for (int i = 0; i < r.mFluidOutputs.length; i++) {
+        if (r.mFluidOutputs != null) for (int i = 0; i < r.mFluidOutputs.length; i++) {
+            if (!present(r.mFluidOutputs[i])) continue;
             node.outputs.add(
                 new Port<>(
                     RecipePropertyAPI.FLUID,
@@ -297,6 +300,16 @@ public class GTProvider implements PropertyProvider {
     @Nullable
     private static FluidStack copyOf(@Nullable final FluidStack stack) {
         return stack == null ? null : stack.copy();
+    }
+
+    /** A recipe slot that is actually an ingredient: present, and not an empty hole. */
+    private static boolean present(@Nullable final ItemStack stack) {
+        return stack != null && stack.stackSize > 0;
+    }
+
+    /** A recipe slot that is actually an ingredient: present, and not an empty hole. */
+    private static boolean present(@Nullable final FluidStack stack) {
+        return stack != null && stack.amount > 0;
     }
 
 }

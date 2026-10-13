@@ -19,6 +19,7 @@ a flowchart planner that lives in NEI, builds its cards from NEI's own recipes, 
 - **The same account as the website.** Sign in with your gtnhplanner.com account to post a plan to the public
   library, where it shows on the website and in game.
 - **Client side only.** No server mod needed.
+- **Another window.** With the Offscreen mod installed, F7 opens the planner in its own window. The key is in Controls.
   
 ## Images
 <img width="1922" height="1081" alt="image" src="https://github.com/user-attachments/assets/5273a93c-d1f2-4dbd-9137-7a8e348d163b" />
