@@ -13,7 +13,6 @@ import com.gtnhplanner.dev.DevHarness;
 
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -39,11 +38,6 @@ public class ClientProxy extends CommonProxy {
         Compat.init();
 
         ClientRegistry.registerKeyBinding(openFlowchartKey);
-        // Another window for the planner, only when that mod is installed. The handler is not loaded
-        // otherwise: its classes are the other mod's.
-        if (Loader.isModLoaded("offscreen")) {
-            com.gtnhplanner.client.OffscreenHandler.init();
-        }
         // Playing with the planner closed: its keys, the minimap.
         com.gtnhplanner.ui.world.PlannerKeys.register();
         FMLCommonHandler.instance()

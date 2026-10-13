@@ -6,7 +6,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 
 import com.cleanroommc.modularui.api.drawable.IDrawable;
@@ -70,12 +69,10 @@ public final class BoardScreen extends ModularScreen {
             .left(0)
             // Clear of NEI's search box along the bottom.
             .marginBottom(22)
-            .widthRelOffset(() -> {
-                // A second window (Offscreen) lays this out when the game's screen is not this one.
-                final GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-                final int width = gui == null || gui.width <= 0 ? 1 : gui.width;
-                return (double) Math.max(120, LayoutManager.itemPanel.x - 4) / width;
-            }, 0);
+            .widthRelOffset(
+                () -> (double) Math.max(120, LayoutManager.itemPanel.x - 4)
+                    / Minecraft.getMinecraft().currentScreen.width,
+                0);
         final BoardCanvas canvas = new BoardCanvas(session, panel);
         final OverviewRail rail = new OverviewRail(session, canvas);
         final java.util.Map<String, IWidget> parts = new java.util.HashMap<>();
