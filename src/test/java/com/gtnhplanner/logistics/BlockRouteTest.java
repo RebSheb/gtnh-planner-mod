@@ -128,8 +128,10 @@ class BlockRouteTest {
         assertFalse(
             claims.blocked(Set.of(), "fluid:lightfuel")
                 .contains(pipe));
-        assertFalse(claims.hatchFree(hatch, "item:dust"));
-        assertTrue(claims.hatchFree(hatch, "fluid:lightfuel"));
+        assertFalse(claims.hatchFree(hatch));
+        assertTrue(
+            claims.blockedAll(Set.of())
+                .contains(pipe));
     }
 
     @Test
@@ -141,7 +143,17 @@ class BlockRouteTest {
         assertTrue(
             claims.blocked(Set.of(), "fluid:fuel")
                 .contains(pipe));
-        assertFalse(claims.hatchFree(hatch, "fluid:fuel"));
-        assertTrue(claims.hatchFree(hatch, "fluid:lightfuel"));
+        assertFalse(claims.hatchFree(hatch));
+    }
+
+    @Test
+    void eachPairingTakesItsOwnHatch() {
+        final PipeClaims claims = new PipeClaims();
+        final Cell first = new Cell(0, 0, 0), second = new Cell(0, 1, 0);
+        claims.claim(List.of(), first, null, "fluid:ethanol");
+        assertFalse(claims.hatchFree(first));
+        assertTrue(claims.hatchFree(second));
+        claims.claim(List.of(), second, null, "fluid:ethanol");
+        assertFalse(claims.hatchFree(second));
     }
 }

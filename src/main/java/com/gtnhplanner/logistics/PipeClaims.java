@@ -11,14 +11,23 @@ import com.gtnhplanner.logistics.BlockRoute.Cell;
 
 /**
  * Each resource keeps its own blocks and hatches. Light Fuel and Fuel do not share a pipe, and they do not leave or
- * enter through the same hatch or the same face of a single-block. The same resource may share, so a bus can join.
+ * enter through the same hatch or the same face of a single-block. A shared bus lets the same resource reuse pipe
+ * blocks; each pairing still takes its own hatch.
  */
 public final class PipeClaims {
 
     private final Map<Cell, String> cells = new HashMap<>();
     private final Map<Cell, String> hatches = new HashMap<>();
 
-    /** Machines plus every cell already taken by a different resource. */
+    /** Machines plus every cell already taken, so each direct run keeps its own blocks. */
+    public Set<Cell> blockedAll(final Set<Cell> machines) {
+        final Set<Cell> out = new HashSet<>(machines);
+        out.addAll(cells.keySet());
+        out.addAll(hatches.keySet());
+        return out;
+    }
+
+    /** Machines plus every cell already taken by a different resource, so a bus can join. */
     public Set<Cell> blocked(final Set<Cell> machines, final String resource) {
         final Set<Cell> out = new HashSet<>(machines);
         for (final Map.Entry<Cell, String> entry : cells.entrySet()) if (!entry.getValue()
@@ -28,11 +37,9 @@ public final class PipeClaims {
         return out;
     }
 
-    /** Whether this hatch is still free for that resource: no other resource has claimed it. */
-    public boolean hatchFree(final Cell hatch, final String resource) {
-        if (hatch == null) return true;
-        final String owner = hatches.get(hatch);
-        return owner == null || owner.equals(resource);
+    /** Whether this hatch is still free: each pairing takes its own, even for the same resource. */
+    public boolean hatchFree(final Cell hatch) {
+        return hatch == null || !hatches.containsKey(hatch);
     }
 
     public void claim(final Iterable<Cell> pipes, @Nullable final Cell fromHatch, @Nullable final Cell toHatch,

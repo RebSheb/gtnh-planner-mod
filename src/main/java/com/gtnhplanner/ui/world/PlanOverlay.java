@@ -131,20 +131,23 @@ public final class PlanOverlay {
     private Conn hovered;
 
     /**
-     * A wire of the plan between two placed cards: its ends, what goes along it (from the card that makes it), and
-     * where its ends fell on the screen this frame.
+     * A wire of the plan between two placed machines: its ends, what goes along it (from the card that makes it), and
+     * this run's share of the card's rate when more than one of a 2× card is placed.
      */
-    private record Conn(Placed from, Placed to, PlanSnapshot.Line line, @Nullable PlanSnapshot.Flow flow) {
+    private record Conn(Placed from, Placed to, PlanSnapshot.Line line, @Nullable PlanSnapshot.Flow flow,
+        double perSecond) {
 
         String what() {
             return flow != null ? flow.name() : "Wire";
         }
 
         boolean same(@Nullable final Conn o) {
-            return o != null && o.line.from()
-                .equals(line.from())
-                && o.line.to()
-                    .equals(line.to())
+            return o != null && o.from.x == from.x
+                && o.from.y == from.y
+                && o.from.z == from.z
+                && o.to.x == to.x
+                && o.to.y == to.y
+                && o.to.z == to.z
                 && o.line.resource()
                     .equals(line.resource());
         }
@@ -226,7 +229,12 @@ public final class PlanOverlay {
             final boolean inHand = picking != null && c.nodeIds()
                 .contains(picking.id);
             if (inHand && preview != null) {
-                all.add(new Placed(c, preview, true, true));
+                final Placed p = new Placed(c, preview, true, true);
+                final int[] moving = LinkPicker.moving();
+                p.nth = moving != null
+                    ? Math.max(1, WorldLinks.indexOf(n, moving[0], moving[1], moving[2], moving[3]) + 1)
+                    : LinkPicker.replacing() ? 1 : n.worldLinks.size() + 1;
+                all.add(p);
                 first = false;
             }
             for (int i = 0; i < n.worldLinks.size(); i++) {
@@ -344,7 +352,7 @@ public final class PlanOverlay {
         }
         final List<PipeBlocks.Link> links = new ArrayList<>();
         for (final Conn conn : conns(placed)) {
-            if (!conn.line.flowing() || conn.line.perSecond() <= 0) continue;
+            if (!conn.line.flowing() || conn.perSecond() <= 0) continue;
             final Integer from = index.get(conn.from), to = index.get(conn.to);
             if (from == null || to == null) continue;
             final PlanSnapshot.Flow flow = conn.flow;
@@ -369,7 +377,7 @@ public final class PlanOverlay {
                     from,
                     to,
                     conn.line.resource(),
-                    conn.line.perSecond(),
+                    conn.perSecond(),
                     com.gtnhplanner.ui.Resources.isFluid(conn.line.resource()),
                     stack,
                     temperature,
@@ -416,21 +424,29 @@ public final class PlanOverlay {
             && here.getItemDamage() == machine.getItemDamage();
     }
 
-    /** Each wire of the plan between two placed cards, with what goes along it. */
+    /** Each wire of the plan between placed machines, one run per pairing of a 2× card. */
     private static List<Conn> conns(final List<Placed> placed) {
         final List<Conn> out = new ArrayList<>();
         final PlanSnapshot snap = PlanSnapshot.latest();
         if (snap == null) return out;
-        final Map<UUID, Placed> byNode = new HashMap<>();
-        for (final Placed p : placed) if (p.main) for (final UUID id : p.card.nodeIds()) byNode.put(id, p);
+        final Map<UUID, List<Placed>> byNode = new HashMap<>();
+        for (final Placed p : placed)
+            for (final UUID id : p.card.nodeIds()) byNode.computeIfAbsent(id, key -> new ArrayList<>())
+                .add(p);
+        for (final List<Placed> list : byNode.values()) list.sort(Comparator.comparingInt(p -> p.nth));
         for (final PlanSnapshot.Line w : snap.wires()) {
             if (w.from() == null || w.to() == null) continue;
-            final Placed a = byNode.get(w.from()), b = byNode.get(w.to());
-            if (a == null || b == null || a == b) continue;
+            final List<Placed> froms = byNode.get(w.from()), tos = byNode.get(w.to());
+            if (froms == null || tos == null) continue;
             PlanSnapshot.Flow flow = null;
-            for (final PlanSnapshot.Flow f : a.card.outputs()) if (f.key()
+            for (final PlanSnapshot.Flow f : froms.get(0).card.outputs()) if (f.key()
                 .equals(w.resource())) flow = f;
-            out.add(new Conn(a, b, w, flow));
+            for (final com.gtnhplanner.logistics.PipePairs.Pair pair : com.gtnhplanner.logistics.PipePairs
+                .pair(froms.size(), tos.size(), w.perSecond())) {
+                final Placed a = froms.get(pair.from()), b = tos.get(pair.to());
+                if (a == b) continue;
+                out.add(new Conn(a, b, w, flow, pair.share()));
+            }
         }
         return out;
     }
@@ -749,8 +765,10 @@ public final class PlanOverlay {
         final List<Run> out = new ArrayList<>();
         final Map<String, List<Conn>> pairs = new java.util.LinkedHashMap<>();
         for (final Conn c : conns) {
-            final UUID a = c.from.card.id(), b = c.to.card.id();
-            pairs.computeIfAbsent(a.compareTo(b) < 0 ? a + "/" + b : b + "/" + a, key -> new ArrayList<>())
+            pairs
+                .computeIfAbsent(
+                    c.from.x + "," + c.from.y + "," + c.from.z + ">" + c.to.x + "," + c.to.y + "," + c.to.z,
+                    key -> new ArrayList<>())
                 .add(c);
         }
         final double clock = System.currentTimeMillis() / 1000.0;
@@ -846,7 +864,18 @@ public final class PlanOverlay {
 
     /** A wire tag's name across frames: the wire's ends and what it carries. */
     private static String tagKey(final Run r) {
-        return r.conn.line.from() + "/" + r.conn.line.to() + "/" + r.conn.line.resource();
+        return r.conn.from.x + ","
+            + r.conn.from.y
+            + ","
+            + r.conn.from.z
+            + ">"
+            + r.conn.to.x
+            + ","
+            + r.conn.to.y
+            + ","
+            + r.conn.to.z
+            + "/"
+            + r.conn.line.resource();
     }
 
     /** Places along a tag's wire, its shown part end to end, as offsets from its spot, nearest first. */
@@ -943,7 +972,7 @@ public final class PlanOverlay {
             if (al > 0) arrows.add(new float[] { p[0] + ox, p[1] + oy, ax / al, ay / al, fade });
         }
         final PlanSnapshot.Flow f = c.flow;
-        final double perSecond = c.line.flowing() ? c.line.perSecond() : f == null ? 0 : f.perSecond();
+        final double perSecond = c.line.flowing() ? c.perSecond() : f == null ? 0 : f.perSecond();
         final boolean fluid = (f != null && f.fluid() != null) || Resources.isFluid(c.line.resource());
         final String rate = f == null ? ""
             : f.power() ? com.gtnhplanner.ui.theme.Fmt.power(perSecond / 20) + " EU/t"

@@ -92,6 +92,9 @@ final class PipeBlocks {
                 .append(ghost == null ? -1 : ghost.blocks());
         }
         for (final Link link : links) text.append('|')
+            .append(link.from)
+            .append('>')
+            .append(link.to)
             .append(link.resource)
             .append('@')
             .append(link.perSecond)
@@ -151,7 +154,7 @@ final class PipeBlocks {
     private static void layDirect(final List<Machine> machines, final Link link, final Set<Cell> occupied,
         final PipeClaims claims, final Map<Cell, Load> loads, final List<Mark> hatches, final Set<Cell> marked,
         final Map<String, Set<Cell>> docks, final Map<String, Set<Cell>> ports, final List<Route> routes) {
-        final Set<Cell> blocked = claims.blocked(occupied, link.resource);
+        final Set<Cell> blocked = claims.blockedAll(occupied);
         final Join from = join(
             machines.get(link.from),
             true,
@@ -284,7 +287,7 @@ final class PipeBlocks {
         if (ghost != null) for (final Hatch hatch : StructureGhosts.hatches(ghost, link.fluid, output)) {
             final int[] at = world(machine, hatch.dx(), hatch.dy(), hatch.dz());
             final Cell hatchCell = new Cell(at[0], at[1], at[2]);
-            if (!claims.hatchFree(hatchCell, link.resource)) continue;
+            if (!claims.hatchFree(hatchCell)) continue;
             if (output && link.layer >= 0 && hatch.dy() != link.layer) continue;
             final int[] step = step(machine.facing, hatch.fx(), hatch.fy(), hatch.fz());
             final Cell exit = BlockRoute.outside(hatchCell, step[0], step[1], step[2], self);
