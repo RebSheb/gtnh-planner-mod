@@ -183,6 +183,15 @@ public final class PlannerSettings {
         save();
     }
 
+    /** One shared pipe for every placed machine moving the same item or fluid, instead of a run for each connection. */
+    public static boolean sharedPipes() {
+        return bool("world.sharedPipes", false);
+    }
+
+    public static void setSharedPipes(final boolean on) {
+        set("world.sharedPipes", on);
+    }
+
     /** The plan overlaid on the world: its placed cards over their blocks, with their wires. */
     public static boolean arLens() {
         return bool("world.ar", true);

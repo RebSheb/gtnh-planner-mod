@@ -23,7 +23,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
 import com.gtnhplanner.data.flowchart.Node;
+import com.gtnhplanner.logistics.PipeCatalog;
+import com.gtnhplanner.logistics.PipeSelect;
 import com.gtnhplanner.ui.PlannerSettings;
+import com.gtnhplanner.ui.Resources;
 import com.gtnhplanner.ui.card.RecipeCard;
 import com.gtnhplanner.ui.theme.Hyb;
 
@@ -36,9 +39,9 @@ import cpw.mods.fml.common.gameevent.TickEvent;
  * ten blocks and shrinking with distance beyond. A card is small and faint until you look at its machine (or the card),
  * then grows and comes up solid; with Focus on, only that one shows. Every ghost's edges always show. Cards move out of
  * each other's way, their lines pointing back to their machines. The plan's wires between placed cards are drawn flat
- * on the screen as the board draws them, from block to block, with arrowheads moving towards the card fed
- * and a tag naming what goes along and how much. Nothing shows until a card is placed. What the crosshair is on is
- * highlighted.
+ * on the screen as the board draws them, along the pipe blocks of that wire when it has them, with arrowheads moving
+ * towards the card fed and a tag naming what goes along, how much, and the pipe that can carry that wire's own share.
+ * Nothing shows until a card is placed. What the crosshair is on is highlighted.
  */
 public final class PlanOverlay {
 
@@ -306,8 +309,98 @@ public final class PlanOverlay {
             if (p.card.id()
                 .equals(lit)) WorldMarks.outline(p.box, Hyb.LIT & 0xFFFFFF, 0.012f, 1.5f, 0.6f);
         }
+        final PipeBlocks.Drawn pipes = pipes(placed);
+        for (final PipeBlocks.Mark hatch : pipes.hatches())
+            WorldMarks.outline(hatch.x(), hatch.y(), hatch.z(), Hyb.GOLD & 0xFFFFFF, 0.02f, 2.2f);
+        for (final PipeBlocks.Mark pipe : pipes.pipes()) {
+            if (pipe.stack() == null || pipeThere(mc, pipe)) continue;
+            WorldMarks.ghostPipe(pipe.stack(), pipe.x(), pipe.y(), pipe.z(), pipe.connections(), pipe.thickness());
+        }
         WorldMarks.end();
         lap("ar.ghosts");
+    }
+
+    /** The pipe blocks and hatches for the placed machines, from the wires between them. */
+    private static PipeBlocks.Drawn pipes(final List<Placed> placed) {
+        final PlanSnapshot snap = PlanSnapshot.latest();
+        if (snap == null) return new PipeBlocks.Drawn(List.of(), List.of(), List.of());
+        final List<PipeBlocks.Machine> machines = new ArrayList<>();
+        final Map<Placed, Integer> index = new java.util.IdentityHashMap<>();
+        for (final Placed p : placed) {
+            if (p.preview) continue;
+            index.put(p, machines.size());
+            machines.add(
+                new PipeBlocks.Machine(
+                    p.x,
+                    p.y,
+                    p.z,
+                    p.facing,
+                    p.size,
+                    p.card.machine(),
+                    p.card.needs(),
+                    p.home[0],
+                    p.home[1],
+                    p.home[2]));
+        }
+        final List<PipeBlocks.Link> links = new ArrayList<>();
+        for (final Conn conn : conns(placed)) {
+            if (!conn.line.flowing() || conn.line.perSecond() <= 0) continue;
+            final Integer from = index.get(conn.from), to = index.get(conn.to);
+            if (from == null || to == null) continue;
+            final PlanSnapshot.Flow flow = conn.flow;
+            int stack = com.gtnhplanner.logistics.PipeCatalog.STACK, temperature = 0;
+            boolean gas = false;
+            if (flow != null && flow.item() != null) stack = Math.max(
+                1,
+                flow.item()
+                    .getMaxStackSize());
+            if (flow != null && flow.fluid() != null
+                && flow.fluid()
+                    .getFluid() != null) {
+                temperature = flow.fluid()
+                    .getFluid()
+                    .getTemperature(flow.fluid());
+                gas = flow.fluid()
+                    .getFluid()
+                    .isGaseous(flow.fluid());
+            }
+            links.add(
+                new PipeBlocks.Link(
+                    from,
+                    to,
+                    conn.line.resource(),
+                    conn.line.perSecond(),
+                    com.gtnhplanner.ui.Resources.isFluid(conn.line.resource()),
+                    stack,
+                    temperature,
+                    gas,
+                    outputLayer(conn.from, conn.line.resource())));
+        }
+        return PipeBlocks.draw(machines, links, PlannerSettings.sharedPipes());
+    }
+
+    /**
+     * A distillation tower's hatch layer for this fluid, from the recipe's fluid outputs in order (the controller and
+     * items are layer 0). -1 when the machine is not a tower or the resource is not one of its fluids.
+     */
+    private static int outputLayer(final Placed from, final String resource) {
+        if (!com.gtnhplanner.ui.Resources.isFluid(resource)
+            || !com.gtnhplanner.ui.gt.StructureGhosts.layeredOutputs(from.card.machine())) return -1;
+        final List<String> fluids = new ArrayList<>();
+        for (final PlanSnapshot.Flow flow : from.card.outputs()) {
+            if (flow.fluid() != null || com.gtnhplanner.ui.Resources.isFluid(flow.key())) fluids.add(flow.key());
+        }
+        return com.gtnhplanner.logistics.TowerLayers.layer(fluids, resource);
+    }
+
+    /** Whether this pipe block is already in the world, so its ghost steps aside. */
+    private static boolean pipeThere(final Minecraft mc, final PipeBlocks.Mark pipe) {
+        final net.minecraft.block.Block block = mc.theWorld.getBlock(pipe.x(), pipe.y(), pipe.z());
+        if (block == null || block.isAir(mc.theWorld, pipe.x(), pipe.y(), pipe.z())) return false;
+        return net.minecraft.item.Item.getItemFromBlock(block) == pipe.stack()
+            .getItem() && mc.theWorld.getBlockMetadata(pipe.x(), pipe.y(), pipe.z())
+                == pipe.stack()
+                    .getItemDamage();
     }
 
     /** Whether the card's machine is built on its block already: the block there is the machine. */
@@ -394,7 +487,7 @@ public final class PlanOverlay {
             final MachineLabel.Placement l = label(p, sr, mc, labelBoxes);
             if (l != null) labels.add(l);
         }
-        final List<Run> runs = runs(conns(all), seen, sr, mc, snap);
+        final List<Run> runs = runs(conns(all), pipes(all).routes(), seen, sr, mc, snap);
         layout(shown, labelBoxes, all, sr);
         // The wire tags last, clear of the labels, the cards and the panels in the corners.
         final List<float[]> taken = new ArrayList<>(labelBoxes);
@@ -425,7 +518,7 @@ public final class PlanOverlay {
         if (inHand == null && near == null && card == null) {
             float nearest = WIRE_REACH;
             for (final Run r : runs) {
-                final float d = distance(cx, cy, r.ax, r.ay, r.bx, r.by);
+                final float d = r.reach(cx, cy);
                 if (d < nearest) {
                     nearest = d;
                     near = r;
@@ -583,8 +676,8 @@ public final class PlanOverlay {
 
     // region The wires
 
-    /** A wire's tag, unscaled: its height, icon and the rate's size against the name's. */
-    private static final int TAG_H = 26, TAG_ICON = 20;
+    /** A wire's tag, unscaled: its height, icon and the rate's size against the name's. Taller once it names a pipe. */
+    private static final int TAG_H = 26, TAG_H_PIPE = 36, TAG_ICON = 20;
 
     private static final float TAG_RATE = 1.5f;
 
@@ -595,16 +688,15 @@ public final class PlanOverlay {
     private static final double ARROW_FADE = 0.35;
 
     /**
-     * A wire on the screen this frame: its ends (where it leaves one block and meets the other, cut short at the
-     * camera, moved aside into its lane), its arrowheads {x, y, direction x, direction y}, how big its tag is drawn,
-     * and the tag's text and box.
+     * A wire on the screen this frame: the segments of its run (straight, or along its pipe), its arrowheads
+     * {x, y, direction x, direction y}, how big its tag is drawn, and the tag's text and box.
      */
     private static final class Run {
 
         final Conn conn;
         final float ax, ay, bx, by, scale;
-        final List<float[]> arrows;
-        final String name, rate;
+        final List<float[]> segs, arrows;
+        final String name, rate, pipe;
         float tx, ty, tw, th;
         /**
          * Where along the wire its tag can go: the wire's ends in the world, the share of it shown, and its lane's
@@ -621,21 +713,29 @@ public final class PlanOverlay {
         /** Whether its tag shows: a card it joins is looked at, or the crosshair is on it. */
         boolean tag;
 
-        Run(final Conn conn, final float[] a, final float[] b, final List<float[]> arrows, final float scale,
-            final String name, final String rate) {
+        Run(final Conn conn, final float[] a, final float[] b, final List<float[]> segs, final List<float[]> arrows,
+            final float scale, final String name, final String rate, final String pipe) {
             this.conn = conn;
             this.ax = a[0];
             this.ay = a[1];
             this.bx = b[0];
             this.by = b[1];
+            this.segs = segs;
             this.arrows = arrows;
             this.scale = scale;
             this.name = name;
             this.rate = rate;
+            this.pipe = pipe;
         }
 
         boolean covers(final float x, final float y) {
             return x >= tx && x < tx + tw && y >= ty && y < ty + th;
+        }
+
+        float reach(final float x, final float y) {
+            float best = Float.MAX_VALUE;
+            for (final float[] s : segs) best = Math.min(best, distance(x, y, s[0], s[1], s[2], s[3]));
+            return segs.isEmpty() ? distance(x, y, ax, ay, bx, by) : best;
         }
     }
 
@@ -644,8 +744,8 @@ public final class PlanOverlay {
      * in
      * lanes, each tag beside its own lane on its outer side.
      */
-    private List<Run> runs(final List<Conn> conns, final Map<UUID, Float> seen, final ScaledResolution sr,
-        final Minecraft mc, final PlanSnapshot snap) {
+    private List<Run> runs(final List<Conn> conns, final List<PipeBlocks.Route> routes, final Map<UUID, Float> seen,
+        final ScaledResolution sr, final Minecraft mc, final PlanSnapshot snap) {
         final List<Run> out = new ArrayList<>();
         final Map<String, List<Conn>> pairs = new java.util.LinkedHashMap<>();
         for (final Conn c : conns) {
@@ -655,7 +755,7 @@ public final class PlanOverlay {
         }
         final double clock = System.currentTimeMillis() / 1000.0;
         for (final List<Conn> pair : pairs.values()) for (int i = 0; i < pair.size(); i++) {
-            final Run r = run(pair.get(i), i - (pair.size() - 1) / 2f, clock, seen, sr, mc, snap);
+            final Run r = run(pair.get(i), routes, i - (pair.size() - 1) / 2f, clock, sr, mc, snap);
             if (r == null) continue;
             // Its tag: always, for the machine looked at (or the wire under the crosshair), or never, as set.
             final int labels = PlannerSettings.arWireLabels();
@@ -790,61 +890,78 @@ public final class PlanOverlay {
      * world, so they keep their pace and spacing however you move.
      */
     @Nullable
-    private Run run(final Conn c, final float lane, final double clock, final Map<UUID, Float> seen,
+    private Run run(final Conn c, final List<PipeBlocks.Route> routes, final float lane, final double clock,
         final ScaledResolution sr, final Minecraft mc, final PlanSnapshot snap) {
-        // From the block of the one nearest the other to the block of the other nearest that: a structure's wire
-        // leaves from its side toward where it goes, and meets the near side of where it arrives.
-        final double[] start = nearest(c.from, c.to.home), to = nearest(c.to, start), from = nearest(c.from, to);
-        final double dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2];
-        final double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        // Shown from where it leaves the one block to where it meets the other, cut short at the camera.
-        final double leave = blockEdge(dx, dy, dz), meet = leave;
-        if (leave + meet >= 1) return null;
-        final double[] span = inFront(from, to, leave, 1 - meet);
-        if (span == null) return null;
-        final float[] sa = screen(along(from, to, span[0]), sr, mc), sb = screen(along(from, to, span[1]), sr, mc);
-        final double[] middle = along(from, to, (span[0] + span[1]) / 2);
+        final List<double[]> world = worldPath(c, routes);
+        if (world.size() < 2) return null;
+        final boolean piped = world.size() > 2 || routeOf(c, routes) != null;
+        final double length = polyLength(world);
+        if (length < 1e-6) return null;
+        final double[] first = world.get(0), last = world.get(world.size() - 1);
+        final double leave = piped ? 0 : blockEdge(last[0] - first[0], last[1] - first[1], last[2] - first[2]);
+        if (!piped && leave * 2 >= 1) return null;
+        final List<float[]> segs = new ArrayList<>();
+        float[] sa = null, sb = null;
+        for (int i = 1; i < world.size(); i++) {
+            final double[] a = world.get(i - 1), b = world.get(i);
+            final double t0 = !piped && i == 1 ? leave : 0, t1 = !piped && i == world.size() - 1 ? 1 - leave : 1;
+            final double[] span = inFront(a, b, t0, t1);
+            if (span == null) continue;
+            final float[] pa = screen(along(a, b, span[0]), sr, mc), pb = screen(along(a, b, span[1]), sr, mc);
+            if (pa == null || pb == null) continue;
+            segs.add(new float[] { pa[0], pa[1], pb[0], pb[1] });
+            if (sa == null) sa = pa;
+            sb = pb;
+        }
+        if (sa == null || sb == null) return null;
+        final double[] middle = atPoint(world, length / 2);
         final float[] mid = screen(middle, sr, mc);
-        if (sa == null || sb == null || mid == null) return null;
-        // Sized as the cards are: full size near, shrinking with distance.
+        if (mid == null) return null;
         final double far = Math.sqrt(
             (middle[0] - camX) * (middle[0] - camX) + (middle[1] - camY) * (middle[1] - camY)
                 + (middle[2] - camZ) * (middle[2] - camZ));
         final float scale = (float) (SIZE * Math.min(1, FULL_SIZE_WITHIN / far));
-        // The lane: a step across the wire on the screen, measured the same way for both directions of a pair.
         final boolean forward = c.from.card.id()
             .compareTo(c.to.card.id()) < 0;
         final float ux = forward ? sb[0] - sa[0] : sa[0] - sb[0], uy = forward ? sb[1] - sa[1] : sa[1] - sb[1];
         final float run = (float) Math.hypot(ux, uy);
-        // Lane to lane: a line, its two edges and a clear gap.
         final float step = run < 1 ? 0 : lane * (lineWidth(scale) + 2 + Math.max(3, 10 * scale)) / run;
         final float ox = -uy * step, oy = ux * step;
+        for (final float[] s : segs) {
+            s[0] += ox;
+            s[1] += oy;
+            s[2] += ox;
+            s[3] += oy;
+        }
         final List<float[]> arrows = new ArrayList<>();
         for (double at = (clock * ARROW_SPEED) % ARROW_GAP; at < length; at += ARROW_GAP) {
-            final double t = at / length;
-            if (t <= span[0] || t >= span[1]) continue;
-            // All the way along the line, fading in as it leaves one end and out as it reaches the other.
-            final float fade = (float) Math.min(1, Math.min(t - span[0], span[1] - t) * length / ARROW_FADE);
-            final float[] p = screen(along(from, to, t), sr, mc),
-                q = screen(along(from, to, t + 0.05 / length), sr, mc);
+            final float fade = (float) Math.min(1, Math.min(at, length - at) / ARROW_FADE);
+            if (fade <= 0) continue;
+            final float[] p = screen(atPoint(world, at), sr, mc), q = screen(atPoint(world, at + 0.05), sr, mc);
             if (p == null || q == null) continue;
             final float ax = q[0] - p[0], ay = q[1] - p[1], al = (float) Math.hypot(ax, ay);
             if (al > 0) arrows.add(new float[] { p[0] + ox, p[1] + oy, ax / al, ay / al, fade });
         }
         final PlanSnapshot.Flow f = c.flow;
+        final double perSecond = c.line.flowing() ? c.line.perSecond() : f == null ? 0 : f.perSecond();
+        final boolean fluid = (f != null && f.fluid() != null) || Resources.isFluid(c.line.resource());
         final String rate = f == null ? ""
-            : f.power() ? com.gtnhplanner.ui.theme.Fmt.power(f.perSecond() / 20) + " EU/t"
-                : com.gtnhplanner.ui.theme.Fmt.rate(f.perSecond(), snap.rateUnit(), f.fluid() != null);
+            : f.power() ? com.gtnhplanner.ui.theme.Fmt.power(perSecond / 20) + " EU/t"
+                : com.gtnhplanner.ui.theme.Fmt.rate(perSecond, snap.rateUnit(), fluid);
+        final String pipe = Hyb.fit(pipeOf(c, f, perSecond, snap.rateUnit()), 200);
         final Run r = new Run(
             c,
             new float[] { sa[0] + ox, sa[1] + oy },
             new float[] { sb[0] + ox, sb[1] + oy },
+            segs,
             arrows,
             scale,
             Hyb.fit(c.what(), 120),
-            rate);
-        r.tw = (TAG_ICON + 9 + Math.max(Hyb.width(r.name), Hyb.width(rate) * TAG_RATE) + 5) * scale;
-        r.th = TAG_H * scale;
+            rate,
+            pipe);
+        r.tw = (TAG_ICON + 9 + Math.max(Hyb.width(r.name), Math.max(Hyb.width(rate) * TAG_RATE, Hyb.width(pipe))) + 5)
+            * scale;
+        r.th = (pipe.isEmpty() ? TAG_H : TAG_H_PIPE) * scale;
         // On its own line, on the part of it on the screen (its own half size in from the edges), so it is plain which
         // wire it names and it stays where the wire can be seen; wires sharing a pair of cards have theirs staggered
         // along them, a fifth of it apart.
@@ -904,6 +1021,57 @@ public final class PlanOverlay {
         final float x0 = Math.max(0, r[0]), y0 = Math.max(0, r[1]), x1 = Math.min(sr.getScaledWidth(), r[2]),
             y1 = Math.min(sr.getScaledHeight(), r[3]);
         return x1 > x0 && y1 > y0 ? new float[] { x0, y0, x1, y1 } : null;
+    }
+
+    /** The pipe blocks of this wire, or a straight run from one machine to the other when it has none. */
+    private List<double[]> worldPath(final Conn c, final List<PipeBlocks.Route> routes) {
+        final PipeBlocks.Route route = routeOf(c, routes);
+        if (route != null && route.cells()
+            .size() >= 2) {
+            final List<double[]> out = new ArrayList<>();
+            for (final com.gtnhplanner.logistics.BlockRoute.Cell cell : route.cells())
+                out.add(new double[] { cell.x() + 0.5, cell.y() + 0.5, cell.z() + 0.5 });
+            return out;
+        }
+        final double[] start = nearest(c.from, c.to.home), to = nearest(c.to, start), from = nearest(c.from, to);
+        return List.of(from, to);
+    }
+
+    @Nullable
+    private static PipeBlocks.Route routeOf(final Conn c, final List<PipeBlocks.Route> routes) {
+        for (final PipeBlocks.Route route : routes) {
+            if (route.resource()
+                .equals(c.line.resource()) && route.fromX() == c.from.x
+                && route.fromY() == c.from.y
+                && route.fromZ() == c.from.z
+                && route.toX() == c.to.x
+                && route.toY() == c.to.y
+                && route.toZ() == c.to.z) return route;
+        }
+        return null;
+    }
+
+    private static double polyLength(final List<double[]> pts) {
+        double n = 0;
+        for (int i = 1; i < pts.size(); i++) n += dist(pts.get(i - 1), pts.get(i));
+        return n;
+    }
+
+    private static double[] atPoint(final List<double[]> pts, final double dist) {
+        if (pts.isEmpty()) return new double[] { 0, 0, 0 };
+        double left = dist;
+        for (int i = 1; i < pts.size(); i++) {
+            final double step = dist(pts.get(i - 1), pts.get(i));
+            if (left <= step || i == pts.size() - 1)
+                return along(pts.get(i - 1), pts.get(i), step < 1e-9 ? 0 : Math.max(0, Math.min(1, left / step)));
+            left -= step;
+        }
+        return pts.get(pts.size() - 1);
+    }
+
+    private static double dist(final double[] a, final double[] b) {
+        final double dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private static double[] along(final double[] a, final double[] b, final double t) {
@@ -1118,14 +1286,18 @@ public final class PlanOverlay {
      * card it feeds; faint where nothing flows yet; edged in the highlight when the crosshair is on it.
      */
     private static void wire(final Run r, final boolean lit) {
-        if (Math.hypot(r.bx - r.ax, r.by - r.ay) < 4) return;
+        if (r.segs.isEmpty() && Math.hypot(r.bx - r.ax, r.by - r.ay) < 4) return;
         final int colour = 0xFF000000 | r.conn.line.color() & 0xFFFFFF;
         final boolean flowing = r.conn.line.flowing();
         final float w = lineWidth(r.scale), arrow = arrowWidth(r.scale);
-        // Its own colour always; lit, its edge is the highlight instead of dark.
         final int edge = lit ? Hyb.LIT : flowing ? 0xB0000000 : 0x70000000;
-        band(r.ax, r.ay, r.bx, r.by, w + (lit ? 3 : 2), edge);
-        band(r.ax, r.ay, r.bx, r.by, w, flowing || lit ? colour : colour & 0x00FFFFFF | 0x99000000);
+        final int fill = flowing || lit ? colour : colour & 0x00FFFFFF | 0x99000000;
+        final List<float[]> bands = r.segs.isEmpty() ? List.of(new float[] { r.ax, r.ay, r.bx, r.by }) : r.segs;
+        for (final float[] s : bands) {
+            if (Math.hypot(s[2] - s[0], s[3] - s[1]) < 1) continue;
+            band(s[0], s[1], s[2], s[3], w + (lit ? 3 : 2), edge);
+            band(s[0], s[1], s[2], s[3], w, fill);
+        }
         // The arrowheads, set out along the wire in the world.
         final float head = 5.6f * arrow, half = 3f * arrow;
         final int tip = Hyb.mix(colour, 0xFFFFFFFF, 0.3f);
@@ -1170,8 +1342,9 @@ public final class PlanOverlay {
     }
 
     /**
-     * What a wire carries, at its middle: the item or fluid, how much in large type, and its name small under it, on a
-     * plain soft dark backing. The wire the crosshair is on is ringed in the highlight.
+     * What a wire carries, at its middle: the item or fluid, how much in large type, its name small under it, and the
+     * pipe that covers that rate in gold. On a plain soft dark backing. The wire the crosshair is on is ringed in the
+     * highlight.
      */
     private static void tag(final Run r, final boolean lit) {
         // Off its wire: a line from its spot on the wire to its nearest edge, in the wire's colour, a dot on the wire.
@@ -1185,7 +1358,7 @@ public final class PlanOverlay {
         GL11.glPushMatrix();
         GL11.glTranslatef(r.tx, r.ty, 0);
         GL11.glScalef(r.scale, r.scale, 1);
-        final int w = Math.round(r.tw / r.scale), h = TAG_H;
+        final int w = Math.round(r.tw / r.scale), h = r.pipe.isEmpty() ? TAG_H : TAG_H_PIPE;
         // In its wire's colours: a backing tinted with it and an edge of it (the highlight's when lit).
         final int wire = 0xFF000000 | r.conn.line.color() & 0xFFFFFF;
         // Nearly black for the text, only a hint of the wire in it; the edge says which wire.
@@ -1205,7 +1378,43 @@ public final class PlanOverlay {
         // No text shadows on the dark backing: each would draw the text twice, every frame.
         Hyb.text(r.rate, text, 3, TAG_RATE, Hyb.INK, false);
         Hyb.text(r.name, text, 3 + 8 * TAG_RATE + 2, 1f, 0xFFB8BBC4, false);
+        if (!r.pipe.isEmpty()) Hyb.text(r.pipe, text, 3 + 8 * TAG_RATE + 2 + 9, Hyb.GOLD, false);
         GL11.glPopMatrix();
+    }
+
+    /**
+     * The pipe for this wire's own share: the smallest item or fluid pipe whose tooltip covers it. EU stays a bolt.
+     * Nothing is named until the solve has put a rate on the wire. Heat and gas come from the fluid, when the pack
+     * has one; a stack that will not stack to 64 needs a fatter item pipe.
+     */
+    private static String pipeOf(final Conn c, @Nullable final PlanSnapshot.Flow f, final double perSecond,
+        final com.gtnhplanner.ui.theme.Fmt.RateUnit unit) {
+        if (!c.line.flowing() || perSecond <= 0) return "";
+        final String key = c.line.resource();
+        final boolean fluid = Resources.isFluid(key);
+        final boolean item = key.startsWith("item:");
+        if (!fluid && !item) return "";
+        int temperature = 0;
+        boolean gas = false;
+        int stack = PipeCatalog.STACK;
+        if (f != null && f.fluid() != null
+            && f.fluid()
+                .getFluid() != null) {
+            temperature = f.fluid()
+                .getFluid()
+                .getTemperature(f.fluid());
+            gas = f.fluid()
+                .getFluid()
+                .isGaseous(f.fluid());
+        } else if (f != null && f.item() != null) {
+            stack = Math.max(
+                1,
+                f.item()
+                    .getMaxStackSize());
+        }
+        final PipeSelect.Choice choice = PipeSelect
+            .choose(fluid ? PipeCatalog.Kind.FLUID : PipeCatalog.Kind.ITEM, perSecond, stack, temperature, gas);
+        return choice == null ? "" : choice.line(unit, stack);
     }
 
     // endregion

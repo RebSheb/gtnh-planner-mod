@@ -64,11 +64,13 @@ public record PlanSnapshot(Graph graph, String planName, long graphVersion, List
     }
 
     /**
-     * A wire: its route on the board, colour and width; {@code flowing} false for one nothing moves along. Between two
-     * cards, {@code from} and {@code to} are their recipes' nodes; a drawer's wire has neither.
+     * A wire: its route on the board, colour and width; {@code flowing} false for one nothing moves along.
+     * {@code perSecond} is this wire's own share after the solve (items or litres a second), not the port's total, so
+     * a split is not sized as if every branch carried all of it. Between two cards, {@code from} and {@code to} are
+     * their recipes' nodes; a drawer's wire has neither.
      */
     public record Line(List<int[]> path, int color, float width, boolean flowing, String resource, @Nullable UUID from,
-        @Nullable UUID to) {}
+        @Nullable UUID to, double perSecond) {}
 
     private static volatile PlanSnapshot latest;
     /** Where the board's view was last centred, kept apart so panning the board needs no new snapshot. */

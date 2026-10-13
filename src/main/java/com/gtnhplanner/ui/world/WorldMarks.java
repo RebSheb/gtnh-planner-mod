@@ -294,6 +294,100 @@ final class WorldMarks {
     }
 
     /**
+     * A pipe ghost whose arms follow {@code connections} (Forge side bits: down 1, up 2, north 4, south 8, west 16,
+     * east 32), so a run turns at corners instead of every block facing the same way.
+     */
+    static void ghostPipe(final ItemStack machine, final int x, final int y, final int z, final int connections,
+        final float thickness) {
+        final net.minecraft.block.Block block = net.minecraft.block.Block.getBlockFromItem(machine.getItem());
+        if (block == null || block == net.minecraft.init.Blocks.air) return;
+        if (connections == 0) {
+            ghost(machine, x, y, z);
+            return;
+        }
+        Minecraft.getMinecraft()
+            .getTextureManager()
+            .bindTexture(net.minecraft.client.renderer.texture.TextureMap.locationBlocksTexture);
+        GL11.glPushMatrix();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(false);
+        GL11.glEnable(GL11.GL_BLEND);
+        org.lwjgl.opengl.GL14.glBlendColor(1, 1, 1, 0.55f);
+        GL11.glBlendFunc(0x8003, 0x8004);
+        GL11.glColor4f(1, 1, 1, 1);
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1f);
+        net.minecraft.client.renderer.RenderHelper.enableStandardItemLighting();
+        final float thick = thickness > 0 && thickness < 1 ? thickness : 0.375f;
+        final float min = (1f - thick) / 2f, max = 1f - min;
+        final int meta = machine.getItemDamage();
+        net.minecraft.util.IIcon tex = null;
+        try {
+            tex = machine.getItem()
+                .getIconFromDamage(meta);
+        } catch (final RuntimeException ignored) {}
+        if (tex == null) tex = icon(block, 0, meta);
+        if (tex == null) {
+            ghost(machine, x, y, z);
+            return;
+        }
+        final boolean ao = GHOST.enableAO;
+        GHOST.enableAO = false;
+        final Tessellator tess = Tessellator.instance;
+        try {
+            tess.startDrawingQuads();
+            tess.setColorOpaque_F(1, 1, 1);
+            tess.setBrightness(0x00F000F0);
+            pipeBox(block, tex, x, y, z, min, min, min, max, max, max);
+            if ((connections & 1) != 0) pipeBox(block, tex, x, y, z, min, 0, min, max, min, max);
+            if ((connections & 2) != 0) pipeBox(block, tex, x, y, z, min, max, min, max, 1, max);
+            if ((connections & 4) != 0) pipeBox(block, tex, x, y, z, min, min, 0, max, max, min);
+            if ((connections & 8) != 0) pipeBox(block, tex, x, y, z, min, min, max, max, max, 1);
+            if ((connections & 16) != 0) pipeBox(block, tex, x, y, z, 0, min, min, min, max, max);
+            if ((connections & 32) != 0) pipeBox(block, tex, x, y, z, max, min, min, 1, max, max);
+            tess.draw();
+        } catch (final RuntimeException e) {
+            try {
+                tess.draw();
+            } catch (final RuntimeException ignored) {}
+            ghost(machine, x, y, z);
+        } finally {
+            GHOST.enableAO = ao;
+        }
+        net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glPopMatrix();
+    }
+
+    private static void pipeBox(final net.minecraft.block.Block block, final net.minecraft.util.IIcon tex, final int x,
+        final int y, final int z, final float x0, final float y0, final float z0, final float x1, final float y1,
+        final float z1) {
+        GHOST.setRenderBounds(x0, y0, z0, x1, y1, z1);
+        GHOST.renderFaceYNeg(block, x, y, z, tex);
+        GHOST.renderFaceYPos(block, x, y, z, tex);
+        GHOST.renderFaceZNeg(block, x, y, z, tex);
+        GHOST.renderFaceZPos(block, x, y, z, tex);
+        GHOST.renderFaceXNeg(block, x, y, z, tex);
+        GHOST.renderFaceXPos(block, x, y, z, tex);
+    }
+
+    @javax.annotation.Nullable
+    private static net.minecraft.util.IIcon icon(final net.minecraft.block.Block block, final int side,
+        final int meta) {
+        try {
+            return block.getIcon(side, meta);
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    /**
      * Turns the drawing space into a flat panel facing the camera at a world point, a GUI pixel being {@code scale}
      * blocks, x to the right and y down as on screen; {@link #endPanel()} undoes it.
      */

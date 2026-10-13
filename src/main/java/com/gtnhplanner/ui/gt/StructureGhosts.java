@@ -125,9 +125,40 @@ public final class StructureGhosts {
     }
 
     /**
+     * A hatch the structure will take, in the same unrotated space as {@link #blocks}: where it stands, the step out
+     * of its front, and whether that seat is a fluid hatch or an item bus, on the way out or the way in.
+     */
+    public record Hatch(int dx, int dy, int dz, int fx, int fy, int fz, boolean fluid, boolean output) {}
+
+    /**
+     * Where that kind of hatch may sit on a built ghost: every casing the structure's definition allows. Empty when
+     * the structure has none, or it could not be read.
+     */
+    public static java.util.List<Hatch> hatches(final Ghost ghost, final boolean fluid, final boolean output) {
+        try {
+            return StructureGhostBuilder.hatches(ghost, fluid, output);
+        } catch (final LinkageError | RuntimeException e) {
+            return java.util.List.of();
+        }
+    }
+
+    /**
      * How far above a picked spot a machine's controller goes so the structure's bottom stands on it: 0 for anything
      * without a ghost built yet.
      */
+    /**
+     * Whether this controller dumps each fluid on its own layer (a distillation tower). False when it is not one, or
+     * GregTech is not loaded.
+     */
+    public static boolean layeredOutputs(@Nullable final ItemStack controller) {
+        if (controller == null || !MultiblockPictures.available()) return false;
+        try {
+            return StructureGhostBuilder.layeredOutputs(controller);
+        } catch (final LinkageError | RuntimeException e) {
+            return false;
+        }
+    }
+
     public static int lift(@Nullable final ItemStack controller, final Needs needs, final int size) {
         final Ghost g = peek(controller, needs, size);
         return g == null ? 0 : -g.minY();

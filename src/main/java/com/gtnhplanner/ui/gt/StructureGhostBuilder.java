@@ -11,14 +11,20 @@ import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 
+import com.gtnewhorizon.structurelib.StructureLibAPI;
+import com.gtnewhorizon.structurelib.alignment.constructable.ChannelDataAccessor;
+import com.gtnhplanner.logistics.HatchKind;
+
 import blockrenderer6343.client.world.TrackedDummyWorld;
 import gregtech.api.GregTechAPI;
 import gregtech.api.enums.HeatingCoilLevel;
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
 /**
  * Builds and draws a multiblock's ghost: the structure placed in BlockRenderer6343's fake world as the card's picture
@@ -30,8 +36,11 @@ import gregtech.api.enums.HeatingCoilLevel;
  */
 final class StructureGhostBuilder {
 
-    /** A structure as built: its world, its renderer, and each block as {dx, dy, dz} from the controller. */
-    record Built(TrackedDummyWorld world, RenderBlocks render, List<int[]> blocks) {}
+    /**
+     * A structure as built: its world, its renderer, each block as {dx, dy, dz} from the controller, and the hologram
+     * channels it was placed with (a coil's tier, a tower's height), so hatch seats can be read against the same build.
+     */
+    record Built(TrackedDummyWorld world, RenderBlocks render, List<int[]> blocks, ItemStack trigger) {}
 
     /**
      * A structure that comes in sizes: its channel, how many steps it has (the Hologram Projector's 1 the smallest),
@@ -67,11 +76,71 @@ final class StructureGhostBuilder {
         "MTEAdvAssLine",
         new Sizing("length", 12, false, true, 5));
 
+    /**
+     * Whether this controller dumps each fluid on its own layer: the ordinary distillation tower and the GT++ advanced
+     * one. The mega tower packs layers by a rule of its own.
+     */
+    static boolean layeredOutputs(final ItemStack controller) {
+        final int meta = MultiblockRenderer.controllerMeta(controller);
+        if (meta < 0) return false;
+        final Object machine = GregTechAPI.METATILEENTITIES[meta];
+        if (machine == null) return false;
+        final String name = machine.getClass()
+            .getSimpleName();
+        return "MTEDistillationTower".equals(name) || "MTEAdvDistillationTower".equals(name);
+    }
+
     private StructureGhostBuilder() {}
 
     /** A built ghost's blocks, each {dx, dy, dz} from the controller, its front to the south. */
     static List<int[]> blocks(final StructureGhosts.Ghost ghost) {
         return ((Built) ghost.built()).blocks();
+    }
+
+    /**
+     * Where this structure will take a pipe hatch of that kind: every casing its definition allows, not only the
+     * hatch the preview happened to build. The front step is in the same unrotated space as the block. Energy, muffler
+     * and maintenance hatches are not pipes.
+     */
+    static List<StructureGhosts.Hatch> hatches(final StructureGhosts.Ghost ghost, final boolean fluid,
+        final boolean output) {
+        final Built built = (Built) ghost.built();
+        try {
+            final List<StructureGhosts.Hatch> seats = new ArrayList<>();
+            for (final StructureGhosts.Hatch seat : HatchSeats.of(ghost)) {
+                if (seat.fluid() == fluid && seat.output() == output) seats.add(seat);
+            }
+            if (!seats.isEmpty()) return seats;
+        } catch (final LinkageError | RuntimeException ignored) {}
+        return placedHatches(built, fluid, output);
+    }
+
+    /** Hatches the preview actually built, used only when the structure would not say where they may go. */
+    private static List<StructureGhosts.Hatch> placedHatches(final Built built, final boolean fluid,
+        final boolean output) {
+        final List<StructureGhosts.Hatch> out = new ArrayList<>();
+        for (final int[] block : built.blocks()) {
+            final int wx = MultiblockRenderer.PLACE_X + block[0], wy = MultiblockRenderer.PLACE_Y + block[1],
+                wz = MultiblockRenderer.PLACE_Z + block[2];
+            final net.minecraft.tileentity.TileEntity tile = built.world()
+                .getTileEntity(wx, wy, wz);
+            if (!(tile instanceof final IGregTechTileEntity gt)) continue;
+            final Object machine = gt.getMetaTileEntity();
+            if (machine == null || !HatchKind.matches(machine.getClass().getSimpleName(), fluid, output)) continue;
+            final net.minecraftforge.common.util.ForgeDirection front = gt.getFrontFacing();
+            if (front == null || front == net.minecraftforge.common.util.ForgeDirection.UNKNOWN) continue;
+            out.add(
+                new StructureGhosts.Hatch(
+                    block[0],
+                    block[1],
+                    block[2],
+                    front.offsetX,
+                    front.offsetY,
+                    front.offsetZ,
+                    fluid,
+                    output));
+        }
+        return out;
     }
 
     @javax.annotation.Nullable
@@ -134,7 +203,7 @@ final class StructureGhostBuilder {
                 }
         final Sizing sizing = sizing(meta);
         return new StructureGhosts.Ghost(
-            new Built(world, new RenderBlocks(world), blocks),
+            new Built(world, new RenderBlocks(world), blocks, triggerOf(channels)),
             blocks.size(),
             minX,
             minY,
@@ -144,6 +213,14 @@ final class StructureGhostBuilder {
             maxZ,
             sizing == null ? 0 : channels.get(sizing.channel()),
             sizing == null ? 0 : sizing.steps());
+    }
+
+    private static ItemStack triggerOf(final Map<String, Integer> channels) {
+        final ItemStack trigger = new ItemStack(StructureLibAPI.getDefaultHologramItem());
+        trigger.stackSize = 1;
+        for (final Map.Entry<String, Integer> channel : channels.entrySet())
+            ChannelDataAccessor.setChannelData(trigger, channel.getKey(), channel.getValue());
+        return trigger;
     }
 
     /**

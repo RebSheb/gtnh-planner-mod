@@ -319,6 +319,8 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
                         PlannerKeys.label(PlannerKeys.AR),
                         PlannerSettings::arLens,
                         PlannerSettings::setArLens).about("Shows or hides everything below."),
+                    toggle("Shared bus", null, PlannerSettings::sharedPipes, PlannerSettings::setSharedPipes)
+                        .about("Joins machines moving the same thing onto one pipe."),
                     toggle(
                         "Cards",
                         PlannerKeys.held(PlannerKeys.FOCUS),

@@ -104,7 +104,8 @@ final class SnapshotMaker {
                     w.perSecond() > 0,
                     w.resource(),
                     e == null ? null : e.sourceNodeId,
-                    e == null ? null : e.targetNodeId));
+                    e == null ? null : e.targetNodeId,
+                    w.perSecond()));
         }
         return new PlanSnapshot(
             graph,
