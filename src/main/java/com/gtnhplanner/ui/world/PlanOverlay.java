@@ -1378,7 +1378,7 @@ public final class PlanOverlay {
         // No text shadows on the dark backing: each would draw the text twice, every frame.
         Hyb.text(r.rate, text, 3, TAG_RATE, Hyb.INK, false);
         Hyb.text(r.name, text, 3 + 8 * TAG_RATE + 2, 1f, 0xFFB8BBC4, false);
-        if (!r.pipe.isEmpty()) Hyb.text(r.pipe, text, 3 + 8 * TAG_RATE + 2 + 9, Hyb.GOLD, false);
+        if (!r.pipe.isEmpty()) Hyb.text(r.pipe, text, 3 + 8 * TAG_RATE + 2 + 9, 1f, Hyb.GOLD, false);
         GL11.glPopMatrix();
     }
 

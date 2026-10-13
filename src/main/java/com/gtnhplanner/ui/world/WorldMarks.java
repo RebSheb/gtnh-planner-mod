@@ -302,7 +302,7 @@ final class WorldMarks {
         final net.minecraft.block.Block block = net.minecraft.block.Block.getBlockFromItem(machine.getItem());
         if (block == null || block == net.minecraft.init.Blocks.air) return;
         if (connections == 0) {
-            ghost(machine, x, y, z);
+            ghost(machine, x, y, z, 2);
             return;
         }
         Minecraft.getMinecraft()
@@ -330,7 +330,7 @@ final class WorldMarks {
         } catch (final RuntimeException ignored) {}
         if (tex == null) tex = icon(block, 0, meta);
         if (tex == null) {
-            ghost(machine, x, y, z);
+            ghost(machine, x, y, z, 2);
             return;
         }
         final boolean ao = GHOST.enableAO;
@@ -352,7 +352,7 @@ final class WorldMarks {
             try {
                 tess.draw();
             } catch (final RuntimeException ignored) {}
-            ghost(machine, x, y, z);
+            ghost(machine, x, y, z, 2);
         } finally {
             GHOST.enableAO = ao;
         }
