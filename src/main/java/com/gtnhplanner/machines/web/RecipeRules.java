@@ -476,7 +476,17 @@ public final class RecipeRules {
     }
 
     private static String slug(final String value) {
-        return normalizeRecipeMapName(value).replaceAll("[^a-z0-9]+", "-");
+        return Names.SLUGS.computeIfAbsent(value, v -> normalizeRecipeMapName(v).replaceAll("[^a-z0-9]+", "-"));
+    }
+
+    /**
+     * These run for every card many times a solve, over a handful of names: each worked out once. Made on first use, so
+     * the tables built as the class loads can already use them.
+     */
+    private static final class Names {
+
+        static final java.util.Map<String, String> SLUGS = new java.util.concurrent.ConcurrentHashMap<>(),
+            MAP_NAMES = new java.util.concurrent.ConcurrentHashMap<>();
     }
 
     private static String normalizeMachineLabel(final String value) {
@@ -487,13 +497,15 @@ public final class RecipeRules {
 
     /** normalizeRecipeMapName: lower case, without "recipe(s)" or "recipe map", runs of the rest one space. */
     static String normalizeRecipeMapName(final String recipeMap) {
-        return recipeMap.trim()
-            .toLowerCase(Locale.ROOT)
-            .replaceAll("\\brecipes?\\b", "")
-            .replaceAll("\\brecipe\\s+map\\b", "")
-            .replaceAll("[^a-z0-9]+", " ")
-            .replaceAll("\\s+", " ")
-            .trim();
+        return Names.MAP_NAMES.computeIfAbsent(
+            recipeMap,
+            r -> r.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("\\brecipes?\\b", "")
+                .replaceAll("\\brecipe\\s+map\\b", "")
+                .replaceAll("[^a-z0-9]+", " ")
+                .replaceAll("\\s+", " ")
+                .trim());
     }
 
     // endregion

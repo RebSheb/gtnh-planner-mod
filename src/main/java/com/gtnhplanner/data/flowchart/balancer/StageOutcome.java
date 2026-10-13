@@ -45,6 +45,20 @@ public final class StageOutcome {
         return new StageOutcome(extents, flows, externals, ctx.gateSupport(externals), qty, flowSum, provenOptimal);
     }
 
+    /** As above, with the gate support given rather than read off the externals: a plan's islands merged. */
+    static StageOutcome of(final SolveContext ctx, final double[] extents, final double[] flows,
+        final double[] externals, final Set<Integer> support, final boolean provenOptimal) {
+        final StageOutcome read = of(ctx, extents, flows, externals, provenOptimal);
+        return new StageOutcome(
+            extents,
+            flows,
+            externals,
+            Set.copyOf(support),
+            read.externalQuantity,
+            read.internalFlow,
+            provenOptimal);
+    }
+
     /**
      * The context's committed point, defensively copied for the profiler: a clone of the arrays and
      * the metrics recomputed against {@code ctx}. Only ever called when a profiler is attached

@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -481,6 +482,7 @@ public final class Serializer {
         }
 
         final JsonArray edgesArray = root.getAsJsonArray("edges");
+        final List<Edge> loadedEdges = new ArrayList<>(edgesArray.size());
         for (final JsonElement elem : edgesArray) {
             final JsonObject obj = elem.getAsJsonObject();
             final UUID id = UUID.fromString(
@@ -496,8 +498,9 @@ public final class Serializer {
                 .getAsInt();
             final int dstIn = obj.get("dstIn")
                 .getAsInt();
-            graph.addEdge(new Edge(id, src, dst, srcOut, dstIn));
+            loadedEdges.add(new Edge(id, src, dst, srcOut, dstIn));
         }
+        graph.addEdgesLoaded(loadedEdges);
 
         for (final JsonElement elem : root.getAsJsonArray("notes")) {
             final Note note = GSON.fromJson(elem, Note.class);
@@ -557,10 +560,12 @@ public final class Serializer {
 
         // Absent from saves written before drawers existed; those load with none.
         if (root.has("drawers")) {
+            final List<Drawer> loadedDrawers = new ArrayList<>();
             for (final JsonElement elem : root.getAsJsonArray("drawers")) {
                 final Drawer drawer = readDrawer(elem);
-                if (drawer != null) graph.addDrawer(drawer);
+                if (drawer != null) loadedDrawers.add(drawer);
             }
+            graph.addDrawersLoaded(loadedDrawers);
         }
 
         return graph;

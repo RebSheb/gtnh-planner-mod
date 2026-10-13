@@ -14,13 +14,15 @@ import com.gtnhplanner.GtnhPlanner;
  * <p>
  * The client thread takes a {@link SolveInput} snapshot whenever the graph's version moves and
  * {@link #submit}s it; the worker solves it with {@link Balancer#solve(SolveInput)} and publishes
- * the answer, which the board reads every frame with {@link #latest()}. Only the newest request
+ * the answer, which the board reads every frame with {@link #latest()}. Islands of the plan an edit did not touch
+ * are not solved again ({@link Balancer.Cache}). Only the newest request
  * matters:
  * <ul>
  * <li>a request that has not started yet is replaced by the next {@code submit}, so a burst of edits
  * costs one solve, not one per edit;</li>
- * <li>a request that was already solving when a newer one arrived finishes but is dropped as stale -
- * its answer belongs to a graph that no longer exists - and the worker moves on to the newer one.
+ * <li>a request that was already solving when a newer one arrived is stopped at its next model and dropped - its
+ * answer belongs to a graph that no longer exists - and the worker moves on to the newer one (a solver handed in
+ * whole, as tests do, finishes first and is dropped as stale).
  * Stale is decided by submission order, never by comparing version numbers, so switching back to a
  * plan tab whose version is lower than the last one submitted still publishes.</li>
  * </ul>
@@ -77,24 +79,46 @@ public final class SolveService implements AutoCloseable {
     // Guarded by lock.
     private @Nullable Request pending;
     private boolean running;
-    private long lastSeq;
+    private volatile long lastSeq;
+    /** The request being solved, so a newer one can stop it. */
+    private volatile long runningSeq;
     private long lastVersion = Long.MIN_VALUE;
-    private boolean closed;
+    private volatile boolean closed;
 
     private volatile @Nullable Result latest;
 
     /** A service solving with {@link Balancer#solve(SolveInput)}. */
     public SolveService() {
-        this(Balancer::solve);
+        this.solver = cachedSolve();
+        this.worker = start();
+    }
+
+    /**
+     * {@link Balancer#solve(SolveInput, Balancer.Cache, java.util.function.BooleanSupplier)} with a cache of its own
+     * (the plan's unchanged islands kept), stopped the moment a newer request arrives.
+     */
+    private Function<SolveInput, BalanceResult> cachedSolve() {
+        final Balancer.Cache cache = new Balancer.Cache();
+        return input -> Balancer.solve(input, cache, this::superseded);
+    }
+
+    /** Whether the solve now running has been overtaken by a newer request, or the service closed. */
+    private boolean superseded() {
+        return closed || lastSeq != runningSeq;
     }
 
     /** A service solving with {@code solver}; tests hand in a solver they control. */
     public SolveService(final Function<SolveInput, BalanceResult> solver) {
         this.solver = Objects.requireNonNull(solver, "solver");
-        this.worker = new Thread(this::loop, "GTNH Planner solver");
-        worker.setDaemon(true);
-        worker.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.NORM_PRIORITY - 1));
-        worker.start();
+        this.worker = start();
+    }
+
+    private Thread start() {
+        final Thread thread = new Thread(this::loop, "GTNH Planner solver");
+        thread.setDaemon(true);
+        thread.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.NORM_PRIORITY - 1));
+        thread.start();
+        return thread;
     }
 
     /**
@@ -185,6 +209,7 @@ public final class SolveService implements AutoCloseable {
                 request = pending;
                 pending = null;
                 running = true;
+                runningSeq = request.seq();
             }
             final long start = System.currentTimeMillis();
             Result result;
@@ -196,6 +221,13 @@ public final class SolveService implements AutoCloseable {
                     balance,
                     null,
                     System.currentTimeMillis() - start);
+            } catch (final Balancer.Stopped stopped) {
+                // A newer request overtook it: nothing to publish, and the next one is already waiting.
+                synchronized (lock) {
+                    running = false;
+                    lock.notifyAll();
+                }
+                continue;
             } catch (final Throwable t) {
                 GtnhPlanner.LOG.error("Solve of version {} threw", request.version(), t);
                 result = new Result(request.version(), request.input(), null, t, System.currentTimeMillis() - start);

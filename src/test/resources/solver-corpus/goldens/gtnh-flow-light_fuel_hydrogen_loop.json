@@ -1,0 +1,71 @@
+{
+  "solution": {
+    "extentsPerSecond": {
+      "003d7aca-e9e4-3ae5-b725-1611caa74493": 0.00208333333333,
+      "680a8ea4-e50f-3a34-bdfa-cd2b74d5dd3f": 1.0,
+      "81b1f67d-f7ad-3eea-a483-3b9d9bd80652": 0.00208333333333
+    },
+    "machineCounts": {
+      "003d7aca-e9e4-3ae5-b725-1611caa74493": 0.014999999999976,
+      "680a8ea4-e50f-3a34-bdfa-cd2b74d5dd3f": 1.0,
+      "81b1f67d-f7ad-3eea-a483-3b9d9bd80652": 0.01666666666664
+    },
+    "edgeFlowsPerSecond": {
+      "2520af6c-ce3c-33f5-8f45-cea784af0c0d": 2.08333333333333,
+      "8c0c5066-abac-37b3-b021-198749c10d85": 4.16666666666666,
+      "d80335a8-0d30-32a2-b5d3-5dc897509013": 25.0
+    },
+    "gatedSources": [],
+    "gatedSinks": [],
+    "terminalInputs": [
+      {
+        "port": {
+          "nodeId": "680a8ea4-e50f-3a34-bdfa-cd2b74d5dd3f",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 25.0
+      }
+    ],
+    "terminalOutputs": [
+      {
+        "port": {
+          "nodeId": "81b1f67d-f7ad-3eea-a483-3b9d9bd80652",
+          "portIndex": 1.0,
+          "input": false
+        },
+        "ratePerSecond": 24.99999999996
+      },
+      {
+        "port": {
+          "nodeId": "003d7aca-e9e4-3ae5-b725-1611caa74493",
+          "portIndex": 1.0,
+          "input": false
+        },
+        "ratePerSecond": 0.00208333333333
+      }
+    ],
+    "openGates": 0.0,
+    "externalQuantity": 0.0,
+    "totalInternalFlow": 31.24999999999999,
+    "floorsUsed": false,
+    "notes": [],
+    "key": {
+      "gateAnchors": []
+    },
+    "drawers": {
+      "rates": {},
+      "unmet": [],
+      "shortfalls": []
+    },
+    "spares": []
+  },
+  "alternatives": {
+    "chosen": {
+      "gateAnchors": []
+    },
+    "options": [],
+    "complete": true,
+    "notes": []
+  }
+}

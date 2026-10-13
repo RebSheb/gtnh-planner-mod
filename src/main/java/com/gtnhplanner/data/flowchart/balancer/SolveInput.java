@@ -2,12 +2,17 @@ package com.gtnhplanner.data.flowchart.balancer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
+
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.oredict.OreDictionary;
 
 import com.gtnhplanner.Config;
 import com.gtnhplanner.data.MachineConfig;
@@ -263,10 +268,17 @@ public record SolveInput(BalanceMode mode, @Nullable ChoiceKey choice, List<Mach
             inputTargets);
     }
 
-    /** Numbers the ingredients of one snapshot: ports that connect share a number. */
+    /**
+     * Numbers the ingredients of one snapshot: a port takes the number of the first ingredient it connects to, else a
+     * new one. Each ingredient is filed under every key a port connecting to it must share (an item's id and damage
+     * and each of its ore dictionary ids; a fluid; any other kind as a whole), so a port is only tested against the
+     * ingredients filed under its own keys, in order: the same numbers as testing every ingredient, without the plan
+     * squared.
+     */
     private static final class Ingredients {
 
         private final List<Port<?>> representatives = new ArrayList<>();
+        private final Map<Object, List<Integer>> filed = new HashMap<>();
 
         PortIn portOf(final Port<?> port, final double multiplier) {
             final String name = port.getDisplayName();
@@ -280,12 +292,47 @@ public record SolveInput(BalanceMode mode, @Nullable ChoiceKey choice, List<Mach
         }
 
         private int resourceOf(final Port<?> port) {
-            for (int i = 0; i < representatives.size(); i++) {
-                if (representatives.get(i)
-                    .canConnect(port)) return i;
+            final List<Object> keys = keysOf(port);
+            int found = Integer.MAX_VALUE;
+            for (final Object key : keys) {
+                final List<Integer> candidates = filed.get(key);
+                if (candidates == null) continue;
+                for (final int i : candidates) {
+                    if (i >= found) break;
+                    if (representatives.get(i)
+                        .canConnect(port)) {
+                        found = i;
+                        break;
+                    }
+                }
             }
+            if (found != Integer.MAX_VALUE) return found;
+            final int index = representatives.size();
             representatives.add(port);
-            return representatives.size() - 1;
+            for (final Object key : keys) filed.computeIfAbsent(key, k -> new ArrayList<>())
+                .add(index);
+            return index;
+        }
+
+        /**
+         * Every key a port that connects to this one shares with it: {@code RecipePropertyAPI}'s item rule (same item and
+         * damage, or a shared ore dictionary id) and fluid rule (same fluid), recognised by their keys so that nothing
+         * here loads the fluid registry; any other kind is filed whole.
+         */
+        private static List<Object> keysOf(final Port<?> port) {
+            final String kind = port.getType()
+                .getKey();
+            if ("item".equals(kind) && port.getValue() instanceof final ItemStack stack) {
+                if (stack.getItem() == null) return List.of(); // connects to nothing
+                final List<Object> keys = new ArrayList<>();
+                keys.add(List.of(stack.getItem(), stack.getItemDamage()));
+                for (final int ore : OreDictionary.getOreIDs(stack)) keys.add(ore);
+                return keys;
+            }
+            if ("fluid".equals(kind) && port.getValue() instanceof final FluidStack fluid) {
+                return Collections.singletonList(fluid.getFluid());
+            }
+            return List.of(port.getType());
         }
     }
 }

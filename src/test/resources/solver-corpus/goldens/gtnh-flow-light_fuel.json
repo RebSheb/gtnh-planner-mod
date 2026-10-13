@@ -1,0 +1,86 @@
+{
+  "solution": {
+    "extentsPerSecond": {
+      "932f665b-4691-3011-9883-685c33e92fe1": 0.00416666666667,
+      "99a88d22-afdb-3ffb-b6e9-00d7dcfd0e4b": 0.00208333333333,
+      "ea3c6f48-7dbc-3493-a787-f6b8e0d7fda8": 1.0
+    },
+    "machineCounts": {
+      "932f665b-4691-3011-9883-685c33e92fe1": 0.20833333333350001,
+      "99a88d22-afdb-3ffb-b6e9-00d7dcfd0e4b": 0.01666666666664,
+      "ea3c6f48-7dbc-3493-a787-f6b8e0d7fda8": 1.0
+    },
+    "edgeFlowsPerSecond": {
+      "0646d0ff-e060-33b1-8b3a-c14cfabebc6b": 4.16666666666666,
+      "80d62cc0-a77a-39dc-a741-2be848d81c06": 25.0
+    },
+    "gatedSources": [],
+    "gatedSinks": [],
+    "terminalInputs": [
+      {
+        "port": {
+          "nodeId": "932f665b-4691-3011-9883-685c33e92fe1",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 12.50000000001
+      },
+      {
+        "port": {
+          "nodeId": "ea3c6f48-7dbc-3493-a787-f6b8e0d7fda8",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 25.0
+      }
+    ],
+    "terminalOutputs": [
+      {
+        "port": {
+          "nodeId": "932f665b-4691-3011-9883-685c33e92fe1",
+          "portIndex": 1.0,
+          "input": false
+        },
+        "ratePerSecond": 2.083333333335
+      },
+      {
+        "port": {
+          "nodeId": "99a88d22-afdb-3ffb-b6e9-00d7dcfd0e4b",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 2.08333333333
+      },
+      {
+        "port": {
+          "nodeId": "99a88d22-afdb-3ffb-b6e9-00d7dcfd0e4b",
+          "portIndex": 1.0,
+          "input": false
+        },
+        "ratePerSecond": 24.99999999996
+      }
+    ],
+    "openGates": 0.0,
+    "externalQuantity": 0.0,
+    "totalInternalFlow": 29.16666666666666,
+    "floorsUsed": false,
+    "notes": [],
+    "key": {
+      "gateAnchors": []
+    },
+    "drawers": {
+      "rates": {},
+      "unmet": [],
+      "shortfalls": []
+    },
+    "spares": []
+  },
+  "alternatives": {
+    "chosen": {
+      "gateAnchors": []
+    },
+    "options": [],
+    "complete": true,
+    "notes": []
+  }
+}

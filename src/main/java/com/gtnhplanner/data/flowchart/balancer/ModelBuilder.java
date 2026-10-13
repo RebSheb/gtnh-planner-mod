@@ -34,12 +34,26 @@ import org.ojalgo.type.context.NumberContext;
 public final class ModelBuilder {
 
     private final SolveContext ctx;
-    private final ExpressionsBasedModel m = new ExpressionsBasedModel();
+    /**
+     * The solver's own ojAlgo environment, with no presolvers. ojAlgo 57.3.1's presolve restarts its pass over the rows
+     * after every variable it fixes, in BigDecimal: 85% of a solve. Worse, it declared sets of gates infeasible that
+     * balance (gtnh-flow's 230_platline, with the every-machine floors), so it decided answers. These models are small
+     * and plain; the simplex needs none of it. Branch-and-bound (the OUTPUT and INPUT modes) still presolves its own
+     * way.
+     */
+    private static final Optimisation.Environment ENVIRONMENT = environment();
+
+    /**
+     * Tests only: every model adds its variables in reverse order, a different path through the simplex to the same
+     * optima, to show no answer depends on the path.
+     */
+    private static volatile boolean reversed;
+
+    private final ExpressionsBasedModel m = ENVIRONMENT.newModel();
 
     private Variable[] extentVars = new Variable[0];
     private Variable[] flowVars = new Variable[0];
     private Variable[] extVars = new Variable[0];
-    private Variable[] gateVars = new Variable[0];
     private boolean extents;
     private boolean flows;
     private boolean externals;
@@ -52,20 +66,31 @@ public final class ModelBuilder {
     private ModelBuilder(final SolveContext ctx) {
         this.ctx = ctx;
         final Numerics numerics = ctx.heuristics.numerics();
-        // Never longer than what the whole solve has left. The floor matters as much as the
-        // ceiling: a model handed a millisecond aborts into whatever point it is holding, so the
-        // floor wins once the budget is nearly spent. Not Math.clamp: that throws when the floor is
-        // above the remaining budget, which is exactly the case the floor is for.
-        final long limit = Math.max(
-            numerics.minModelMillis,
-            Math.min(numerics.effort(numerics.stageTimeLimitMillis), ctx.budget.remaining()));
-        m.options.time_abort = limit;
-        m.options.time_suffice = limit;
+        // A safety net against a model that never ends, never reached by a working one: the work a solve does is
+        // counted, never timed, so its answer is the same on every computer however busy.
+        m.options.time_abort = numerics.modelSafetyMillis;
+        m.options.time_suffice = numerics.modelSafetyMillis;
         // One branch-and-bound worker, so the node order is a property of the model, not of thread
         // interleaving, and the same chart answers the same on every machine.
         m.options.integer(IntegerStrategy.DEFAULT.withGapTolerance(NumberContext.of(12, 8)));
         m.options.parallelism(1);
         m.options.feasibility = NumberContext.of(12, 10);
+    }
+
+    private static Optimisation.Environment environment() {
+        final Optimisation.Environment environment = Optimisation.newEnvironment();
+        environment.clearPresolvers();
+        return environment;
+    }
+
+    /** Tests only: whether every model from now on adds its variables in reverse order. */
+    public static void reversed(final boolean on) {
+        reversed = on;
+    }
+
+    /** The {@code i}th variable of a family of {@code n} to add: its index, or its mirror when {@link #reversed}. */
+    private static int order(final int i, final int n) {
+        return reversed ? n - 1 - i : i;
     }
 
     /** Starts a fresh model over the shared chart data; the stage factors that choose its parts. */
@@ -81,7 +106,8 @@ public final class ModelBuilder {
     public ModelBuilder extents(final double[] lower) {
         final ModelData model = ctx.model;
         extentVars = new Variable[model.machines.size()];
-        for (int i = 0; i < extentVars.length; i++) {
+        for (int k = 0; k < extentVars.length; k++) {
+            final int i = order(k, extentVars.length);
             final Variable v = m.addVariable("extent_" + i);
             final double pinned = ctx.pinnedExtent[i];
             if (!Double.isNaN(pinned)) {
@@ -160,7 +186,8 @@ public final class ModelBuilder {
     public ModelBuilder flows() {
         final ModelData model = ctx.model;
         flowVars = new Variable[model.edges.size()];
-        for (int e = 0; e < flowVars.length; e++) {
+        for (int k = 0; k < flowVars.length; k++) {
+            final int e = order(k, flowVars.length);
             flowVars[e] = m.addVariable("flow_" + e)
                 .lower(0);
         }
@@ -171,30 +198,12 @@ public final class ModelBuilder {
     /** One nonnegative external variable per connected port. */
     public ModelBuilder externals() {
         extVars = new Variable[ctx.model.connectedPorts.size()];
-        for (int p = 0; p < extVars.length; p++) {
+        for (int k = 0; k < extVars.length; k++) {
+            final int p = order(k, extVars.length);
             extVars[p] = m.addVariable("ext_" + p)
                 .lower(0);
         }
         externals = true;
-        return this;
-    }
-
-    /** One binary gate variable per gate, each linked to its ports' externals by a big-M row. */
-    public ModelBuilder gates(final double bigM) {
-        requireExternals();
-        final ModelData model = ctx.model;
-        gateVars = new Variable[model.gates.size()];
-        for (int g = 0; g < gateVars.length; g++) {
-            gateVars[g] = m.addVariable("y_" + g)
-                .binary();
-            final Expression link = m.addExpression("link_" + g);
-            for (final int p : model.gates.get(g)
-                .ports()) {
-                link.set(extVars[p], 1.0);
-            }
-            link.set(gateVars[g], -bigM);
-            link.upper(0);
-        }
         return this;
     }
 
@@ -367,16 +376,9 @@ public final class ModelBuilder {
         return this;
     }
 
-    /** Caps the branch-and-bound nodes a {@link #solve(String)} spends certifying an optimum. */
-    public ModelBuilder nodeBudget(final int nodes) {
-        m.options.iterations_abort = nodes;
-        m.options.iterations_suffice = nodes;
-        return this;
-    }
-
     /** The variable arrays, for the readers and the caps that must be set between build and solve. */
     public Handles handles() {
-        return new Handles(m, extentVars, flowVars, extVars, gateVars);
+        return new Handles(m, extentVars, flowVars, extVars);
     }
 
     /** Runs the model, reporting to the profiler with {@code label} when one is attached. */

@@ -1,13 +1,12 @@
 package com.gtnhplanner.data.flowchart.balancer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
+import org.ojalgo.optimisation.linear.LinearSolver;
 
 /**
  * The LP/MILP machinery shared by every stage. Model ASSEMBLY now lives in one fluent place,
@@ -34,26 +33,44 @@ public final class Solver {
     private Solver() {}
 
     /**
-     * The one place a model runs, so the profiler sees every solve. Timed and sized only when a
-     * profiler is attached (the {@code disabled} singleton never pays for the clock read).
+     * The simplex set-ups an AUTO model is solved under, in turn: ojAlgo's revised simplex with Ruiz equilibration
+     * (scaled, the fastest here), then its own pick. ojAlgo 57.3.1 is not sure-footed on these models: one set-up can
+     * call a model infeasible that the other solves, or return a point that does not conserve.
      */
-    public static Optimisation.Result solve(final SolveContext ctx, final Handles h, final String label) {
-        final Profiler profiler = ctx.profiler;
-        final long start = profiler.enabled() ? System.currentTimeMillis() : 0;
-        final Optimisation.Result result = h.model()
-            .minimise();
-        if (profiler.enabled()) {
-            profiler.modelSolved(
-                label,
-                System.currentTimeMillis() - start,
-                result.getState()
-                    .toString(),
-                h.model()
-                    .countVariables(),
-                h.model()
-                    .countExpressions());
+    private static final List<LinearSolver.Configuration> OPINIONS = List
+        .of(new LinearSolver.Configuration().equilibration(5), new LinearSolver.Configuration());
+
+    /**
+     * The one place an AUTO model runs: under each simplex set-up in turn ({@link #OPINIONS}) until one returns a
+     * point that passes the independent conservation check. A point that passes proves the model has one; that it has
+     * none is believed only when every set-up says so. The profiler hears every attempt.
+     */
+    public static SolveResult run(final SolveContext ctx, final Handles h, final String label) {
+        SolveResult last = null;
+        for (final LinearSolver.Configuration opinion : OPINIONS) {
+            ctx.checkStop();
+            h.model().options.linear(opinion);
+            final long start = System.currentTimeMillis();
+            final Optimisation.Result result = h.model()
+                .minimise();
+            final long millis = System.currentTimeMillis() - start;
+            if (ctx.profiler.enabled()) {
+                ctx.profiler.modelSolved(
+                    label,
+                    millis,
+                    result.getState()
+                        .toString(),
+                    h.model()
+                        .countVariables(),
+                    h.model()
+                        .countExpressions());
+            }
+            last = result.getState()
+                .isFeasible() ? fromHandles(ctx, h, false)
+                    : rejected(ctx, result, millis >= h.model().options.time_abort);
+            if (!last.isRejected()) return last;
         }
-        return result;
+        return last;
     }
 
     /** The AUTO extent lower bound: the pass-2 floors when a replay forced them, else zero. */
@@ -83,9 +100,28 @@ public final class Solver {
         if (!open.isEmpty()) holdQuantity(ctx, h, qtyCap);
         flowObjective(h);
         final String label = open.isEmpty() ? "fast path" : "stage 3 flow";
-        final Optimisation.Result result = solve(ctx, h, label);
-        if (!isUsable(result)) return rejected(ctx, result);
-        return fromHandles(ctx, h, false);
+        return run(ctx, h, label);
+    }
+
+    /**
+     * Every gate open, each port's externals weighted by its gate's {@code gateWeight} (per craft of the machine at the
+     * port): one round of the gate search's reweighted-L1 start. Each port's weight is nudged by its fixed tie weight,
+     * a ten-thousandth at most, so the optimum is one point and not whichever of a tie the simplex reaches first.
+     */
+    public static SolveResult gateWeighted(final SolveContext ctx, final double[] gateWeight) {
+        final Handles h = ModelBuilder.over(ctx)
+            .extents(autoLower(ctx))
+            .pools()
+            .flows()
+            .externals()
+            .conservation()
+            .drawers()
+            .handles();
+        for (int p = 0; p < ctx.model.connectedPorts.size(); p++) {
+            h.extVars()[p]
+                .weight(gateWeight[ctx.model.portGate[p]] * ctx.externalWeight(p) * (1 + 1e-4 * (tieWeight(p) - 1)));
+        }
+        return run(ctx, h, "gate weighted");
     }
 
     /** LP over the whole gate structure, raw-quantity objective; seeds the deletion filter. */
@@ -108,63 +144,7 @@ public final class Solver {
                 h.extVars()[p].weight(ctx.importTilt(ctx.model.portGate[p]));
             }
         }
-        final Optimisation.Result result = solve(ctx, h, "externals");
-        if (!isUsable(result)) return rejected(ctx, result);
-        return fromHandles(ctx, h, false);
-    }
-
-    /** Stage 1 exact MILP (certification): proves the gate-count optimum within the node budget. */
-    public static SolveResult gateMILP(final SolveContext ctx, final Double upperBoundCost, final double scale) {
-        return confirmed(ctx, infeasible -> gateMILP(ctx, upperBoundCost, scale, infeasible));
-    }
-
-    private static SolveResult gateMILP(final SolveContext ctx, final Double upperBoundCost, final double scale,
-        final List<Set<Integer>> infeasible) {
-        final Numerics n = ctx.heuristics.numerics();
-        double bigM = n.bigMFactor * scale;
-        for (int growth = 0; growth <= n.maxMGrowths; growth++) {
-            final Handles h = ModelBuilder.over(ctx)
-                .extents(autoLower(ctx))
-                .pools()
-                .flows()
-                .externals()
-                .gates(bigM)
-                .conservation()
-                .drawers()
-                .nodeBudget(n.milpCertNodeBudget)
-                .handles();
-            final Expression ub = h.model()
-                .addExpression("ub_cut");
-            for (int g = 0; g < ctx.model.gates.size(); g++) {
-                final double weight = ctx.gateWeight(g);
-                h.gateVars()[g].weight(weight);
-                if (ub != null) ub.set(h.gateVars()[g], weight);
-            }
-            if (ub != null) ub.upper(upperBoundCost + 0.5);
-            addCoverCuts(h, infeasible);
-            // Epsilon cost on every external so a costless external cannot sit at an arbitrary
-            // vertex (which presses the big-M cap and pollutes the flow-derived support). Sized
-            // after bigM so one external at its cap costs a thousandth of a gate on any scale.
-            final double anchor = 1e-3 / bigM;
-            for (final Variable ext : h.extVars()) {
-                ext.weight(anchor);
-            }
-            final long solveStart = System.currentTimeMillis();
-            final Optimisation.Result result = solve(ctx, h, "stage 1 gate MILP");
-            final boolean withinValve = System.currentTimeMillis() - solveStart < h.model().options.time_abort;
-            if (!isUsable(result)) return rejected(ctx, result);
-            if (pressesCap(h, bigM)) {
-                ctx.profiler.bigMGrew("stage 1 gate MILP", bigM);
-                bigM *= 10;
-                continue;
-            }
-            return fromHandles(
-                ctx,
-                h,
-                withinValve && result.getState()
-                    .isOptimal());
-        }
-        return SolveResult.rejected(ctx.rejection);
+        return run(ctx, h, "externals");
     }
 
     /** Least external quantity over a fixed support: no binaries, so a plain LP. */
@@ -181,81 +161,7 @@ public final class Solver {
         for (int p = 0; p < ctx.model.connectedPorts.size(); p++) {
             h.extVars()[p].weight(ctx.externalWeight(p));
         }
-        final Optimisation.Result result = solve(ctx, h, "stage 2 fixed quantity");
-        if (!isUsable(result)) return rejected(ctx, result);
-        return fromHandles(ctx, h, false);
-    }
-
-    /** Stage 2 MILP: least external quantity under the stage-1 gate-cap cut, free over supports. */
-    public static SolveResult quantityMILP(final SolveContext ctx, final double weightedCap,
-        final List<Set<Integer>> cuts, final double scale) {
-        return confirmed(ctx, infeasible -> quantityMILP(ctx, weightedCap, cuts, infeasible, scale));
-    }
-
-    private static SolveResult quantityMILP(final SolveContext ctx, final double weightedCap,
-        final List<Set<Integer>> cuts, final List<Set<Integer>> infeasible, final double scale) {
-        final Numerics n = ctx.heuristics.numerics();
-        double bigM = n.bigMFactor * scale;
-        for (int growth = 0; growth <= n.maxMGrowths; growth++) {
-            final Handles h = ModelBuilder.over(ctx)
-                .extents(autoLower(ctx))
-                .pools()
-                .flows()
-                .externals()
-                .gates(bigM)
-                .conservation()
-                .drawers()
-                .handles();
-            final Expression cap = h.model()
-                .addExpression("count_cap");
-            for (int g = 0; g < ctx.model.gates.size(); g++) {
-                cap.set(h.gateVars()[g], ctx.gateWeight(g));
-            }
-            cap.upper(weightedCap + 0.5);
-            for (int p = 0; p < ctx.model.connectedPorts.size(); p++) {
-                h.extVars()[p].weight(ctx.externalWeight(p));
-            }
-            addNoGoodCuts(h, cuts);
-            addCoverCuts(h, infeasible);
-            final Optimisation.Result result = solve(ctx, h, "stage 2 quantity MILP");
-            if (!isUsable(result)) return rejected(ctx, result);
-            if (pressesCap(h, bigM)) {
-                ctx.profiler.bigMGrew("stage 2 quantity MILP", bigM);
-                bigM *= 10;
-                continue;
-            }
-            return fromHandles(ctx, h, false);
-        }
-        return SolveResult.rejected(ctx.rejection);
-    }
-
-    /**
-     * Gate binaries are integral only to tolerance, so a big-M link can leak enough flow to certify
-     * a support that is infeasible on its own. Re-solve each answer as an LP over its support; cut
-     * and retry every one the LP refutes.
-     */
-    private static SolveResult confirmed(final SolveContext ctx, final Function<List<Set<Integer>>, SolveResult> milp) {
-        final List<Set<Integer>> infeasible = new ArrayList<>();
-        while (true) {
-            final SolveResult found = milp.apply(infeasible);
-            if (found.isRejected()) return found;
-            final StageOutcome point = found.point();
-            final SolveResult lp = fixedQuantity(ctx, point.support);
-            if (!lp.isRejected()) {
-                final StageOutcome confirmedPoint = lp.point();
-                return SolveResult.solved(
-                    StageOutcome.of(
-                        ctx,
-                        confirmedPoint.extents,
-                        confirmedPoint.flows,
-                        confirmedPoint.externals,
-                        point.provenOptimal));
-            }
-            if (infeasible.size() >= ctx.heuristics.numerics().maxRefutedSupports || ctx.budget.expired()) {
-                return lp;
-            }
-            infeasible.add(point.support);
-        }
+        return run(ctx, h, "stage 2 fixed quantity");
     }
 
     /** The one canonical point among a stage-3 optimum: redistributes within it, deterministically. */
@@ -276,7 +182,7 @@ public final class Solver {
         for (int p = 0; p < ports; p++) {
             if (qty != null && open.contains(ctx.model.portGate[p])) {
                 qty.set(h.extVars()[p], ctx.externalWeight(p));
-                h.extVars()[p].weight(rank(p, ports) * ctx.externalWeight(p));
+                h.extVars()[p].weight(tieWeight(p) * ctx.externalWeight(p));
             } else {
                 h.extVars()[p].upper(0);
             }
@@ -288,18 +194,24 @@ public final class Solver {
             .addExpression("flow_cap");
         for (int e = 0; e < h.flowVars().length; e++) {
             flowCap.set(h.flowVars()[e], 1.0);
-            h.flowVars()[e].weight(rank(e, h.flowVars().length));
+            h.flowVars()[e].weight(tieWeight(e));
         }
         flowCap.upper(s3.internalFlow * (1 + qtyEps) + qtyEps * Math.max(1.0, s3.internalFlow));
-        final Optimisation.Result result = solve(ctx, h, "canonicalise");
-        if (!isUsable(result)) return s3; // the uncanonical point is still a correct answer
-        final StageOutcome canonical = fromHandles(ctx, h, false).point();
-        return canonical == null ? s3 : canonical;
+        final SolveResult canonical = run(ctx, h, "canonicalise");
+        return canonical.isRejected() ? s3 : canonical.point(); // the uncanonical point is still a correct answer
     }
 
-    /** Position {@code i} of {@code n} mapped into [1, 2]: a tie-break, not a cost. */
-    public static double rank(final int i, final int n) {
-        return n <= 1 ? 1.0 : 1.0 + (double) i / (n - 1);
+    /**
+     * Position {@code i}'s weight in the canonical tie-break, in [1, 2): a fixed scramble of the index (SplitMix64), so
+     * no two different sets of edges or ports weigh the same. Evenly spaced weights tie whenever two index sums match,
+     * and then the solver's path picks the point.
+     */
+    public static double tieWeight(final int i) {
+        long z = (i + 1) * 0x9E3779B97F4A7C15L;
+        z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+        z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+        z ^= z >>> 31;
+        return 1.0 + (z >>> 11) * 0x1.0p-53;
     }
 
     public static void closeGatesOutside(final SolveContext ctx, final Handles h, final Set<Integer> open) {
@@ -308,55 +220,15 @@ public final class Solver {
         }
     }
 
-    public static void addNoGoodCuts(final Handles h, final List<Set<Integer>> cuts) {
-        int i = 0;
-        for (final Set<Integer> cut : cuts) {
-            final Expression e = h.model()
-                .addExpression("no_good_" + i++);
-            for (int g = 0; g < h.gateVars().length; g++) {
-                e.set(h.gateVars()[g], cut.contains(g) ? -1.0 : 1.0);
-            }
-            e.lower(1.0 - cut.size());
-        }
-    }
-
-    /**
-     * A support the LP has shown infeasible, and so every subset of it: some gate outside it must
-     * open.
-     */
-    private static void addCoverCuts(final Handles h, final List<Set<Integer>> infeasible) {
-        int i = 0;
-        for (final Set<Integer> support : infeasible) {
-            final Expression e = h.model()
-                .addExpression("cover_" + i++);
-            for (int g = 0; g < h.gateVars().length; g++) {
-                if (!support.contains(g)) e.set(h.gateVars()[g], 1.0);
-            }
-            e.lower(1.0);
-        }
-    }
-
-    private static boolean pressesCap(final Handles h, final double bigM) {
-        for (final Variable ext : h.extVars()) {
-            final Number v = ext.getValue();
-            if (v != null && v.doubleValue() > 0.9 * bigM) return true;
-        }
-        return false;
-    }
-
-    private static boolean isUsable(final Optimisation.Result result) {
-        return result.getState()
-            .isFeasible();
-    }
-
     /**
      * Records what the solver actually said and yields the rejection every caller reads as
      * "nothing here". The state does not separate a model with no solution from a search that gave
-     * up looking - ojAlgo returns INFEASIBLE for both - so whether the budget was spent goes into
-     * the reason too.
+     * up looking - ojAlgo returns INFEASIBLE for both - so a model that ran into its safety limit
+     * ({@link Numerics#modelSafetyMillis}) says so in the reason too.
      */
-    private static SolveResult rejected(final SolveContext ctx, final Optimisation.Result result) {
-        final Note note = ctx.budget.expired() ? new Note(SolverMessage.SOLVER_BUDGET, result.getState())
+    private static SolveResult rejected(final SolveContext ctx, final Optimisation.Result result,
+        final boolean outOfTime) {
+        final Note note = outOfTime ? new Note(SolverMessage.SOLVER_BUDGET, result.getState())
             : new Note(SolverMessage.SOLVER_UNSATISFIABLE, result.getState());
         ctx.profiler.pointRejected("solve", note.describe());
         return SolveResult.rejected(note);

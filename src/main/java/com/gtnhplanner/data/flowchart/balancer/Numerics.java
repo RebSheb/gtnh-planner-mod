@@ -13,43 +13,31 @@ public final class Numerics {
     public static final int TICKS_PER_SECOND = 20;
 
     /**
-     * How far above a chart's own scale the big-M gate links sit. Relative because the model is
-     * homogeneous: one fixed M is absurd on a chart measured in hundredths of an item. Under-estimates
-     * are caught by {@link Solver#pressesCap(Handles, double)} and grown.
+     * How long one model may run before it is stopped as broken: a safety net only, far past what any working model
+     * takes. Nothing else in a solve looks at the clock; its work is counted.
      */
-    public final double bigMFactor = 1e3;
-    public final int maxMGrowths = 3;
-
-    /** Ceiling on the WHOLE solve, scaled by effort. */
-    public final long solveBudgetMillis = 20_000;
-    /** Floor on any one model's time limit, however little of the budget is left. */
-    public final long minModelMillis = 250;
+    public final long modelSafetyMillis = 30_000;
     /**
-     * Budget for the exact stage-1 MILP, counted in branch-and-bound nodes, deliberately NOT scaled
-     * by effort: every corpus certification closes within 109 nodes.
+     * How many questions the gate search ({@link GateSearch}) may ask proving its minimal answer least, scaled by
+     * effort. Counted, so where it stops is the same on every computer; past it, the least answers found stand, or the
+     * minimal one does, not proven least.
      */
-    public final int milpCertNodeBudget = 512;
+    public final int maxGateProofQuestions = 1024;
+    /** How many steps the gate search's hitting-set search may take over its cores before it gives up. */
+    public final int maxHittingSetNodes = 200_000;
     /** Relative tolerance for "two solves found the SAME optimum". */
     public final double tieRel = 1e-6;
     /** Relative slack on the stage-2 quantity cap in stage 3. */
     public final double qtyEps = 1e-7;
     /**
-     * Ceiling on the stage-3 tie enumeration, NOT scaled by effort: cutting the ties short lets the
-     * same chart answer differently.
+     * Ceiling on how many least gate sets ({@link GateSearch}) are compared on quantity and flow, NOT scaled by effort:
+     * cutting the ties short lets the same chart answer differently.
      */
     public final int maxTiedSupports = 64;
-    /** How many supports the LP may refute before a gate MILP gives up; see {@link Solver#gateMILP}. */
-    public final int maxRefutedSupports = 16;
-    /** Ceiling on any ONE model's model time, scaled by effort. */
-    public final long stageTimeLimitMillis = 15_000;
 
-    /** Wall budget for the WHOLE alternatives search, scaled by effort. */
-    public final long altBudgetMillis = 750;
-    /** How much of the alternatives budget the broad swap search may spend first. */
-    public final long altSearchSharePercent = 50;
     /** Cap on gate swaps tried in the alternatives search, scaled by effort. */
     public final int maxAltSwaps = 1024;
-    /** How many answers the alternatives list carries before it stops being a list. */
+    /** How many other places the alternatives list offers for one leftover. */
     public final int maxAltOptions = 8;
 
     /** Flows below this count as zero when deriving gate support (relative). */

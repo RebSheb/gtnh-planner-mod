@@ -3,19 +3,19 @@ package com.gtnhplanner.data.flowchart.balancer.alternatives;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.Nullable;
 
-import com.gtnhplanner.data.flowchart.balancer.Budget;
 import com.gtnhplanner.data.flowchart.balancer.ChoiceKey;
 import com.gtnhplanner.data.flowchart.balancer.External;
 import com.gtnhplanner.data.flowchart.balancer.ModelData;
 import com.gtnhplanner.data.flowchart.balancer.Note;
 import com.gtnhplanner.data.flowchart.balancer.Numerics;
+import com.gtnhplanner.data.flowchart.balancer.Parallel;
 import com.gtnhplanner.data.flowchart.balancer.PortRef;
 import com.gtnhplanner.data.flowchart.balancer.SolveContext;
 import com.gtnhplanner.data.flowchart.balancer.SolveResult;
@@ -55,6 +55,15 @@ public final class Enumerator {
      * As {@link #enumerate(SolveContext)}, also keeping each answer's whole point in {@code points}, by its key (the
      * committed point under the default's key), so a split between answers can be made by mixing them
      * ({@link com.gtnhplanner.data.flowchart.balancer.Spares}).
+     *
+     * <p>
+     * Every leftover the answer shows (an open gate) that not every answer has ({@link SolveContext#neededGates}) is a
+     * decision: each closed gate is tried in its place, the canonical point {@link #evaluateSupport} finds, side by
+     * side
+     * ({@link Parallel}). A swap that balances with the same gate count is an option for that decision, ranked by why
+     * it
+     * is not the default; each decision lists its best {@link Numerics#maxAltOptions}. The swaps are counted
+     * ({@link Numerics#maxAltSwaps}), never timed, so the list is the same on every computer.
      */
     public static Alternatives enumerate(final SolveContext ctx, @Nullable final Map<ChoiceKey, StageOutcome> points) {
         final Set<Integer> incumbent = ctx.support();
@@ -84,112 +93,73 @@ public final class Enumerator {
         }
         final double tol = ctx.heuristics.numerics().tieRel
             * Math.max(Math.max(flowStar, qtyStar), ctx.solutionScale(ctx.extents(), ctx.flows(), ctx.externals()));
-
         final Numerics n = ctx.heuristics.numerics();
-        // One gate swapped at a time. Equal gate count by construction, so stage 1's optimum holds
-        // and no MILP is needed; either direction, because the whole point is to surface the
-        // source/sink tilt rather than let it delete a candidate before anyone sees it.
-        final long altBudget = n.effort(n.altBudgetMillis);
-        final Budget whole = Budget.of(altBudget);
-        ctx.budget = Budget.of(altBudget * n.altSearchSharePercent / 100);
-        final Set<ChoiceKey> seen = new HashSet<>();
-        seen.add(chosen);
-        // Two passes: the neighbourhood is large and most of it is not feasible. A stage-2 LP alone
-        // answers "does this support work at all, and how much does it lean on the outside" for one
-        // solve; only the shortlist that survives pays for stage 3 and canonicalization.
-        final List<Swap> shortlist = new ArrayList<>();
-        int evaluated = 0;
-        int skipped = 0;
+
+        // What the answer opens, gates carrying too little to show included: a swap keeps them open.
+        final Set<Integer> open = ctx.openGates.isEmpty() ? incumbent : ctx.openGates;
+        final List<int[]> swaps = new ArrayList<>();
         for (final int out : sorted(incumbent)) {
+            if (ctx.neededGates.contains(out)) continue;
             for (int in = 0; in < ctx.model.gates.size(); in++) {
-                if (incumbent.contains(in)) continue;
-                if (evaluated >= n.effort(n.maxAltSwaps) || ctx.budget.expired()) {
-                    skipped++;
-                    continue;
-                }
-                evaluated++;
-                final Set<Integer> trial = new HashSet<>(incumbent);
-                trial.remove(out);
-                trial.add(in);
-                final SolveResult s2Result = Solver.fixedQuantity(ctx, trial);
-                if (s2Result.isRejected() || s2Result.point().support.size() != incumbent.size()) continue;
-                final StageOutcome s2 = s2Result.point();
-                if (!seen.add(ctx.keyOf(s2.support))) continue;
-                shortlist.add(new Swap(out, in, s2));
+                if (!open.contains(in)) swaps.add(new int[] { out, in });
             }
         }
+        final int cap = (int) Math.min(swaps.size(), n.effort(n.maxAltSwaps));
+        final List<int[]> tried = swaps.subList(0, cap);
+        final List<StageOutcome> answers = Parallel.map(ctx, tried, swap -> {
+            final Set<Integer> trial = new HashSet<>(open);
+            trial.remove(swap[0]);
+            trial.add(swap[1]);
+            return evaluateSupport(ctx, trial);
+        });
 
-        // Whatever the search did not use now belongs to the evaluation.
-        ctx.budget = whole;
-
-        // Cheapest on the outside world first, so a budget that runs out takes the least
-        // interesting answers with it rather than an arbitrary slice.
-        shortlist.sort(
-            Comparator.<Swap, Double>comparing(c -> c.witness().externalQuantity)
-                .thenComparing(c -> ctx.keyOf(c.witness().support)));
-
-        // Round-robin over the decisions rather than straight down the sorted list, so a chart
-        // asking two questions where one has six cheap answers does not spend the whole option
-        // budget on that one and leave the other with just its heading.
-        final List<Swap> fair = interleaveByDecision(shortlist);
-        for (final Swap candidate : fair) {
-            if (options.size() >= n.maxAltOptions || ctx.budget.expired()) {
-                skipped++;
-                continue;
-            }
-            final StageOutcome witness = candidate.witness();
-            final Set<Integer> open = ctx.carryingGates(witness.externals, witness.support);
-            final SolveResult s3Result = Solver.flowMinimal(ctx, open, witness.externalQuantity);
-            if (s3Result.isRejected()) continue;
-            final StageOutcome alt = Solver.canonicalize(ctx, open, s3Result.point());
-            if (alt.support.size() != incumbent.size()) continue;
-            if (points != null) points.put(ctx.keyOf(alt.support), alt);
-            options.add(
-                asAlternative(
-                    ctx,
-                    alt.externals,
-                    alt.support,
-                    candidate.out(),
-                    candidate.in(),
-                    Preference.rankOf(ctx, alt, incumbentCost, tol)));
+        final Map<Integer, List<Alternative>> byDecision = new TreeMap<>();
+        final Set<ChoiceKey> seen = new HashSet<>();
+        seen.add(chosen);
+        for (int i = 0; i < tried.size(); i++) {
+            final StageOutcome alt = answers.get(i);
+            final int out = tried.get(i)[0], in = tried.get(i)[1];
+            if (alt == null || alt.support.size() != incumbent.size()
+                || !alt.support.contains(in)
+                || alt.support.contains(out)) continue;
+            final ChoiceKey key = ctx.keyOf(alt.support);
+            if (!seen.add(key)) continue;
+            if (points != null) points.put(key, alt);
+            byDecision.computeIfAbsent(out, k -> new ArrayList<>())
+                .add(
+                    asAlternative(
+                        ctx,
+                        alt.externals,
+                        alt.support,
+                        out,
+                        in,
+                        Preference.rankOf(ctx, alt, incumbentCost, tol)));
         }
         // Default first, then the ones that cost nothing to prefer, then by how much they give up.
         // Ties inside a rank go to the lower key, so the same chart always lists in the same order.
         final List<Rank> displayOrder = Preference.displayOrder();
+        final Comparator<Alternative> best = Comparator
+            .comparingInt((final Alternative option) -> displayOrder.indexOf(option.rank()))
+            .thenComparing(Alternative::key);
+        boolean complete = cap == swaps.size();
+        int shown = 0, found = 0;
+        for (final List<Alternative> decision : byDecision.values()) {
+            decision.sort(best);
+            found += decision.size();
+            if (decision.size() > n.maxAltOptions) {
+                decision.subList(n.maxAltOptions, decision.size())
+                    .clear();
+                complete = false;
+            }
+            shown += decision.size();
+            options.addAll(decision);
+        }
         options.sort(
             Comparator.comparing((final Alternative option) -> option.replaces(), PortRef.ORDER)
-                .thenComparingInt(option -> displayOrder.indexOf(option.rank()))
-                .thenComparing(Alternative::key));
-        boolean complete = skipped == 0;
-        if (options.size() > n.maxAltOptions) {
-            notes.add(new Note(SolverMessage.SHOWING_CLOSEST, n.maxAltOptions, options.size()));
-            options.subList(n.maxAltOptions, options.size())
-                .clear();
-            complete = false;
-        }
-        if (skipped > 0) {
-            notes.add(new Note(SolverMessage.STOPPED_EARLY, evaluated, skipped));
-        }
+                .thenComparing(best));
+        if (shown < found) notes.add(new Note(SolverMessage.SHOWING_CLOSEST, shown, found));
+        if (cap < swaps.size()) notes.add(new Note(SolverMessage.STOPPED_EARLY, cap, swaps.size() - cap));
         return new Alternatives(chosen, List.copyOf(options), complete, List.copyOf(notes));
-    }
-
-    /** A candidate support reached by closing one gate and opening another, with its witness. */
-    private record Swap(int out, int in, StageOutcome witness) {}
-
-    /** The same candidates, dealt out one per decision per round, best-first within each. */
-    private static List<Swap> interleaveByDecision(final List<Swap> sorted) {
-        final Map<Integer, List<Swap>> byDecision = new LinkedHashMap<>();
-        for (final Swap swap : sorted) {
-            byDecision.computeIfAbsent(swap.out(), k -> new ArrayList<>())
-                .add(swap);
-        }
-        final List<Swap> out = new ArrayList<>(sorted.size());
-        for (int round = 0; out.size() < sorted.size(); round++) {
-            for (final List<Swap> queue : byDecision.values()) {
-                if (round < queue.size()) out.add(queue.get(round));
-            }
-        }
-        return out;
     }
 
     /**
@@ -265,15 +235,16 @@ public final class Enumerator {
         return found;
     }
 
-    /** The stage-2 -> stage-3 -> canonical point over one fixed gate support, or null. */
+    /**
+     * The canonical point with exactly {@code open}'s gates allowed: least quantity, then least flow, then the
+     * canonical tie-break. Null when they do not balance. A property of the set, however the LPs reach it.
+     */
     public static StageOutcome evaluateSupport(final SolveContext ctx, final Set<Integer> open) {
         final SolveResult s2Result = Solver.fixedQuantity(ctx, open);
         if (s2Result.isRejected()) return null;
-        final StageOutcome s2 = s2Result.point();
-        final Set<Integer> carrying = ctx.carryingGates(s2.externals, s2.support);
-        final SolveResult s3Result = Solver.flowMinimal(ctx, carrying, s2.externalQuantity);
+        final SolveResult s3Result = Solver.flowMinimal(ctx, open, s2Result.point().externalQuantity);
         if (s3Result.isRejected()) return null;
-        return Solver.canonicalize(ctx, carrying, s3Result.point());
+        return Solver.canonicalize(ctx, open, s3Result.point());
     }
 
     /** One answer packaged for the UI, carrying only the flows at the gate it opens. */

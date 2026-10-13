@@ -74,13 +74,29 @@ public class FlowchartLayoutStyle extends LayoutStyleMinecraft {
         // NEI's item zoom draws a big copy of the hovered item left of the GUI, which in the planner is on the board.
         // It draws only when the space it measured is wide enough, so tell it there is none.
         try {
-            final java.lang.reflect.Field area = codechicken.nei.ItemZoom.class.getDeclaredField("availableAreaWidth");
-            area.setAccessible(true);
-            area.setInt(LayoutManager.itemZoom, 0);
+            if (zoomArea == null) {
+                zoomArea = codechicken.nei.ItemZoom.class.getDeclaredField("availableAreaWidth");
+                zoomArea.setAccessible(true);
+            }
+            zoomArea.setInt(LayoutManager.itemZoom, 0);
         } catch (final ReflectiveOperationException ignored) {}
 
+        // NEI lays out every frame; the board's width follows its item panel, so it is laid out again only when that
+        // or the screen moved (every frame, it was a whole new layout of every card on the board).
         final ModularScreen screen = ((GuiContainerWrapper) gui).getScreen();
-        screen.getMainPanel()
-            .scheduleResize();
+        final int panelX = LayoutManager.itemPanel.x;
+        if (screen != laidScreen || panelX != laidPanelX || screenW != laidW || screenH != laidH) {
+            laidScreen = screen;
+            laidPanelX = panelX;
+            laidW = screenW;
+            laidH = screenH;
+            screen.getMainPanel()
+                .scheduleResize();
+        }
     }
+
+    private static java.lang.reflect.Field zoomArea;
+    /** What the board was last laid out for. */
+    private static ModularScreen laidScreen;
+    private static int laidPanelX, laidW, laidH;
 }

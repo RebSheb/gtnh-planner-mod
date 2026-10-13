@@ -101,8 +101,47 @@ public record PlanSnapshot(Graph graph, String planName, long graphVersion, List
     /** The card holding a node (a recipe on a shared machine is on its host's card), or null. */
     @Nullable
     public Card cardOf(final UUID nodeId) {
-        for (final Card c : cards) if (c.nodeIds()
-            .contains(nodeId)) return c;
-        return null;
+        // Asked for every placed machine every tick: the snapshot's cards by node, made once per snapshot.
+        if (indexed != this) {
+            final java.util.Map<UUID, Card> by = new java.util.HashMap<>();
+            for (final Card c : cards) for (final UUID id : c.nodeIds()) by.putIfAbsent(id, c);
+            byNode = by;
+            indexed = this;
+        }
+        return byNode.get(nodeId);
     }
+
+    /** The snapshot {@link #byNode} was made for. */
+    private static PlanSnapshot indexed;
+    private static java.util.Map<UUID, Card> byNode;
+
+    /**
+     * Where in {@link #wires} the wires leaving a node are, in order; empty for none. Made once per snapshot: the world
+     * asks for the wires among the machines near the player every frame.
+     */
+    public int[] wiresFrom(final UUID nodeId) {
+        if (wiresIndexed != this) {
+            final java.util.Map<UUID, List<Integer>> by = new java.util.HashMap<>();
+            for (int i = 0; i < wires.size(); i++) {
+                final UUID from = wires.get(i)
+                    .from();
+                if (from != null) by.computeIfAbsent(from, k -> new java.util.ArrayList<>())
+                    .add(i);
+            }
+            final java.util.Map<UUID, int[]> made = new java.util.HashMap<>();
+            for (final java.util.Map.Entry<UUID, List<Integer>> e : by.entrySet()) made.put(
+                e.getKey(),
+                e.getValue()
+                    .stream()
+                    .mapToInt(Integer::intValue)
+                    .toArray());
+            wiresByNode = made;
+            wiresIndexed = this;
+        }
+        return wiresByNode.getOrDefault(nodeId, NO_WIRES);
+    }
+
+    private static final int[] NO_WIRES = {};
+    private static PlanSnapshot wiresIndexed;
+    private static java.util.Map<UUID, int[]> wiresByNode;
 }

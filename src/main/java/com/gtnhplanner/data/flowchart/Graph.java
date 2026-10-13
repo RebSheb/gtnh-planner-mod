@@ -1,7 +1,10 @@
 package com.gtnhplanner.data.flowchart;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -389,6 +392,52 @@ public class Graph {
                     && e.targetInputIndex == edge.targetInputIndex);
         edges.put(edge.id, edge);
         bumpVersion();
+    }
+
+    /**
+     * Adds wires read from a save, in order, as {@link #addEdge} would one at a time (a pair of ports carries one wire:
+     * a later one on the same pair replaces it), without looking through every wire for each: a plan of thousands of
+     * wires took most of a minute to load.
+     */
+    public void addEdgesLoaded(final List<Edge> loaded) {
+        final Map<String, UUID> byPorts = new HashMap<>();
+        for (final Edge e : edges.values()) byPorts.put(ports(e), e.id);
+        for (final Edge e : loaded) {
+            final UUID was = byPorts.put(ports(e), e.id);
+            if (was != null) edges.remove(was);
+            edges.put(e.id, e);
+        }
+        bumpVersion();
+    }
+
+    private static String ports(final Edge e) {
+        return e.sourceNodeId + ">" + e.sourceOutputIndex + ">" + e.targetNodeId + ">" + e.targetInputIndex;
+    }
+
+    /**
+     * Adds drawers read from a save, in order, as {@link #addDrawer} would one at a time (a port belongs to at most one
+     * drawer each way: a later drawer holding it takes it from an earlier one), without looking through every drawer
+     * for each port.
+     */
+    public void addDrawersLoaded(final List<Drawer> loaded) {
+        final Map<String, Drawer> holder = new HashMap<>();
+        for (final Drawer d : drawers.values()) for (final Drawer.Link l : d.getLinks()) holder.put(held(d, l), d);
+        for (final Drawer d : loaded) {
+            drawers.put(d.getId(), d);
+            for (final Drawer.Link l : new ArrayList<>(d.getLinks())) {
+                final Drawer other = holder.put(held(d, l), d);
+                if (other != null && other != d) other.removeLink(l);
+            }
+        }
+        bumpVersion();
+    }
+
+    private static String held(final Drawer d, final Drawer.Link l) {
+        return d.getKind()
+            .linksInputs() + ">"
+            + l.nodeId()
+            + ">"
+            + l.portIndex();
     }
 
     public void removeEdge(final UUID id) {

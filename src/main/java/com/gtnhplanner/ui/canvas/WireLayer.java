@@ -124,6 +124,11 @@ final class WireLayer {
      */
     List<Wire> wires(final Map<UUID, RecipeCard> cards, final Map<UUID, DrawerCard> drawers, final boolean moving) {
         final boolean arrived = collect();
+        // Hashing where everything is costs as much as the plan is big: done only when something it covers may have
+        // moved (an edit, a solve, a card's new size, the board placing things, a drag).
+        final long quick = quickKey(cards, drawers);
+        if (!arrived && !moving && quick == builtQuick) return wires;
+        builtQuick = moving ? Long.MIN_VALUE : quick;
         final long geometry = geometry(cards);
         // What a route is for: the geometry, and whether a drag is under way (its quick route is redone thoroughly
         // once it lands, even if nothing moved since the last step).
@@ -165,6 +170,32 @@ final class WireLayer {
         builtGeometry = routeKey;
         builtSignature = signature;
         return wires;
+    }
+
+    /** What {@link #wires} last hashed the geometry for. */
+    private long builtQuick = Long.MIN_VALUE;
+    /** Moves whenever the board puts cards or drawers somewhere, or a card's size changes, outside an edit. */
+    private long moves;
+
+    /** Something moved or changed size outside an edit: the wires look again. */
+    void moved() {
+        moves++;
+    }
+
+    private long quickKey(final Map<UUID, RecipeCard> cards, final Map<UUID, DrawerCard> drawers) {
+        long k = session.graph()
+            .version();
+        k = k * 31 + System.identityHashCode(session.graph());
+        k = k * 31 + System.identityHashCode(session.models());
+        k = k * 31 + System.identityHashCode(session.drawerModels());
+        k = k * 31 + System.identityHashCode(session.result());
+        k = k * 31 + cards.size();
+        k = k * 31 + drawers.size();
+        k = k * 31 + moves;
+        k = k * 31 + System.identityHashCode(phantom);
+        k = k * 31 + System.identityHashCode(ghostEdge);
+        k = k * 31 + System.identityHashCode(ghostLink);
+        return k;
     }
 
     /** A route expected back this soon is waited for on the spot; longer ones are picked up on a later frame. */
@@ -513,13 +544,47 @@ final class WireLayer {
 
     // region Drawing
 
+    /**
+     * Screen pixels to a board unit as the wires are drawn now. Far out a wire would be thinner than a pixel and would
+     * flicker as the board moves: it keeps {@link #LEAST_PX} of width, its dots their size and spacing, and its shadow
+     * and arrows, a smear at that size, go.
+     */
+    private float pixels = Float.MAX_VALUE;
+    private static final float LEAST_PX = 1.5f;
+
+    /** A width on the board, made no thinner on the screen than {@link #LEAST_PX}. */
+    private float atLeast(final float width) {
+        return Math.max(width, LEAST_PX / pixels);
+    }
+
+    /** A wire's casing, at least a pixel wider than its core. */
+    private float casing(final Wire w) {
+        return Math.max(w.width() + Math.max(2, 0.22f * w.width()), atLeast(w.width()) + 1 / pixels);
+    }
+
+    /** Whether something this long on the board is long enough on the screen to be worth drawing. */
+    private boolean shows(final float length) {
+        return length * pixels >= 4;
+    }
+
+    /** Draws every wire at {@code pixels} screen pixels to a board unit (see {@link #pixels}). */
+    void draw(final List<Wire> wires, final com.gtnhplanner.ui.HoverScope lit, final float pixels) {
+        this.pixels = pixels;
+        draw(wires, lit);
+    }
+
     /** Draws every wire; those {@code lit} (what the mouse is on, or wired to it) get a faint highlight halo first. */
     void draw(final List<Wire> wires, final com.gtnhplanner.ui.HoverScope lit) {
         // Thickest first, so thinner wires lie on top and do the hopping, as in Factory Flow: a thin line survives
         // being drawn over a fat pipe, and a small bump on it reads at once where a fat pipe rearing up is a blob.
         // The sort is stable, so equal widths keep the route order.
-        final List<Wire> order = new ArrayList<>(wires);
-        order.sort((a, b) -> Float.compare(b.width(), a.width()));
+        if (wires != orderFor) {
+            final List<Wire> sorted = new ArrayList<>(wires);
+            sorted.sort((a, b) -> Float.compare(b.width(), a.width()));
+            order = sorted;
+            orderFor = wires;
+        }
+        final List<Wire> order = this.order;
         final Map<Wire, WireHops.Hopped> hopped = hops(wires, order);
         Hyb.beginBatch();
         if (!lit.isEmpty()) {
@@ -527,14 +592,17 @@ final class WireLayer {
             final int edge = 0xD8000000 | Hyb.LIT & 0xFFFFFF, glow = 0x2C000000 | Hyb.LIT & 0xFFFFFF;
             for (final Wire w : wires) {
                 if (!lit.wire(w.edge(), w.drawer(), w.link(), w.resource())) continue;
-                final float casing = w.width() + Math.max(2, 0.22f * w.width());
+                final float casing = casing(w);
                 drawHopped(hopped.get(w), casing + 7, glow, 0, 0);
                 drawHopped(hopped.get(w), casing + 3, edge, 0, 0);
             }
         }
         Hyb.endBatch();
         // The rest only changes with the wires: recorded once into a display list and replayed every frame.
-        if (wires != listFor || listId == 0) {
+        // Near enough, wires draw at their own widths whatever the zoom; far out, each zoom draws them its own way.
+        final float drawnAt = pixels >= 2 ? -1 : pixels;
+        if (wires != listFor || listId == 0 || drawnAt != listPixels) {
+            listPixels = drawnAt;
             if (listId == 0) listId = org.lwjgl.opengl.GL11.glGenLists(1);
             org.lwjgl.opengl.GL11.glNewList(listId, org.lwjgl.opengl.GL11.GL_COMPILE);
             Hyb.beginBatch();
@@ -547,25 +615,29 @@ final class WireLayer {
         org.lwjgl.opengl.GL11.glCallList(listId);
     }
 
+    /** The wires thickest first, and the wires they were sorted for. */
+    private List<Wire> order = List.of(), orderFor;
+
     /** The display list of the wires' shadows, casings, cores and arrows, and the wires it was made for. */
     private int listId;
     private List<Wire> listFor;
+    private float listPixels = -1;
 
     private void drawStill(final List<Wire> wires, final List<Wire> order, final Map<Wire, WireHops.Hopped> hopped) {
         // The shadow the wire layer casts (Factory Flow: 4 right, 5 down, soft, 35%), under every wire.
-        for (final Wire w : wires) {
+        if (shows(5)) for (final Wire w : wires) {
             if (w.perSecond() <= 0) continue;
-            drawHopped(hopped.get(w), w.width() + Math.max(2, 0.22f * w.width()) + 2, 0x3C000000, 4, 5);
+            drawHopped(hopped.get(w), casing(w) + 2, 0x3C000000, 4, 5);
         }
         for (final Wire w : order) {
             if (w.perSecond() <= 0) {
-                dotted(w.path(), w.color(), w.width());
+                dotted(w.path(), w.color(), w.width(), pixels);
                 continue;
             }
             final WireHops.Hopped h = hopped.get(w);
-            drawHopped(h, w.width() + Math.max(2, 0.22f * w.width()), CASING, 0, 0);
-            drawHopped(h, w.width(), w.color(), 0, 0);
-            arrows(w.path(), w.color(), w.width(), h.spans());
+            drawHopped(h, casing(w), CASING, 0, 0);
+            drawHopped(h, atLeast(w.width()), w.color(), 0, 0);
+            if (shows(8)) arrows(w.path(), w.color(), w.width(), h.spans());
         }
     }
 
@@ -581,17 +653,36 @@ final class WireLayer {
     private Map<Wire, WireHops.Hopped> hops(final List<Wire> wires, final List<Wire> order) {
         if (wires == hopsFor && hopsMade != null) return hopsMade;
         final Map<Wire, WireHops.Hopped> out = new java.util.IdentityHashMap<>();
+        // Only a run that comes near a wire can cross it: the rest are never tried. In the order they would have been.
+        final SegmentGrid grid = new SegmentGrid(order, w -> 2);
         for (int k = 0; k < order.size(); k++) {
             final Wire w = order.get(k);
             final List<WireHops.Crossed> crossed = new ArrayList<>();
+            final int before = k;
             if (w.perSecond() > 0) {
-                for (int j = 0; j < k; j++) {
-                    final Wire o = order.get(j);
-                    final List<int[]> q = o.path();
-                    for (int i = 1; i < q.size(); i++) {
-                        final int[] c = q.get(i - 1), d = q.get(i);
-                        crossed.add(new WireHops.Crossed(c[0], c[1], d[0], d[1], o.width()));
-                    }
+                final java.util.Set<Long> near = new java.util.HashSet<>();
+                final List<int[]> path = w.path();
+                for (int i = 1; i < path.size(); i++) {
+                    final int[] a = path.get(i - 1), b = path.get(i);
+                    near.addAll(
+                        grid.near(
+                            Math.min(a[0], b[0]) - 2,
+                            Math.min(a[1], b[1]) - 2,
+                            Math.max(a[0], b[0]) + 2,
+                            Math.max(a[1], b[1]) + 2));
+                }
+                final long[] runs = near.stream()
+                    .mapToLong(Long::longValue)
+                    .filter(r -> SegmentGrid.wire(r) < before)
+                    .sorted()
+                    .toArray();
+                for (final long r : runs) {
+                    final Wire o = order.get(SegmentGrid.wire(r));
+                    final int[] c = o.path()
+                        .get(SegmentGrid.run(r) - 1),
+                        d = o.path()
+                            .get(SegmentGrid.run(r));
+                    crossed.add(new WireHops.Crossed(c[0], c[1], d[0], d[1], o.width()));
                 }
             }
             out.put(w, WireHops.build(w.path(), crossed, w.width()));
@@ -647,7 +738,7 @@ final class WireLayer {
     static void drawWire(final List<int[]> path, final int color, final float width, final boolean flowing) {
         if (path.size() < 2) return;
         if (!flowing) {
-            dotted(path, color, width);
+            dotted(path, color, width, Float.MAX_VALUE);
             return;
         }
         final float casing = width + Math.max(2, 0.22f * width);
@@ -660,9 +751,13 @@ final class WireLayer {
     private static final int ARROW_EVERY = 320;
 
     /** Dots along the run, for a wire nothing flows through yet. */
-    private static void dotted(final List<int[]> path, final int color, final float width) {
-        final float size = Math.max(2, width);
-        final float step = Math.max(8, 2.5f * width);
+    /**
+     * A wire nothing moves along, as dots: no smaller than {@link #LEAST_PX} nor closer than 4 pixels at
+     * {@code pixels}.
+     */
+    private static void dotted(final List<int[]> path, final int color, final float width, final float pixels) {
+        final float size = Math.max(Math.max(2, width), LEAST_PX / pixels);
+        final float step = Math.max(Math.max(8, 2.5f * width), 4 / pixels);
         final float total = length(path);
         for (float d = 0; d <= total; d += step) {
             final float[] p = pointAt(path, d);
@@ -811,18 +906,45 @@ final class WireLayer {
     /** The wire within a few world pixels of a point, topmost first. */
     @Nullable
     Wire hit(final float wx, final float wy) {
-        for (int i = wires.size() - 1; i >= 0; i--) {
+        final List<Wire> wires = this.wires;
+        if (wires == hitFor && wx == hitX && wy == hitY) return hitWire;
+        if (wires != gridFor) {
+            hitGrid = new SegmentGrid(wires, WireLayer::tolerance);
+            gridFor = wires;
+        }
+        // The last wire in the list that passes near the point: the one drawn on top.
+        Wire best = null;
+        int bestAt = -1;
+        for (final long r : hitGrid.at(wx, wy)) {
+            final int i = SegmentGrid.wire(r);
+            if (i <= bestAt) continue;
             final Wire w = wires.get(i);
-            final float tolerance = Math.max(3, w.width() / 2 + 2);
-            final List<int[]> path = w.path();
-            for (int k = 1; k < path.size(); k++) {
-                final int[] a = path.get(k - 1), b = path.get(k);
-                // Distance from the point to the run, diagonal runs included.
-                final float vx = b[0] - a[0], vy = b[1] - a[1], len2 = vx * vx + vy * vy;
-                final float t = len2 == 0 ? 0 : Math.max(0, Math.min(1, ((wx - a[0]) * vx + (wy - a[1]) * vy) / len2));
-                if (Math.hypot(wx - (a[0] + vx * t), wy - (a[1] + vy * t)) <= tolerance) return w;
+            final int[] a = w.path()
+                .get(SegmentGrid.run(r) - 1),
+                b = w.path()
+                    .get(SegmentGrid.run(r));
+            // Distance from the point to the run, diagonal runs included.
+            final float vx = b[0] - a[0], vy = b[1] - a[1], len2 = vx * vx + vy * vy;
+            final float t = len2 == 0 ? 0 : Math.max(0, Math.min(1, ((wx - a[0]) * vx + (wy - a[1]) * vy) / len2));
+            if (Math.hypot(wx - (a[0] + vx * t), wy - (a[1] + vy * t)) <= tolerance(w)) {
+                best = w;
+                bestAt = i;
             }
         }
-        return null;
+        hitFor = wires;
+        hitX = wx;
+        hitY = wy;
+        hitWire = best;
+        return best;
     }
+
+    /** How near a wire a point is still on it. */
+    private static double tolerance(final Wire w) {
+        return Math.max(3, w.width() / 2 + 2);
+    }
+
+    private SegmentGrid hitGrid;
+    private List<Wire> gridFor, hitFor;
+    private float hitX, hitY;
+    private Wire hitWire;
 }

@@ -170,11 +170,25 @@ public final class StructureGhosts {
         if (controller == null || !MultiblockPictures.available()) return null;
         try {
             final int meta = MultiblockRenderer.controllerMeta(controller);
-            return meta < 0 ? null : meta + " " + StructureGhostBuilder.channels(meta, needs, size);
+            // Asked for every placed machine every tick (the look ray) and frame: the channels are worked out once.
+            return meta < 0 ? null
+                : KEYS.computeIfAbsent(
+                    new KeyOf(meta, needs, size),
+                    k -> k.meta() + " " + StructureGhostBuilder.channels(k.meta(), k.needs(), k.size()));
         } catch (final LinkageError e) {
             return null;
         }
     }
+
+    /** What a cache key is made from. */
+    private record KeyOf(int meta, Needs needs, int size) {}
+
+    /** Moves whenever a structure's ghost is made or found impossible: what fills a placed spot may have changed. */
+    public static int generation() {
+        return GHOSTS.size() + NONE.size();
+    }
+
+    private static final Map<KeyOf, String> KEYS = new HashMap<>();
 
     /**
      * Draws a ghost with its controller on the block at (x, y, z), its front turned to {@code facing} (0 south, 1 west,

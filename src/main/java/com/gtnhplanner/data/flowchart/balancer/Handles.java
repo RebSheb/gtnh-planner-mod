@@ -11,7 +11,5 @@ import org.ojalgo.optimisation.Variable;
  * @param extentVars per machine
  * @param flowVars   per drawn edge
  * @param extVars    per connected port
- * @param gateVars   per gate (empty when the model did not create binaries)
  */
-public record Handles(ExpressionsBasedModel model, Variable[] extentVars, Variable[] flowVars, Variable[] extVars,
-    Variable[] gateVars) {}
+public record Handles(ExpressionsBasedModel model, Variable[] extentVars, Variable[] flowVars, Variable[] extVars) {}

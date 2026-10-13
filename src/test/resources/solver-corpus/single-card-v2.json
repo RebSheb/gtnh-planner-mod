@@ -1,0 +1,41 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "24f5a8bf-a88d-468b-8037-6ec0476c1cfc",
+      "name": "Steam Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1540.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Steam",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 640.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [],
+  "pools": [],
+  "drawers": [],
+  "extentPins": {},
+  "spares": {}
+}

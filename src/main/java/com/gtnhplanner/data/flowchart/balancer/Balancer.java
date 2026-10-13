@@ -1,19 +1,27 @@
 package com.gtnhplanner.data.flowchart.balancer;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.gtnhplanner.Config;
 import com.gtnhplanner.GtnhPlanner;
 import com.gtnhplanner.data.flowchart.Graph;
+import com.gtnhplanner.data.flowchart.balancer.alternatives.Alternative;
 import com.gtnhplanner.data.flowchart.balancer.alternatives.Alternatives;
 import com.gtnhplanner.data.flowchart.balancer.alternatives.Enumerator;
+import com.gtnhplanner.data.flowchart.balancer.alternatives.Preference;
+import com.gtnhplanner.data.flowchart.balancer.alternatives.Rank;
 import com.gtnhplanner.data.properties.RecipeProperty;
 
 /**
@@ -44,7 +52,7 @@ public final class Balancer {
 
     /**
      * Runs the mode's chain against the chart and returns the context plus its {@link Settlement}
-     * (a point, or the reason there is none). Each call builds its own budget.
+     * (a point, or the reason there is none).
      */
     public static RunContext run(final BalanceMode mode, final Graph graph) {
         return run(mode, graph, Profiler.disabled());
@@ -116,13 +124,15 @@ public final class Balancer {
 
     /** The shared context each entry point runs its mode's chain under; see {@link #run}. */
     private static SolveContext ctxOf(final SolveInput input, final Profiler profiler) {
+        return ctxOf(input, profiler, NEVER);
+    }
+
+    private static SolveContext ctxOf(final SolveInput input, final Profiler profiler, final BooleanSupplier stop) {
         final BalanceMode mode = input.mode();
-        final long budgetMillis = mode.heuristics()
-            .numerics().solveBudgetMillis;
         return new SolveContext(
             input,
             mode.heuristics(),
-            Budget.of(budgetMillis),
+            stop,
             input.extentPins(),
             mode.pins(),
             mode == BalanceMode.AUTO,
@@ -195,30 +205,234 @@ public final class Balancer {
      * read-out, the solver notes). Any thread.
      */
     public static Answer solveWithAlternatives(final SolveInput input) {
+        return solveWithAlternatives(input, null, NEVER);
+    }
+
+    /** Never stops: a solve nobody can make stale. */
+    private static final BooleanSupplier NEVER = () -> false;
+
+    /**
+     * A solve stopped because a newer edit made its answer worthless ({@link SolveContext#checkStop}): never an answer,
+     * only a way out. Islands it finished stay in the cache.
+     */
+    public static final class Stopped extends RuntimeException {
+
+        public Stopped() {
+            super(null, null, false, false);
+        }
+    }
+
+    /**
+     * As above, each island of the plan ({@link Islands}) solved by itself, side by side, and those {@code cache}
+     * already holds not solved again; the islands' answers are read together as one plan's (one {@link SolutionView},
+     * whose notes look across islands). A plan none of whose islands solved answers as one plan does.
+     */
+    public static Answer solveWithAlternatives(final SolveInput input, @Nullable final Cache cache,
+        final BooleanSupplier stop) {
+        if (cache == null) return solveIslands(input, null, stop);
+        boolean stopped = true;
+        try {
+            final Answer answer = solveIslands(input, cache, stop);
+            stopped = false;
+            return answer;
+        } finally {
+            cache.finish(stopped);
+        }
+    }
+
+    private static Answer solveIslands(final SolveInput input, @Nullable final Cache cache,
+        final BooleanSupplier stop) {
+        final long start = System.currentTimeMillis();
+        final List<SolveInput> islands = Islands.of(input);
+        if (islands.size() == 1) return piece(input, cache, stop).answer();
+        final List<Piece> pieces = Parallel.map(islands, island -> piece(island, cache, stop));
+        boolean anySolved = false;
+        for (final Piece p : pieces) anySolved |= p.answer() instanceof Answer.Solved;
+        if (!anySolved) return piece(input, null, stop).answer();
+
+        final SolveContext whole = ctxOf(input, Profiler.disabled());
+        final ModelData model = whole.model;
+        final double[] extents = new double[model.machines.size()];
+        final double[] flows = new double[model.edges.size()];
+        final double[] externals = new double[model.connectedPorts.size()];
+        final Map<UUID, Integer> edgeIndex = new HashMap<>();
+        for (int e = 0; e < model.edges.size(); e++) edgeIndex.put(
+            model.edges.get(e)
+                .id(),
+            e);
+        final Set<Integer> support = new HashSet<>();
+        final List<Alternative> options = new ArrayList<>();
+        final List<Note> choiceNotes = new ArrayList<>();
+        final List<Spares.Leftover> spares = new ArrayList<>();
+        boolean complete = true;
+        for (final Piece p : pieces) {
+            final SolveContext c = p.ctx();
+            if (p.answer() instanceof final Answer.Failed failed) {
+                // An island with nothing to size is idle, not broken; any other stands unsolved, and says why.
+                if (failed.failure() != null && failed.failure()
+                    .message() != SolverMessage.NO_PIN) {
+                    whole.stageNotes.add(failed.failure());
+                    whole.stageNotes.addAll(
+                        failed.notes()
+                            .subList(Math.min(c.constructionNotes, failed.notes().size()), failed.notes().size()));
+                }
+                continue;
+            }
+            final Answer.Solved solved = (Answer.Solved) p.answer();
+            for (int m = 0; m < c.model.machines.size(); m++) {
+                extents[model.machineIndex.get(c.model.machines.get(m).spec.id())] = c.extents()[m];
+            }
+            for (int e = 0; e < c.model.edges.size(); e++) {
+                flows[edgeIndex.get(
+                    c.model.edges.get(e)
+                        .id())] = c.flows()[e];
+            }
+            for (int q = 0; q < c.model.connectedPorts.size(); q++) {
+                externals[portOf(whole, c.refOf(q))] = c.externals()[q];
+            }
+            for (final int g : c.support()) {
+                support.add(
+                    model.portGate[portOf(
+                        whole,
+                        c.refOf(
+                            c.model.gates.get(g)
+                                .ports()
+                                .get(0)))]);
+            }
+            whole.floorsUsed |= c.floorsUsed;
+            whole.stageNotes.addAll(c.notes.subList(c.constructionNotes, c.notes.size()));
+            whole.stageNotes.addAll(c.stageNotes);
+            whole.unmetDrawers.addAll(c.unmetDrawers);
+            whole.shortfalls.addAll(c.shortfalls);
+            options.addAll(
+                solved.alternatives()
+                    .options());
+            choiceNotes.addAll(
+                solved.alternatives()
+                    .notes());
+            complete &= solved.alternatives()
+                .complete();
+            spares.addAll(
+                solved.solution()
+                    .spares());
+        }
+        whole.commit(StageOutcome.of(whole, extents, flows, externals, support, false));
+        // Each option keeps its island's key: a stored choice applies to the islands its anchors sit on (Islands).
+        final List<Alternative> planOptions = new ArrayList<>(options);
+        final List<Rank> displayOrder = Preference.displayOrder();
+        planOptions.sort(
+            Comparator.comparing((final Alternative option) -> option.replaces(), PortRef.ORDER)
+                .thenComparingInt(option -> displayOrder.indexOf(option.rank()))
+                .thenComparing(Alternative::key));
+        final SolutionView view = SolutionView.of(whole, System.currentTimeMillis() - start);
+        // In the plan's order of decisions, as one plan's leftovers come.
+        spares.sort(Comparator.comparing(Balancer::decisionOf, PortRef.ORDER));
+        view.spares(List.copyOf(spares));
+        return new Answer.Solved(
+            view,
+            new Alternatives(whole.keyOf(support), List.copyOf(planOptions), complete, List.copyOf(choiceNotes)));
+    }
+
+    /** The place the solver itself put a leftover: the decision it is listed under. */
+    private static PortRef decisionOf(final Spares.Leftover leftover) {
+        for (final Spares.Bearer b : leftover.bearers()) if (b.solverPick()) return b.anchor();
+        return leftover.bearers()
+            .get(0)
+            .anchor();
+    }
+
+    /** The plan's connected port for {@code ref}. */
+    private static int portOf(final SolveContext ctx, final PortRef ref) {
+        return ctx.model.portLookup
+            .get(ModelData.portKey(ctx.model.machineIndex.get(ref.nodeId()), ref.portIndex(), ref.input()));
+    }
+
+    /** An island's answer, from {@code cache} when it holds the island, else solved and kept there. */
+    private static Piece piece(final SolveInput island, @Nullable final Cache cache, final BooleanSupplier stop) {
+        if (cache == null) return solvePiece(island, stop);
+        final Piece kept = cache.get(island);
+        if (kept != null) return kept;
+        final Piece solved = solvePiece(island, stop);
+        cache.put(island, solved);
+        return solved;
+    }
+
+    /** One island solved, with the context that solved it (whose point is the answer's, when there is one). */
+    record Piece(SolveContext ctx, Answer answer) {}
+
+    /**
+     * Islands already solved, by their snapshot and the solver's effort: an edit re-solves only the island it touched,
+     * and undo finds the answer it had. It keeps the islands of the last two solves, however many. A
+     * {@link SolveService} keeps one for its plan.
+     */
+    public static final class Cache {
+
+        /** The islands of the last solve. */
+        private Map<Object, Piece> last = new HashMap<>();
+        /** The islands of the solve before it, so undo finds its answer. */
+        private Map<Object, Piece> before = new HashMap<>();
+        /** The islands of the solve under way. */
+        private Map<Object, Piece> current = new HashMap<>();
+
+        @Nullable
+        synchronized Piece get(final SolveInput island) {
+            final Object key = keyOf(island);
+            Piece piece = last.get(key);
+            if (piece == null) piece = before.get(key);
+            if (piece != null) current.put(key, piece);
+            return piece;
+        }
+
+        synchronized void put(final SolveInput island, final Piece piece) {
+            current.put(keyOf(island), piece);
+        }
+
+        /**
+         * A solve is over: its islands become the last, the last the ones before. A stopped solve keeps what it did
+         * finish beside the last, so its next try starts there.
+         */
+        synchronized void finish(final boolean stopped) {
+            if (stopped) {
+                last.putAll(current);
+            } else {
+                before = last;
+                last = current;
+            }
+            current = new HashMap<>();
+        }
+
+        private static Object keyOf(final SolveInput island) {
+            return List.of(island, Config.solverEffort());
+        }
+    }
+
+    private static Piece solvePiece(final SolveInput input, final BooleanSupplier stop) {
         final BalanceMode mode = input.mode();
-        final Supplier<SolveContext> fresh = () -> ctxOf(input, Profiler.disabled());
+        final Supplier<SolveContext> fresh = () -> ctxOf(input, Profiler.disabled(), stop);
         final SolveContext first = fresh.get();
         final long start = System.currentTimeMillis();
         if (first.model.machines.isEmpty()) {
-            return new Answer.Failed(SolverMessage.EMPTY_GRAPH.toNote());
+            return new Piece(first, new Answer.Failed(SolverMessage.EMPTY_GRAPH.toNote()));
         }
         if (mode == BalanceMode.AUTO && !first.anchored) {
             // Idle, not broken. Rules that only cap (at most) or drawers asking for nothing size
             // nothing, which is worth saying when the player has set some.
             final List<Note> notes = new ArrayList<>(first.notes);
             if (first.hasDrawerBounds()) notes.add(SolverMessage.DRAWER_ONLY_UPPER_BOUNDS.toNote());
-            return new Answer.Failed(SolverMessage.NO_PIN.toNote(), notes, DrawerReadout.unsolved(first));
+            return new Piece(first, new Answer.Failed(SolverMessage.NO_PIN.toNote(), notes, DrawerReadout.unsolved(first)));
         }
         final RunContext settled = settle(mode, first, fresh);
         final SolveContext ctx = settled.ctx();
         if (settled.settlement() instanceof final Settlement.Stalled stalled) {
-            return new Answer.Failed(stalled.reason(), ctx.notes, DrawerReadout.unsolved(ctx));
+            return new Piece(ctx, new Answer.Failed(stalled.reason(), ctx.notes, DrawerReadout.unsolved(ctx)));
         }
         if (ctx.point() == null) {
-            return new Answer.Failed(
-                SolverMessage.BALANCE_FAILED.toNote(ctx.rejection),
-                ctx.notes,
-                DrawerReadout.unsolved(ctx));
+            return new Piece(
+                ctx,
+                new Answer.Failed(
+                    SolverMessage.BALANCE_FAILED.toNote(ctx.rejection),
+                    ctx.notes,
+                    DrawerReadout.unsolved(ctx)));
         }
         if (input.choice() != null && mode.supportsAlternatives()) {
             ctx.commit(Enumerator.applyChoice(ctx, input.choice()));
@@ -229,15 +443,19 @@ public final class Balancer {
         if (mode == BalanceMode.AUTO) {
             final String residualError = ctx.validate(ctx.extents(), ctx.flows(), ctx.externals());
             if (residualError != null) {
-                return new Answer.Failed(
-                    SolverMessage.VALIDATION_FAILED.toNote(residualError),
-                    ctx.notes,
-                    DrawerReadout.unsolved(ctx));
+                return new Piece(
+                    ctx,
+                    new Answer.Failed(
+                        SolverMessage.VALIDATION_FAILED.toNote(residualError),
+                        ctx.notes,
+                        DrawerReadout.unsolved(ctx)));
             }
         }
         SolutionView view = SolutionView.of(ctx, System.currentTimeMillis() - start);
         if (!mode.supportsAlternatives()) {
-            return new Answer.Solved(view, new Alternatives(ctx.keyOf(ctx.support()), List.of(), true, List.of()));
+            return new Piece(
+                ctx,
+                new Answer.Solved(view, new Alternatives(ctx.keyOf(ctx.support()), List.of(), true, List.of())));
         }
         final int notesBefore = ctx.notes.size(), stageNotesBefore = ctx.stageNotes.size();
         final Map<ChoiceKey, StageOutcome> points = new HashMap<>();
@@ -251,7 +469,7 @@ public final class Balancer {
             view = SolutionView.of(ctx, System.currentTimeMillis() - start);
         }
         view.spares(spares);
-        return new Answer.Solved(view, alternatives);
+        return new Piece(ctx, new Answer.Solved(view, alternatives));
     }
 
     private static void trim(final List<Note> notes, final int size) {
@@ -307,13 +525,22 @@ public final class Balancer {
      */
     @Nonnull
     public static BalanceResult solve(final SolveInput input) {
+        return solve(input, null, NEVER);
+    }
+
+    /**
+     * {@link #solve(SolveInput)}, with the islands {@code cache} holds not solved again, stopped ({@link Stopped}) as
+     * soon as {@code stop} says a newer edit made the answer worthless.
+     */
+    @Nonnull
+    public static BalanceResult solve(final SolveInput input, @Nullable final Cache cache, final BooleanSupplier stop) {
         final BalanceMode mode = input.mode();
         if (mode == BalanceMode.NONE) {
             return buildResultFractional(input, configuredCounts(input), List.of(), null, null, DrawerReadout.NONE);
         }
         // One pass produces both the chart and the answers it could have had: the panel shows the
         // alternatives unconditionally now, and re-deriving them would mean solving twice per edit.
-        final Answer answer = solveWithAlternatives(input);
+        final Answer answer = solveWithAlternatives(input, cache, stop);
         if (answer instanceof final Answer.Failed failed) {
             final Note reason = failed.failure();
             if (reason != null && reason.message() == SolverMessage.NO_PIN) {

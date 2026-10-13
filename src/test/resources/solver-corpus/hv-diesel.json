@@ -1,0 +1,435 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+      "name": "item:gregtech:gt.blockmachines:1126",
+      "durationTicks": 32.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Oil",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 300.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Sulfuric Heavy Fuel",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Sulfuric Light Fuel",
+          "free": false
+        },
+        {
+          "amount": 400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Sulfuric Naphtha",
+          "free": false
+        },
+        {
+          "amount": 50.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Naphthenic Acid",
+          "free": false
+        },
+        {
+          "amount": 1200.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Sulfuric Gas",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9af84517-e69f-4aaa-b6c9-869176650845",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 72.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Hydrogen Sulfide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "fae9d377-be9e-4682-b363-31e3f747dd95",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 10.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 12000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Sulfuric Light Fuel",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 12000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Light Fuel",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Hydrogen Sulfide",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "024057c5-7d50-4b1e-9301-68543214a7a4",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 10.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Sulfuric Heavy Fuel",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Heavy Fuel",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Hydrogen Sulfide",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "29c05102-a7e5-4736-99f3-d8fa505bf531",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 100.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 20000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Light Fuel",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Heavy Fuel",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 24000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Diesel",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "63af1774-294e-4b6f-bc25-a3908a5a0bd9",
+      "name": "Combustion Generator",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 25.294117647058822,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Diesel",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 10240.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 118,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "915cf560-9467-493e-8bfb-c4c241e8b295",
+      "source": "9af84517-e69f-4aaa-b6c9-869176650845",
+      "sourceOutput": 1,
+      "target": "fae9d377-be9e-4682-b363-31e3f747dd95",
+      "targetInput": 1
+    },
+    {
+      "id": "a6b2185a-2e2c-47f9-ace5-7210b4eb8432",
+      "source": "fae9d377-be9e-4682-b363-31e3f747dd95",
+      "sourceOutput": 0,
+      "target": "29c05102-a7e5-4736-99f3-d8fa505bf531",
+      "targetInput": 0
+    },
+    {
+      "id": "fd014994-0f36-4c51-9ac0-71e3b0d00f51",
+      "source": "024057c5-7d50-4b1e-9301-68543214a7a4",
+      "sourceOutput": 0,
+      "target": "29c05102-a7e5-4736-99f3-d8fa505bf531",
+      "targetInput": 1
+    },
+    {
+      "id": "37c6e70b-45cb-4d0e-b8bb-6ba93d5ef110",
+      "source": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+      "sourceOutput": 1,
+      "target": "fae9d377-be9e-4682-b363-31e3f747dd95",
+      "targetInput": 0
+    },
+    {
+      "id": "4df6badb-7879-4bf5-9a69-726347d1f372",
+      "source": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+      "sourceOutput": 0,
+      "target": "024057c5-7d50-4b1e-9301-68543214a7a4",
+      "targetInput": 0
+    },
+    {
+      "id": "58e1f4bb-0cc4-42e2-a105-261d76af64bf",
+      "source": "9af84517-e69f-4aaa-b6c9-869176650845",
+      "sourceOutput": 1,
+      "target": "024057c5-7d50-4b1e-9301-68543214a7a4",
+      "targetInput": 1
+    },
+    {
+      "id": "62e59286-3292-4f40-91ac-c630f9415bf9",
+      "source": "024057c5-7d50-4b1e-9301-68543214a7a4",
+      "sourceOutput": 1,
+      "target": "9af84517-e69f-4aaa-b6c9-869176650845",
+      "targetInput": 0
+    },
+    {
+      "id": "7b609571-2601-489c-913b-adc471c43d31",
+      "source": "fae9d377-be9e-4682-b363-31e3f747dd95",
+      "sourceOutput": 1,
+      "target": "9af84517-e69f-4aaa-b6c9-869176650845",
+      "targetInput": 0
+    }
+  ],
+  "pools": [
+    {
+      "machines": [
+        "fae9d377-be9e-4682-b363-31e3f747dd95",
+        "024057c5-7d50-4b1e-9301-68543214a7a4",
+        "29c05102-a7e5-4736-99f3-d8fa505bf531"
+      ],
+      "capacity": 1,
+      "exact": true
+    }
+  ],
+  "drawers": [
+    {
+      "id": "89900894-2d26-4cce-bf9c-5990a995078e",
+      "label": "Naphthenic Acid",
+      "kind": "TRASH",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "9275d439-13d9-4bda-8bea-2a7217b7b0c6",
+      "label": "Sulfur Dust",
+      "kind": "TRASH",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "9af84517-e69f-4aaa-b6c9-869176650845",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "99d5d115-b6e0-4ba6-b2c4-b0b4f0eeaa25",
+      "label": "Sulfuric Naphtha",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "bec295da-446c-4412-bafa-ffd302e2155f",
+      "label": "Sulfuric Gas",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "860692c4-ca29-45a7-b9b5-8e8714487b50",
+          "port": 4
+        }
+      ]
+    },
+    {
+      "id": "fdb3e9e7-8e31-4efd-808c-bb32fffb6ba8",
+      "label": "Fuel",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "63af1774-294e-4b6f-bc25-a3908a5a0bd9",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "2682c2ea-e240-43ab-8ef7-85ccb658f873",
+      "label": "Fuel",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "29c05102-a7e5-4736-99f3-d8fa505bf531",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "3a5cc1ca-1df5-4162-9218-658b75f47bf5",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "63af1774-294e-4b6f-bc25-a3908a5a0bd9",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

@@ -1,6 +1,7 @@
 package com.gtnhplanner.data.flowchart.balancer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -8,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import com.gtnhplanner.Config;
 
@@ -145,6 +148,7 @@ public final class SolutionView {
      */
     private List<Note> wiringDiagnostics(final SolveContext ctx, final double tol, final List<External> terminalIn) {
         final ModelData model = ctx.model;
+        final Producers producers = new Producers(model);
         // A set: the same ingredient imported at two ports of one machine is one wiring mistake to
         // the reader, and the message that describes it is identical either way.
         final Set<Note> result = new LinkedHashSet<>();
@@ -158,7 +162,7 @@ public final class SolutionView {
             if (supplied.contains(in.port())) continue;
             final SolveInput.PortIn ingredient = portOf(ctx, in);
             if (ingredient.free()) continue;
-            final ModelData.Machine match = findProduction(ctx, in, -1);
+            final ModelData.Machine match = producers.find(ingredient.resource(), -1);
             if (match != null) {
                 // The two cards' ids last, for the board's "Show me".
                 result.add(
@@ -179,7 +183,7 @@ public final class SolutionView {
             if (supplied.contains(src.port())) continue;
             final SolveInput.PortIn ingredient = portOf(ctx, src);
             if (ingredient.free()) continue;
-            final ModelData.Machine match = findProduction(ctx, src, model.portComponent[p]);
+            final ModelData.Machine match = producers.find(ingredient.resource(), model.portComponent[p]);
             if (match != null) {
                 result.add(
                     new Note(
@@ -196,35 +200,58 @@ public final class SolutionView {
     }
 
     /**
-     * A machine producing the same ingredient as {@code consumer}'s port, or null. Checks
-     * terminal outputs and connected output ports; {@code excludeComponent} skips the consumer's
-     * own component (-1 checks everything).
+     * Who makes each ingredient, in the order the diagnostics look: connected output ports in port order, then
+     * unconnected outputs in machine order. Read once, so asking about every import is linear in the plan.
      */
-    private ModelData.Machine findProduction(final SolveContext ctx, final External consumer,
-        final int excludeComponent) {
-        final ModelData model = ctx.model;
-        final int want = portOf(ctx, consumer).resource();
-        for (int p = 0; p < model.connectedPorts.size(); p++) {
-            final ModelData.ConnectedPort port = model.connectedPorts.get(p);
-            if (port.input() || model.portComponent[p] == excludeComponent) continue;
-            final ModelData.Machine md = model.machines.get(port.machine());
-            if (md.port(port.portIndex(), false)
-                .resource() == want) {
-                return md;
+    private static final class Producers {
+
+        private final ModelData model;
+        /** Per ingredient, the connected output ports making it, in port order. */
+        private final Map<Integer, List<Integer>> connected = new HashMap<>();
+        /** Per ingredient, the first machine making it at an output with no edge. */
+        private final Map<Integer, ModelData.Machine> loose = new HashMap<>();
+
+        Producers(final ModelData model) {
+            this.model = model;
+            for (int p = 0; p < model.connectedPorts.size(); p++) {
+                final ModelData.ConnectedPort port = model.connectedPorts.get(p);
+                if (port.input()) continue;
+                final int resource = model.machines.get(port.machine())
+                    .port(port.portIndex(), false)
+                    .resource();
+                connected.computeIfAbsent(resource, k -> new ArrayList<>())
+                    .add(p);
             }
-        }
-        for (int m = 0; m < model.machines.size(); m++) {
-            final ModelData.Machine md = model.machines.get(m);
-            for (int i = 0; i < md.outQty.length; i++) {
-                if (md.outQty[i] <= 0) continue;
-                if (model.portLookup.containsKey(ModelData.portKey(m, i, false))) continue; // connected, handled above
-                if (md.port(i, false)
-                    .resource() == want) {
-                    return md;
+            for (int m = 0; m < model.machines.size(); m++) {
+                final ModelData.Machine md = model.machines.get(m);
+                for (int i = 0; i < md.outQty.length; i++) {
+                    if (md.outQty[i] <= 0) continue;
+                    if (model.portLookup.containsKey(ModelData.portKey(m, i, false))) continue; // connected, above
+                    loose.putIfAbsent(
+                        md.port(i, false)
+                            .resource(),
+                        md);
                 }
             }
         }
-        return null;
+
+        /**
+         * A machine making {@code resource}: at a connected output outside port component {@code excludeComponent}
+         * (-1 skips none), else at an unconnected output; null when none does.
+         */
+        @Nullable
+        ModelData.Machine find(final int resource, final int excludeComponent) {
+            final List<Integer> ports = connected.get(resource);
+            if (ports != null) {
+                for (final int p : ports) {
+                    if (model.portComponent[p] == excludeComponent) continue;
+                    return model.machines.get(
+                        model.connectedPorts.get(p)
+                            .machine());
+                }
+            }
+            return loose.get(resource);
+        }
     }
 
     private SolveInput.PortIn portOf(final SolveContext ctx, final External external) {

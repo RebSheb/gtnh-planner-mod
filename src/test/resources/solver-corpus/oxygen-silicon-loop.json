@@ -1,0 +1,176 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "a74f222f-a3de-4750-b487-87dfd7f7c863",
+      "name": "item:gregtech:gt.blockmachines:371",
+      "durationTicks": 40.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Magnesia Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c0bfb968-e3be-43b7-8752-c281d70df75f",
+      "name": "item:gregtech:gt.blockmachines:371",
+      "durationTicks": 500.0,
+      "energyPerTick": 25.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Sand",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Silicon Dioxide Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 5,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4e17273d-6559-45b0-a699-86d379645d12",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 100.0,
+      "energyPerTick": 7.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Silicon Dioxide Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Magnesium Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Raw Silicon Dust",
+          "free": false
+        },
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Magnesia Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "be26aec8-e77d-421a-9980-40b5a8bcc3dd",
+      "source": "a74f222f-a3de-4750-b487-87dfd7f7c863",
+      "sourceOutput": 0,
+      "target": "4e17273d-6559-45b0-a699-86d379645d12",
+      "targetInput": 1
+    },
+    {
+      "id": "46ebc23e-c447-4847-975c-43facbab7643",
+      "source": "c0bfb968-e3be-43b7-8752-c281d70df75f",
+      "sourceOutput": 0,
+      "target": "4e17273d-6559-45b0-a699-86d379645d12",
+      "targetInput": 0
+    },
+    {
+      "id": "56e6536c-2f43-4f63-bdf2-5d356ceab066",
+      "source": "4e17273d-6559-45b0-a699-86d379645d12",
+      "sourceOutput": 1,
+      "target": "a74f222f-a3de-4750-b487-87dfd7f7c863",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "a90fc2e0-d956-483e-a900-4dd62ab084f3",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a74f222f-a3de-4750-b487-87dfd7f7c863",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "b37c22b4-0e66-4841-9b3d-c952d0003ba7",
+      "label": "Raw Silicon Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "4e17273d-6559-45b0-a699-86d379645d12",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

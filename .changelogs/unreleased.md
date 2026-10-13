@@ -20,6 +20,8 @@
 - Custom Rate moved into the new Other column in Non-recipe.
 - Zooming out switches cards to the simple view a step later, so the text stays readable longer.
 - The tour doesn't touch your GUI scale anymore.
+- Plans solve several times faster on a computer with a few cores to spare, settle on fewer leftovers when a setup can go more than one way, and the same plan always comes out with the same numbers.
+- Huge plans stay smooth: thousands of cards pan and zoom without slowing down, open much faster, and the plan over the world keeps up with thousands of placed machines. Wires no longer flicker when zoomed far out.
 - Resource packs can restyle the plan button on NEI's recipe pages, like NEI's own buttons.
 
 ## Fixed

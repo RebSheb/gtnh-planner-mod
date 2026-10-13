@@ -77,13 +77,60 @@ public final class ZoomedOutLabels {
         if (requests.isEmpty()) return;
         final float font = font(zoom);
         final float s = 1 / zoom, gap = 3 * s, pad = 2 * font, lh = 8 * font + 2 * pad;
+        // The same names in the same places as last frame (the board standing still): placed as they were.
+        final long key = key(zoom);
+        if (key != laidFor) {
+            lay(zoom, font, s, gap, pad, lh);
+            laidFor = key;
+        }
+        // Every backing in one batch, then every name: two draws, however many names.
+        Hyb.beginBatch();
+        for (final Laid l : laid) Hyb.rect(l.x(), l.y(), l.w(), l.h(), 0xC0101114);
+        Hyb.endBatch();
+        for (final Laid l : laid) Hyb.text(l.text(), l.x() + pad, l.y() + pad, font, Hyb.INK);
+    }
+
+    /** A name as placed: its words and its box. */
+    private record Laid(String text, float x, float y, float w, float h) {}
+
+    private List<Laid> laid = List.of();
+    private long laidFor = Long.MIN_VALUE;
+
+    /** What this frame's names are, at a zoom: equal when nothing about them changed. */
+    private long key(final float zoom) {
+        long k = Float.floatToIntBits(zoom);
+        for (final Request r : requests) {
+            k = k * 31 + System.identityHashCode(r.text());
+            k = k * 31 + Float.floatToIntBits(r.x());
+            k = k * 31 + Float.floatToIntBits(r.y());
+            k = k * 31 + Float.floatToIntBits(r.h());
+            k = k * 31 + Double.hashCode(r.priority());
+        }
+        return k;
+    }
+
+    /** Names cut to width, kept: the same few names come up every frame. */
+    private final java.util.Map<String, java.util.Map<Integer, String>> fitted = new java.util.HashMap<>();
+
+    private String fit(final String text, final int width) {
+        if (fitted.size() > 4096) fitted.clear();
+        return fitted.computeIfAbsent(text, t -> new java.util.HashMap<>())
+            .computeIfAbsent(width, w -> Hyb.fit(text, w));
+    }
+
+    /** Places this frame's names: the busiest first, each on the first side clear of names and boxes. */
+    private void lay(final float zoom, final float font, final float s, final float gap, final float pad,
+        final float lh) {
         // Room kept between two names side by side, so they never read as one.
         final float apart = 6 * s;
-        final List<float[]> placed = new ArrayList<>();
+        // What names keep clear of, filed by where it is, so each name looks only at its neighbours.
+        final Grid placed = new Grid(64 * s), solid = new Grid(64 * s);
+        for (final float[] b : boxes) solid.add(b);
+        final List<Laid> out = new ArrayList<>();
         final List<Request> order = new ArrayList<>(requests);
         order.sort(Comparator.comparingDouble(r -> -r.priority()));
         for (final Request r : order) {
-            final String text = Hyb.fit(r.text(), (int) ((r.widest() - 2 * pad) / font));
+            final String text = fit(r.text(), (int) ((r.widest() - 2 * pad) / font));
             if (text.isEmpty()) continue;
             final float lw = Hyb.width(text) * font + 2 * pad;
             for (final Side side : r.sides()) {
@@ -99,12 +146,41 @@ public final class ZoomedOutLabels {
                 };
                 final float[] box = { lx, ly, lw, lh };
                 final float[] room = { lx - apart, ly - gap, lw + 2 * apart, lh + 2 * gap };
-                if (overlapsAny(room, placed) || overlapsAny(box, boxes)) continue;
+                if (placed.overlaps(room) || solid.overlaps(box)) continue;
                 placed.add(box);
-                Hyb.rect(lx, ly, lw, lh, 0xC0101114);
-                Hyb.text(text, lx + pad, ly + pad, font, Hyb.INK);
+                out.add(new Laid(text, lx, ly, lw, lh));
                 break;
             }
+        }
+        laid = out;
+    }
+
+    /** Boxes {x, y, w, h} filed in square cells, for overlap tests against only those nearby. */
+    private static final class Grid {
+
+        private final float cell;
+        private final java.util.Map<Long, List<float[]>> cells = new java.util.HashMap<>();
+
+        Grid(final float cell) {
+            this.cell = Math.max(1, cell);
+        }
+
+        void add(final float[] b) {
+            for (int cx = c(b[0]); cx <= c(b[0] + b[2]); cx++) for (int cy = c(b[1]); cy <= c(b[1] + b[3]); cy++)
+                cells.computeIfAbsent((long) cx << 32 | cy & 0xFFFFFFFFL, k -> new ArrayList<>())
+                    .add(b);
+        }
+
+        boolean overlaps(final float[] a) {
+            for (int cx = c(a[0]); cx <= c(a[0] + a[2]); cx++) for (int cy = c(a[1]); cy <= c(a[1] + a[3]); cy++) {
+                final List<float[]> in = cells.get((long) cx << 32 | cy & 0xFFFFFFFFL);
+                if (in != null && overlapsAny(a, in)) return true;
+            }
+            return false;
+        }
+
+        private int c(final float v) {
+            return (int) Math.floor(v / cell);
         }
     }
 

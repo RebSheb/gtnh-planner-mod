@@ -1,0 +1,67 @@
+{
+  "solution": {
+    "extentsPerSecond": {
+      "6bcdde86-54bd-44b7-935c-d857ee18e9a5": 20.0
+    },
+    "machineCounts": {
+      "6bcdde86-54bd-44b7-935c-d857ee18e9a5": 1.0
+    },
+    "edgeFlowsPerSecond": {},
+    "gatedSources": [],
+    "gatedSinks": [],
+    "terminalInputs": [
+      {
+        "port": {
+          "nodeId": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 1.04864E9
+      },
+      {
+        "port": {
+          "nodeId": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "portIndex": 1.0,
+          "input": true
+        },
+        "ratePerSecond": 5.2432E8
+      }
+    ],
+    "terminalOutputs": [
+      {
+        "port": {
+          "nodeId": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 5.2432E8
+      }
+    ],
+    "openGates": 0.0,
+    "externalQuantity": 0.0,
+    "totalInternalFlow": 0.0,
+    "floorsUsed": false,
+    "notes": [],
+    "key": {
+      "gateAnchors": []
+    },
+    "drawers": {
+      "rates": {
+        "2e50eeda-7d71-44da-adde-0aadaf2a69ec": 5.2432E8,
+        "781a9079-2392-4d4b-99d8-c00f100d928b": 1.04864E9,
+        "df46d804-c0fa-4b59-bf6c-742fc0d53161": 5.2432E8
+      },
+      "unmet": [],
+      "shortfalls": []
+    },
+    "spares": []
+  },
+  "alternatives": {
+    "chosen": {
+      "gateAnchors": []
+    },
+    "options": [],
+    "complete": true,
+    "notes": []
+  }
+}

@@ -173,9 +173,9 @@ public final class LinkPicker {
         double limit = best == null ? REACH : best.hitVec.distanceTo(from);
         final int dim = mc.theWorld.provider.dimensionId;
         final Node inHand = node();
-        for (final Node n : g.nodes.values()) for (final int[] l : n.worldLinks) {
-            if (l[0] != dim || n == inHand && hidden(l)) continue;
-            final double[] box = WorldLinks.extent(g, n, l);
+        for (final WorldIndex.Entry e : WorldIndex.along(dim, from, dir, limit)) {
+            if (e.graph != g || e.node == inHand && hidden(e.link)) continue;
+            final double[] box = e.box;
             final double[] face = WorldLinks.enterFace(from, dir, box);
             if (face == null || face[0] >= limit) continue;
             limit = face[0];

@@ -270,6 +270,8 @@ final class StructureGhostBuilder {
         final Tessellator t = Tessellator.instance;
         final TrackedDummyWorld world = built.world();
         try {
+            // Kept as vertex buffers where none of it is built yet; else block by block, leaving the built ones out.
+            if (GhostMeshes.draw(ghost, built, real, x, y, z, facing)) return;
             for (int pass = 0; pass < 2; pass++) {
                 t.startDrawingQuads();
                 t.setTranslation(
@@ -306,7 +308,7 @@ final class StructureGhostBuilder {
     }
 
     /** Whether the real world has this block of the structure in its place already (its meta too, but a machine's). */
-    private static boolean builtThere(final World real, final Block block, final int meta, final int[] b, final int x,
+    static boolean builtThere(final World real, final Block block, final int meta, final int[] b, final int x,
         final int y, final int z, final int facing) {
         final int[] at = StructureGhosts.turn(b[0], b[2], facing);
         final int rx = x + at[0], ry = y + b[1], rz = z + at[1];

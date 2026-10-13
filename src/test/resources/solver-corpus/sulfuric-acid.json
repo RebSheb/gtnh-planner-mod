@@ -1,0 +1,614 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "a7e7b435-1d99-4bfb-9511-a1c6f7a5f177",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 72.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Hydrogen Sulfide Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Hydrogen Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b061d182-4378-47f4-be4e-1f3058d9774a",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 120.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c501a56a-ffb7-472c-a2e1-0393683e6912",
+      "name": "item:gregtech:gt.blockmachines:423",
+      "durationTicks": 1120.0,
+      "energyPerTick": 192.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Sugar",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Polyethylene (PE) Pulp",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Toluene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Gelled Toluene",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "d0bdb049-540d-4155-bd16-7c356e58be46",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 160.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Hydrogen Cell",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Sulfuric Heavy Fuel",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Hydrogen Sulfide Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Heavy Fuel",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f2fa7cf5-1980-4964-ab14-c15852a5abe4",
+      "name": "item:gregtech:gt.blockmachines:371",
+      "durationTicks": 600.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 14.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Sodium Bisulfate Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Hydrogen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Sodium Persulfate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0d38b77c-cff8-46f8-a1b2-1c69b94be711",
+      "name": "item:gregtech:gt.blockmachines:15515",
+      "durationTicks": 135.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 18.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Salt",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 63.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Sodium Bisulfate Dust",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1bca9b93-381b-45b7-b629-5540397756b0",
+      "name": "item:gregtech:gt.blockmachines:1126",
+      "durationTicks": 120.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Heavy Fuel",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Toluene",
+          "free": false
+        },
+        {
+          "amount": 400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Benzene",
+          "free": false
+        },
+        {
+          "amount": 250.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Phenol",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1cfbb5fb-9ec5-4108-944b-eda025696c79",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 200.0,
+      "energyPerTick": 24.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Gelled Toluene",
+          "free": false
+        },
+        {
+          "amount": 250.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "TNT",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "970cfd50-923a-4dd4-a398-d940b3fdb6cf",
+      "source": "b061d182-4378-47f4-be4e-1f3058d9774a",
+      "sourceOutput": 0,
+      "target": "1cfbb5fb-9ec5-4108-944b-eda025696c79",
+      "targetInput": 1
+    },
+    {
+      "id": "a6e64a64-9db2-48ba-b23d-39eb21dd8990",
+      "source": "d0bdb049-540d-4155-bd16-7c356e58be46",
+      "sourceOutput": 0,
+      "target": "a7e7b435-1d99-4bfb-9511-a1c6f7a5f177",
+      "targetInput": 0
+    },
+    {
+      "id": "d1234035-cbe1-48de-b17d-e231e9413bb8",
+      "source": "d0bdb049-540d-4155-bd16-7c356e58be46",
+      "sourceOutput": 2,
+      "target": "1bca9b93-381b-45b7-b629-5540397756b0",
+      "targetInput": 0
+    },
+    {
+      "id": "e8d44373-9569-4a9c-bf73-ddea55fd69d7",
+      "source": "c501a56a-ffb7-472c-a2e1-0393683e6912",
+      "sourceOutput": 0,
+      "target": "1cfbb5fb-9ec5-4108-944b-eda025696c79",
+      "targetInput": 0
+    },
+    {
+      "id": "eb45cc1c-67fe-4822-94c5-310d7195ad78",
+      "source": "a7e7b435-1d99-4bfb-9511-a1c6f7a5f177",
+      "sourceOutput": 1,
+      "target": "d0bdb049-540d-4155-bd16-7c356e58be46",
+      "targetInput": 0
+    },
+    {
+      "id": "f324da6f-c636-4277-b1d0-32d160aa9e49",
+      "source": "0d38b77c-cff8-46f8-a1b2-1c69b94be711",
+      "sourceOutput": 0,
+      "target": "f2fa7cf5-1980-4964-ab14-c15852a5abe4",
+      "targetInput": 0
+    },
+    {
+      "id": "fe2afe40-7e85-41c1-979f-284e86637508",
+      "source": "d0bdb049-540d-4155-bd16-7c356e58be46",
+      "sourceOutput": 1,
+      "target": "a7e7b435-1d99-4bfb-9511-a1c6f7a5f177",
+      "targetInput": 1
+    },
+    {
+      "id": "13328acd-f4bb-436a-b3c8-a4237d2451cb",
+      "source": "a7e7b435-1d99-4bfb-9511-a1c6f7a5f177",
+      "sourceOutput": 0,
+      "target": "b061d182-4378-47f4-be4e-1f3058d9774a",
+      "targetInput": 0
+    },
+    {
+      "id": "5015a7e6-e72a-4fdf-a778-602d9191b46e",
+      "source": "b061d182-4378-47f4-be4e-1f3058d9774a",
+      "sourceOutput": 0,
+      "target": "0d38b77c-cff8-46f8-a1b2-1c69b94be711",
+      "targetInput": 1
+    },
+    {
+      "id": "5e49c432-0d17-4794-aac6-485141281a5a",
+      "source": "1bca9b93-381b-45b7-b629-5540397756b0",
+      "sourceOutput": 0,
+      "target": "c501a56a-ffb7-472c-a2e1-0393683e6912",
+      "targetInput": 2
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "91ffcd56-0ca1-4295-b763-43300ec3374d",
+      "label": "Benzene",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1bca9b93-381b-45b7-b629-5540397756b0",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "9a07271c-f91b-4ebd-8c37-c54e35c6400e",
+      "label": "Hydrogen Cell",
+      "kind": "TRASH",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f2fa7cf5-1980-4964-ab14-c15852a5abe4",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "a96b2efc-8097-4356-99fc-37fb63ee1554",
+      "label": "Toluene",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c501a56a-ffb7-472c-a2e1-0393683e6912",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "ac647fb3-f526-402e-9403-cd79c7ef834b",
+      "label": "TNT",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1cfbb5fb-9ec5-4108-944b-eda025696c79",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "c57d7646-4238-4e24-928a-99bd8c0ebb49",
+      "label": "Phenol",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1bca9b93-381b-45b7-b629-5540397756b0",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "cd4e754f-029e-4e06-ab52-9abf49ca9378",
+      "label": "Sodium Persulfate",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f2fa7cf5-1980-4964-ab14-c15852a5abe4",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "e666d1e6-bf91-4a50-9fa8-101605217031",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b061d182-4378-47f4-be4e-1f3058d9774a",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "04583097-385f-4067-a3f9-be0598d0f3ba",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b061d182-4378-47f4-be4e-1f3058d9774a",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "06764125-ddb5-4028-8697-0ce08b18b935",
+      "label": "Salt",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "0d38b77c-cff8-46f8-a1b2-1c69b94be711",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "318343a4-6488-4a23-a9da-a2e1ae663990",
+      "label": "Polyethylene (PE) Pulp",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c501a56a-ffb7-472c-a2e1-0393683e6912",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "6cb3d450-d3bc-46c7-9b37-b22c6009d003",
+      "label": "Empty Cell",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f2fa7cf5-1980-4964-ab14-c15852a5abe4",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "7aedb7c2-2a62-45fb-b909-3828ceed6988",
+      "label": "Hydrochloric Acid",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "0d38b77c-cff8-46f8-a1b2-1c69b94be711",
+          "port": 1
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

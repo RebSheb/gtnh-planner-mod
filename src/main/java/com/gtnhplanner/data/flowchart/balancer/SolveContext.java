@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 import javax.annotation.Nullable;
 
@@ -17,7 +18,7 @@ import com.gtnhplanner.data.flowchart.Drawer;
 /**
  * The shared, mutable state of one solve run - the "threaded" half of the zero-copy pipeline.
  * Everything a stage may read or write on a single shared object rather than copied per stage:
- * the build-once {@link ModelData}, the type's {@link Heuristics}, the run's {@link Budget} and
+ * the build-once {@link ModelData}, the type's {@link Heuristics}, the run's stop signal and
  * pins, the pass-2 floors, and the current point ({@link StageOutcome}). Stages mutate this in
  * place; the next stage reads the result. The only objects rebuilt per stage are the ojAlgo models
  * themselves, which is inherent to the library and allowed.
@@ -30,12 +31,8 @@ public final class SolveContext {
 
     public final ModelData model;
     public final Heuristics heuristics;
-    /**
-     * The wall-clock deadline for the whole solve. Mutable: the alternatives search swaps it for
-     * its own split budgets mid-run, so a stage always reads the deadline that governs the model
-     * it is about to build.
-     */
-    public Budget budget;
+    /** Whether a newer edit has made this solve's answer worthless; every model asks before it runs. */
+    private final BooleanSupplier stop;
     public final boolean anyPin;
     /**
      * Whether anything sets the chart's scale: a pin, or a drawer that asks for a positive amount
@@ -80,6 +77,10 @@ public final class SolveContext {
     public boolean shortCircuit;
     /** True when the replay pass (audit floors) actually ran. */
     public boolean floorsUsed;
+    /** The gates every answer opens ({@link GateSearch}): never the place a leftover could move from. */
+    public Set<Integer> neededGates = Set.of();
+    /** The gates the committed answer opens, those carrying too little to show included (set by the flow stage). */
+    public Set<Integer> openGates = Set.of();
 
     /** The committed point - the only null in the state, until a stage commits one. */
     @Nullable
@@ -95,15 +96,17 @@ public final class SolveContext {
     public Note rejection = new Note(SolverMessage.SOLVER_NO_SOLUTION);
     /** Final answer notes: pin overshoots from construction, then each pass's own stage notes. */
     public final List<Note> notes = new ArrayList<>();
+    /** How many of {@link #notes} the snapshot itself raised (pin overshoots), before any solve added its own. */
+    public final int constructionNotes;
     /** Stage notes produced by the pass currently running (cleared on every pass). */
     public final List<Note> stageNotes = new ArrayList<>();
 
-    SolveContext(final SolveInput input, final Heuristics heuristics, final Budget budget,
+    SolveContext(final SolveInput input, final Heuristics heuristics, final BooleanSupplier stop,
         final Map<UUID, Double> extraExtentPins, final Set<Pin> pins, final boolean bindsExternals,
         final Profiler profiler) {
         this.model = new ModelData(input, heuristics);
         this.heuristics = heuristics;
-        this.budget = budget;
+        this.stop = stop;
         this.pins = Set.copyOf(pins);
         this.profiler = profiler;
         this.bindsExternals = bindsExternals;
@@ -175,6 +178,12 @@ public final class SolveContext {
         // A pinned shared machine is a pin too: its recipes' machines add up to its count.
         for (final ModelData.Pool pool : model.pools) anchor |= pool.exact() && pool.capacity() > 0;
         this.anchored = any || anchor;
+        this.constructionNotes = notes.size();
+    }
+
+    /** Ends the solve ({@link Balancer.Stopped}) when a newer edit has made its answer worthless. */
+    public void checkStop() {
+        if (stop.getAsBoolean()) throw new Balancer.Stopped();
     }
 
     /** Whether any drawer puts a bound in the model. */
@@ -406,6 +415,8 @@ public final class SolveContext {
         this.shortCircuit = false;
         this.rejection = new Note(SolverMessage.SOLVER_NO_SOLUTION);
         this.floorsUsed = false;
+        this.neededGates = Set.of();
+        this.openGates = Set.of();
         this.stageNotes.clear();
     }
 
@@ -427,8 +438,11 @@ public final class SolveContext {
             for (final int e : port.edges()) {
                 flowsSum += flows[e];
             }
-            final double residual = flowsSum + externals[p] - extents[port.machine()] * port.qtyPerCraft();
-            final double scale = Math.max(1.0, port.qtyPerCraft());
+            final double through = extents[port.machine()] * port.qtyPerCraft();
+            final double residual = flowsSum + externals[p] - through;
+            // Relative to what the port carries: a simplex's rounding grows with the flows it moves, and a port moving
+            // hundreds of thousands a second is not unbalanced by a millionth of an item.
+            final double scale = Math.max(1.0, Math.max(port.qtyPerCraft(), Math.abs(through)));
             if (Math.abs(residual) / scale > heuristics.numerics().validateTol) {
                 return "port " + (port.input() ? "in" : "out")
                     + "["
@@ -516,8 +530,16 @@ public final class SolveContext {
         }
         if (!anyIdle) return new double[0];
 
-        final double useEps = heuristics.numerics().useEps;
-        final double floor = (minRunning == Double.MAX_VALUE ? useEps : minRunning) * 1e-3;
+        // A rate the chart already achieves: the slowest unpinned machine that runs, else the slowest pinned one (an
+        // absolute fallback this far below the plan's own rates sits in the simplex's rounding, and its answers with
+        // it).
+        if (minRunning == Double.MAX_VALUE) {
+            for (int m = 0; m < n; m++) {
+                if (!Double.isNaN(pinnedExtent[m]) && pinnedExtent[m] > heuristics.numerics().useEpsDetect)
+                    minRunning = Math.min(minRunning, pinnedExtent[m]);
+            }
+        }
+        final double floor = (minRunning == Double.MAX_VALUE ? heuristics.numerics().useEps : minRunning) * 1e-3;
         final double[] floors = new double[n];
         for (int m = 0; m < n; m++) {
             if (Double.isNaN(pinnedExtent[m]) && pinnedComponents.contains(find(root, m))) floors[m] = floor;

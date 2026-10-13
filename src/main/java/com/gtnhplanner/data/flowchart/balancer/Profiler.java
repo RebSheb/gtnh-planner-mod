@@ -4,7 +4,7 @@ import javax.annotation.Nullable;
 
 /**
  * The instrumentation hook for a solve. Everything a test wants to read that the UI does not -
- * per-stage wall time, model size and solver state, big-M growths, rejections, the pass-2 floor
+ * per-stage wall time, model size and solver state, rejections, the pass-2 floor
  * replay, the fast path - flows through here instead of being carried on
  * {@link SolutionView}/{@link StageOutcome}. The result payload stays shaped by what the UI reads;
  * a test that needs more attaches a profiler at run time.
@@ -41,9 +41,6 @@ public interface Profiler {
     /** One model was solved: how long, what the solver said, and how big it was. */
     default void modelSolved(final String label, final long wallMillis, final String state, final int vars,
         final int exprs) {}
-
-    /** A big-M gate link pressed its cap and was grown for the next solve attempt. */
-    default void bigMGrew(final String label, final double bigM) {}
 
     /** A solve produced a point the independent validation rejected; {@code reason} is why. */
     default void pointRejected(final String label, final String reason) {}

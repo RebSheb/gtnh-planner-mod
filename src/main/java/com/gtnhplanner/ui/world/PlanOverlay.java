@@ -221,15 +221,18 @@ public final class PlanOverlay {
         final int dim = mc.theWorld.provider.dimensionId;
         final Node picking = LinkPicker.active() ? LinkPicker.node() : null;
         final int[] preview = picking == null ? null : LinkPicker.preview();
-        for (final PlanSnapshot.Card c : snap.cards()) {
-            final Node n = snap.graph().nodes.get(c.id());
-            if (n == null) continue;
+        final double range = PlannerSettings.arRange();
+        final EntityLivingBase eye = mc.renderViewEntity;
+        // The card in hand, every one of its placements as it is (one of them may be in hand); the rest from what is
+        // near (the plan may place thousands of machines).
+        final PlanSnapshot.Card held = picking == null ? null : snap.cardOf(picking.id);
+        if (held != null) {
+            final Node n = snap.graph().nodes.get(held.id());
             boolean first = true;
             // The machine in hand goes where it would be put down, card and wires with it, as dragging on the board.
-            final boolean inHand = picking != null && c.nodeIds()
-                .contains(picking.id);
-            if (inHand && preview != null) {
-                final Placed p = new Placed(c, preview, true, true);
+            // Its place in the card's row is kept, so a 2× card still pipes first to first while it is carried.
+            if (preview != null && n != null) {
+                final Placed p = new Placed(held, preview, true, true);
                 final int[] moving = LinkPicker.moving();
                 p.nth = moving != null
                     ? Math.max(1, WorldLinks.indexOf(n, moving[0], moving[1], moving[2], moving[3]) + 1)
@@ -237,18 +240,27 @@ public final class PlanOverlay {
                 all.add(p);
                 first = false;
             }
-            for (int i = 0; i < n.worldLinks.size(); i++) {
+            for (int i = 0; n != null && i < n.worldLinks.size(); i++) {
                 final int[] l = n.worldLinks.get(i);
                 // Where the machine in hand was is empty while it is in hand.
-                if (l[0] != dim || inHand && LinkPicker.hidden(l)) continue;
-                final Placed p = new Placed(c, l, first);
+                if (l[0] != dim || LinkPicker.hidden(l)) continue;
+                final Placed p = new Placed(held, l, first);
                 p.nth = i + 1;
                 all.add(p);
                 first = false;
             }
         }
-        final double range = PlannerSettings.arRange();
-        final EntityLivingBase eye = mc.renderViewEntity;
+        for (final WorldIndex.Entry e : WorldIndex.near(dim, eye.posX, eye.posZ, range)) {
+            if (e.graph != snap.graph()) continue;
+            final PlanSnapshot.Card c = snap.cardOf(e.node.id);
+            if (c == null || c == held
+                || !c.id()
+                    .equals(e.node.id))
+                continue;
+            final Placed p = new Placed(c, e.link, e.first);
+            p.nth = e.index + 1;
+            all.add(p);
+        }
         final List<Placed> list = new ArrayList<>();
         for (final Placed p : all) {
             final double dx = p.home[0] - eye.posX, dy = p.home[1] - eye.posY, dz = p.home[2] - eye.posZ;
@@ -301,15 +313,25 @@ public final class PlanOverlay {
         final List<Placed> placed = placed(mc);
         if (placed.isEmpty()) return;
         lap(null);
+        // Only what the camera can see: a plan placing hundreds of multiblocks has most of them behind it. Made from
+        // the
+        // camera's matrices as the world left them, before ours move them.
+        final net.minecraft.client.renderer.culling.Frustrum frustum = new net.minecraft.client.renderer.culling.Frustrum();
+        frustum.setPosition(camX, camY, camZ);
         WorldMarks.begin();
         // Each placed card's spot: the machine's ghost (unless the machine is built there), see-through, solid or not
         // shown as set; the one looked at outlined. Every multiblock's depth first, so each shows its outside alone and
         // nearer ghosts hide farther ones.
         final int look = PlannerSettings.arGhosts();
         final boolean shown = look != PlannerSettings.GHOSTS_HIDDEN, solid = look == PlannerSettings.GHOSTS_SOLID;
-        if (shown) for (final Placed p : placed) if (!p.preview && p.card.machine() != null)
+        final List<Placed> seen = new ArrayList<>(placed.size());
+        for (final Placed p : placed) if (frustum.isBoundingBoxInFrustum(
+            net.minecraft.util.AxisAlignedBB
+                .getBoundingBox(p.box[0], p.box[1], p.box[2], p.box[3], p.box[4], p.box[5])))
+            seen.add(p);
+        if (shown) for (final Placed p : seen) if (!p.preview && p.card.machine() != null)
             WorldMarks.ghostDepth(p.card.machine(), p.card.needs(), p.size, p.x, p.y, p.z, p.facing);
-        for (final Placed p : placed) {
+        for (final Placed p : seen) {
             if (p.preview) continue;
             if (shown && p.card.machine() != null) WorldMarks
                 .machineGhost(p.card.machine(), p.card.needs(), p.size, p.x, p.y, p.z, p.facing, built(mc, p), solid);
@@ -434,7 +456,12 @@ public final class PlanOverlay {
             for (final UUID id : p.card.nodeIds()) byNode.computeIfAbsent(id, key -> new ArrayList<>())
                 .add(p);
         for (final List<Placed> list : byNode.values()) list.sort(Comparator.comparingInt(p -> p.nth));
-        for (final PlanSnapshot.Line w : snap.wires()) {
+        // Only the wires leaving a card near the player, in the plan's order (a plan has tens of thousands).
+        final java.util.BitSet leaving = new java.util.BitSet();
+        for (final UUID id : byNode.keySet()) for (final int i : snap.wiresFrom(id)) leaving.set(i);
+        for (int i = leaving.nextSetBit(0); i >= 0; i = leaving.nextSetBit(i + 1)) {
+            final PlanSnapshot.Line w = snap.wires()
+                .get(i);
             if (w.from() == null || w.to() == null) continue;
             final List<Placed> froms = byNode.get(w.from()), tos = byNode.get(w.to());
             if (froms == null || tos == null) continue;

@@ -177,7 +177,10 @@ public final class DevHarness {
 
     @SubscribeEvent
     public void onRenderTick(final TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) DevPerf.frame();
+        if (event.phase == TickEvent.Phase.START) {
+            DevPerf.frame();
+            DevStress.frame();
+        }
         if (event.phase != TickEvent.Phase.END) return;
         framedSinceStep = true;
         // Only what was queued before this frame; actions may re-queue themselves for the next one.
@@ -688,6 +691,50 @@ public final class DevHarness {
                         return error("Could not write: " + e.getMessage());
                     }
                 });
+            case "/solvedump":
+                // Every plan's solve input as JSON (dev/SolveInputJson), for the solver's headless corpus: dir=<path>
+                // (from
+                // the repo root when relative), max=<cards> leaves out plans bigger than that (default 2000).
+                requireWorld(); {
+                java.io.File dir = new java.io.File(arg(q, "dir"));
+                if (!dir.isAbsolute()) dir = new java.io.File(new java.io.File(mc.mcDataDir, "../.."), arg(q, "dir"));
+                final java.io.File out = dir;
+                final int max = intArg(q, "max", 2000);
+                return onClient(() -> {
+                    out.mkdirs();
+                    final List<String> written = new ArrayList<>();
+                    final List<com.gtnhplanner.data.flowchart.Graph> graphs = com.gtnhplanner.data.flowchart.Plan
+                        .getInstance()
+                        .getGraphs();
+                    for (int i = 0; i < graphs.size(); i++) {
+                        final com.gtnhplanner.data.flowchart.Graph g = graphs.get(i);
+                        if (g.nodes.isEmpty() || g.nodes.size() > max) continue;
+                        final String name = String.format(
+                            "%02d-%s.json",
+                            i,
+                            g.getName()
+                                .replaceAll("[^A-Za-z0-9]+", "-"));
+                        try {
+                            java.nio.file.Files.writeString(
+                                new java.io.File(out, name).toPath(),
+                                new com.google.gson.GsonBuilder().setPrettyPrinting()
+                                    .create()
+                                    .toJson(
+                                        SolveInputJson
+                                            .write(com.gtnhplanner.data.flowchart.balancer.SolveInput.of(g))));
+                        } catch (final java.io.IOException e) {
+                            return error(String.valueOf(e.getMessage()));
+                        }
+                        written.add(name + " (" + g.nodes.size() + " cards)");
+                    }
+                    return Map.of("dir", out.getAbsolutePath(), "written", written);
+                });
+            }
+            case "/stress":
+                // Stress plans: copies=N tiles the open plan, world=1 places every machine, animate=pan|zoom|yaw|none
+                // moves the camera every frame, timesave=1 times one edit's encodes and save; alone, a report.
+                requireWorld();
+                return onClient(() -> DevStress.handle(q));
             case "/perf":
                 // Frame times: perf?start=1 begins sampling, perf ends it and reports (fps, percentiles, sections).
                 if (q.containsKey("start")) {

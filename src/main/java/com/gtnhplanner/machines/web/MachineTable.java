@@ -383,11 +383,20 @@ public final class MachineTable {
 
     /** normalizeMachineName: lower case, every run of anything but a-z, 0-9 and ^ one space, trimmed. */
     public static String normalizeMachineName(final String name) {
-        return name.trim()
-            .toLowerCase(Locale.ROOT)
-            .replaceAll("[^a-z0-9^]+", " ")
-            .replaceAll("\\s+", " ")
-            .trim();
+        // Asked for every card's machine many times a solve, over a handful of names: worked out once each.
+        return Names.NORMALIZED.computeIfAbsent(
+            name,
+            n -> n.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9^]+", " ")
+                .replaceAll("\\s+", " ")
+                .trim());
+    }
+
+    /** Made on first use, so the tables built as the class loads can already use it. */
+    private static final class Names {
+
+        static final java.util.Map<String, String> NORMALIZED = new java.util.concurrent.ConcurrentHashMap<>();
     }
 
     // endregion

@@ -1,0 +1,89 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 7864320.0,
+      "throughputFactor": 3277,
+      "inputs": [
+        {
+          "amount": 16000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Hydrogen",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Distilled Water",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "df46d804-c0fa-4b59-bf6c-742fc0d53161",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "2e50eeda-7d71-44da-adde-0aadaf2a69ec",
+      "label": "Distilled Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "781a9079-2392-4d4b-99d8-c00f100d928b",
+      "label": "Hydrogen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6bcdde86-54bd-44b7-935c-d857ee18e9a5",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

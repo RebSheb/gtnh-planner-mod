@@ -1,0 +1,55 @@
+{
+  "solution": {
+    "extentsPerSecond": {
+      "24f5a8bf-a88d-468b-8037-6ec0476c1cfc": 1.0
+    },
+    "machineCounts": {
+      "24f5a8bf-a88d-468b-8037-6ec0476c1cfc": 1.0
+    },
+    "edgeFlowsPerSecond": {},
+    "gatedSources": [],
+    "gatedSinks": [],
+    "terminalInputs": [
+      {
+        "port": {
+          "nodeId": "24f5a8bf-a88d-468b-8037-6ec0476c1cfc",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 1540.0
+      }
+    ],
+    "terminalOutputs": [
+      {
+        "port": {
+          "nodeId": "24f5a8bf-a88d-468b-8037-6ec0476c1cfc",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 640.0
+      }
+    ],
+    "openGates": 0.0,
+    "externalQuantity": 0.0,
+    "totalInternalFlow": 0.0,
+    "floorsUsed": false,
+    "notes": [],
+    "key": {
+      "gateAnchors": []
+    },
+    "drawers": {
+      "rates": {},
+      "unmet": [],
+      "shortfalls": []
+    },
+    "spares": []
+  },
+  "alternatives": {
+    "chosen": {
+      "gateAnchors": []
+    },
+    "options": [],
+    "complete": true,
+    "notes": []
+  }
+}

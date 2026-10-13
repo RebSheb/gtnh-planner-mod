@@ -1,0 +1,772 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 400.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Carbon Monoxide",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "name": "item:gregtech:gt.blockmachines:544",
+      "durationTicks": 420.0,
+      "energyPerTick": 1000.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Crushed Ilmenite Ore",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.6,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Ilmenite Slag Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Green Vitriol Water Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 400.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Hot Titanium Ingot",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c3cad290-3d86-4dce-80ef-da6a0bb462c5",
+      "name": "item:gregtech:gt.blockmachines:302",
+      "durationTicks": 200.0,
+      "energyPerTick": 8.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Raw Ilmenite Ore",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Crushed Ilmenite Ore",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.05,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Iron Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.5,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Stone Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "d5f47f71-9a99-4c1f-90a3-bcf405918959",
+      "name": "item:gregtech:gt.blockmachines:373",
+      "durationTicks": 80.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+      "name": "item:gregtech:gt.blockmachines:362",
+      "durationTicks": 40.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Ilmenite Slag Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 0.8,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Iron Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.05,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Niobium Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Tantalum Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.5,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Manganese Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.6,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Magnesium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+      "name": "item:gregtech:gt.blockmachines:373",
+      "durationTicks": 225.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Green Vitriol Water Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Iron Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e922c56c-2de4-4631-a466-93f435098a61",
+      "name": "item:gregtech:gt.blockmachines:423",
+      "durationTicks": 400.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f2a17e46-e15f-4621-8142-dd44bc85ba52",
+      "name": "item:gregtech:gt.blockmachines:1002",
+      "durationTicks": 144.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Hot Titanium Ingot",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Titanium Ingot",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1dbaaaed-ed3f-4950-91e9-34aefe9ac065",
+      "name": "item:gregtech:gt.blockmachines:373",
+      "durationTicks": 150.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "a51a73f7-332c-4e4f-b2ad-27ebe578f059",
+      "source": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "sourceOutput": 1,
+      "target": "e922c56c-2de4-4631-a466-93f435098a61",
+      "targetInput": 1
+    },
+    {
+      "id": "b0259a97-fdd6-4650-aa52-a42284e42e56",
+      "source": "c3cad290-3d86-4dce-80ef-da6a0bb462c5",
+      "sourceOutput": 0,
+      "target": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "targetInput": 0
+    },
+    {
+      "id": "dea93120-9e6c-4367-95c1-0ba3cab001ef",
+      "source": "e922c56c-2de4-4631-a466-93f435098a61",
+      "sourceOutput": 0,
+      "target": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "targetInput": 0
+    },
+    {
+      "id": "0139e883-9bce-4eca-9ff9-1d31a495b06f",
+      "source": "d5f47f71-9a99-4c1f-90a3-bcf405918959",
+      "sourceOutput": 1,
+      "target": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "targetInput": 2
+    },
+    {
+      "id": "192b3839-ea0c-409f-801e-4b6f5e5eb37f",
+      "source": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "sourceOutput": 0,
+      "target": "f2a17e46-e15f-4621-8142-dd44bc85ba52",
+      "targetInput": 0
+    },
+    {
+      "id": "1f9a90e3-a491-48dc-a61c-3cc947c33b1a",
+      "source": "1dbaaaed-ed3f-4950-91e9-34aefe9ac065",
+      "sourceOutput": 0,
+      "target": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "targetInput": 1
+    },
+    {
+      "id": "21a851ff-12e8-4866-9075-18ad6163af95",
+      "source": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+      "sourceOutput": 4,
+      "target": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "targetInput": 0
+    },
+    {
+      "id": "2d325358-4410-4767-9087-cfe514f433a7",
+      "source": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "sourceOutput": 0,
+      "target": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "targetInput": 0
+    },
+    {
+      "id": "31549118-8274-4c0d-87d8-df0c522fbf99",
+      "source": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "sourceOutput": 1,
+      "target": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+      "targetInput": 1
+    },
+    {
+      "id": "3d98543f-529c-4cb6-9072-19d7423a5866",
+      "source": "e922c56c-2de4-4631-a466-93f435098a61",
+      "sourceOutput": 1,
+      "target": "d5f47f71-9a99-4c1f-90a3-bcf405918959",
+      "targetInput": 0
+    },
+    {
+      "id": "521c9734-2403-4728-b6d5-1def53936473",
+      "source": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "sourceOutput": 1,
+      "target": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+      "targetInput": 0
+    },
+    {
+      "id": "5e445357-2cbc-442e-8dd6-b74afe58f311",
+      "source": "849595fe-4a17-4933-8f4f-5c596ae28612",
+      "sourceOutput": 0,
+      "target": "1dbaaaed-ed3f-4950-91e9-34aefe9ac065",
+      "targetInput": 0
+    },
+    {
+      "id": "5f02253f-667a-453a-a227-43c8f3c7be9b",
+      "source": "d5f47f71-9a99-4c1f-90a3-bcf405918959",
+      "sourceOutput": 0,
+      "target": "e922c56c-2de4-4631-a466-93f435098a61",
+      "targetInput": 0
+    },
+    {
+      "id": "68f66e30-aabc-46d9-ae38-b74f19183678",
+      "source": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "sourceOutput": 2,
+      "target": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+      "targetInput": 1
+    },
+    {
+      "id": "791e4ac1-3b1c-412c-beeb-d11137aa1e47",
+      "source": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+      "sourceOutput": 2,
+      "target": "8c1d9a1b-db97-4bd0-8791-6244e865bfd2",
+      "targetInput": 1
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "870bb7f6-9bdb-41fb-a805-7a5a8d17d857",
+      "label": "Sodium Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e922c56c-2de4-4631-a466-93f435098a61",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "97618ea3-3457-46a2-a886-e9f4d66880e7",
+      "label": "Iron Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+          "port": 0
+        },
+        {
+          "node": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+          "port": 0
+        },
+        {
+          "node": "c3cad290-3d86-4dce-80ef-da6a0bb462c5",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "b194f691-4785-4ba1-9364-73c9d7d7780f",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1dbaaaed-ed3f-4950-91e9-34aefe9ac065",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "d90c2f0e-9efa-4756-becc-47280d533fe7",
+      "label": "Tantalum Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "e77db09c-fb02-4de9-856e-fe6ea2d84524",
+      "label": "Titaniumtetrachloride",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "931f4bd6-fc07-4e89-a069-caaea49287b7",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "2e12de30-f694-45c4-8cc3-54e134165e23",
+      "label": "Raw Ilmenite Ore",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c3cad290-3d86-4dce-80ef-da6a0bb462c5",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "4ba7eb47-139f-4e24-917c-656b7d69dbda",
+      "label": "Oxygen Cell",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "5a04a63f-d7ff-4ed8-9bf5-3d9308d4f0c1",
+      "label": "Magnesiumchloride Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e922c56c-2de4-4631-a466-93f435098a61",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "60e0f791-58ef-42a0-93bc-bb2a50b251dc",
+      "label": "Titanium Ingot",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f2a17e46-e15f-4621-8142-dd44bc85ba52",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "6c1f7a05-c9a4-443b-b4ac-d1b4dd33836c",
+      "label": "Niobium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "73624705-ccf8-4b7d-ac9f-bae64e7e2d6d",
+      "label": "Manganese Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e16551cf-7ba8-4e3b-9063-53cd94beb5a2",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "746b6c4b-273f-4380-a80b-4db27ce3f019",
+      "label": "Stone Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c3cad290-3d86-4dce-80ef-da6a0bb462c5",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "74e2946a-4106-42e5-b5a0-789d8db988e7",
+      "label": "Empty Cell",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e57b0362-570a-4425-aee9-0a629c16bb1e",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

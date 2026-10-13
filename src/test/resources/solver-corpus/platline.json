@@ -1,0 +1,3329 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "938a6af4-918d-41d0-a1a1-a46e3b7242f3",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 448.0,
+      "throughputFactor": 3,
+      "inputs": [
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Zinc Sulfate Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Zinc Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "93c981a6-28ea-4f99-81f3-e2e11b1e2860",
+      "name": "item:gregtech:gt.blockmachines:15566",
+      "durationTicks": 100.0,
+      "energyPerTick": 960.0,
+      "throughputFactor": 32,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Rhodium Filter Cake Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Rhodium Filter Cake Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "945544bf-4b66-45d6-b988-b2a8d91cf0dc",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 35.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Palladium Metallic Powder Dust",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Palladium Enriched Ammonia",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Palladium Salt Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Reprecipitated Palladium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "97b69bcc-ccea-49f6-acd7-c8cf4acd4fbc",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 18.0,
+      "energyPerTick": 1485.6593999999996,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Crude Rhodium Metal Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Salt",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Rhodium Salt Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9c233280-8794-4953-81ef-276d127b4038",
+      "name": "item:gregtech:gt.blockmachines:368",
+      "durationTicks": 2.0,
+      "energyPerTick": 4096.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 144.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Molten Potassium",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Potassium Ingot",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9d808eee-2d6c-4463-87d9-a1085ec9254a",
+      "name": "item:gregtech:gt.blockmachines:1126",
+      "durationTicks": 150.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Acidic Osmium Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Osmium Solution",
+          "free": false
+        },
+        {
+          "amount": 900.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 6000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Osmium Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Osmium Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        },
+        {
+          "amount": 7000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "a494d65f-7a39-4364-91e6-2d747d096455",
+      "name": "item:gregtech:gt.blockmachines:15566",
+      "durationTicks": 10.0,
+      "energyPerTick": 960.0,
+      "throughputFactor": 32,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Rhodium Salt Dust",
+          "free": false
+        },
+        {
+          "amount": 200.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 200.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Rhodium Salt Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "adbf82cd-30c2-4711-8f5b-2932cc0b3675",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 50.0,
+      "energyPerTick": 1824.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Platinum Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 360.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Molten Potassium Disulfate",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Leach Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 360.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Rhodium Sulfate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b1a197df-f89f-4421-bde8-31bc2829d610",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 3.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Palladium Enriched Ammonia",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Palladium Salt Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 300.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Iridium Chloride Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Calcium Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Metallic Sludge Dust Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Iridium Dust",
+          "free": false
+        },
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Calcium Chloride",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ba3fc977-64f1-4131-8620-6b24d529ae98",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Zinc Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Rhodium Sulfate Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Zinc Sulfate Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Crude Rhodium Metal Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "bbead58e-7c7a-4a78-9607-e56a3328fb1f",
+      "name": "item:gregtech:gt.blockmachines:15515",
+      "durationTicks": 800.0,
+      "energyPerTick": 393216.0,
+      "throughputFactor": 256,
+      "inputs": [
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 32,
+          "name": "Nitrogen",
+          "free": false
+        },
+        {
+          "amount": 30000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Ammonia",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c34f34ea-4078-411c-9625-e2484e118e7f",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 2.0,
+      "energyPerTick": 1440.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 34,
+          "name": "Potassium Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 35,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 7000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 36,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 11.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 37,
+          "name": "Potassium Disulfate Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "cc5e503e-a106-4d4a-b6e9-20ebec1107ea",
+      "name": "item:gregtech:gt.blockmachines:15566",
+      "durationTicks": 5.0,
+      "energyPerTick": 3840.0,
+      "throughputFactor": 32,
+      "inputs": [
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 38,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 39,
+          "name": "Aqua Regia",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "d6e297d3-2b5f-49e4-9fee-bfdd87b3c529",
+      "name": "item:gregtech:gt.blockmachines:1126",
+      "durationTicks": 750.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 40,
+          "name": "Hot Ruthenium Tetroxide Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Salt",
+          "free": false
+        },
+        {
+          "amount": 1800.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        },
+        {
+          "amount": 7200.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 41,
+          "name": "Ruthenium Tetroxide",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "d8cece6d-6d21-44db-b70a-f5f381b268a4",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 3.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 42,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 43,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "da89ff14-39bd-4520-a7b7-9f727abf14fa",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Hydrogen",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 8.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 44,
+          "name": "Platinum Metallic Powder Dust",
+          "free": false
+        },
+        {
+          "amount": 18000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 39,
+          "name": "Aqua Regia",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Platinum Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 18000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 45,
+          "name": "Platinum Concentrate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ece77bc2-b63b-41a7-85cb-1e5d047f883f",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 35.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Palladium Metallic Powder Dust",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Palladium Enriched Ammonia",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Palladium Salt Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Reprecipitated Palladium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "edc1b1c2-b212-4311-8470-f60cfc78af19",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Rhodium Filter Cake Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 46,
+          "name": "Reprecipitated Rhodium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f702cec6-ad9b-4469-a854-6fc650804375",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 5.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 47,
+          "name": "Nitrogen Dioxide",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 36,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 38,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f8294176-1f2a-4c31-bbca-48a4ac59f5fc",
+      "name": "item:gregtech:gt.blockmachines:368",
+      "durationTicks": 1.0,
+      "energyPerTick": 2048.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 48,
+          "name": "Liquid Sodium",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 42,
+          "name": "Sodium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f9c2b985-5370-4dd2-a399-0903f112ae03",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 3,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 49,
+          "name": "Reprecipitated Platinum Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Calcium Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 50,
+          "name": "Platinum Dust",
+          "free": false
+        },
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 51,
+          "name": "Calcium Chloride Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "00ebddb9-5934-41dc-b1cd-8654eaa42cd1",
+      "name": "item:gregtech:gt.blockmachines:15542",
+      "durationTicks": 60.0,
+      "energyPerTick": 1440.0,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 52,
+          "name": "Rhodium Nitrate Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9.0,
+          "chance": 0.105555564,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Rhodium Filter Cake Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "042411ac-ff1d-431c-8ac6-54b6bae96b0c",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 5,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 43,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 53,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 54,
+          "name": "Sodium Formate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0456c608-807b-4f77-a9ab-daec3c4301ab",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 55,
+          "name": "Iridium Dioxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 56,
+          "name": "Acidic Iridium Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "111f37f1-1776-4a34-a1f7-52969273235a",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 5.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 57,
+          "name": "Sodium Nitrate Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Rhodium Salt Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 52,
+          "name": "Rhodium Nitrate Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1200.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 36000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        },
+        {
+          "amount": 39600.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Rhodium Sulfate",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Leach Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 7200.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Molten Potassium",
+          "free": false
+        },
+        {
+          "amount": 39600.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Rhodium Sulfate Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "12a6f852-3efb-4080-8ede-535f50e78bb6",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 58,
+          "name": "Sodium Ruthenate Dust",
+          "free": false
+        },
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 59,
+          "name": "Ruthenium Tetroxide Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 60,
+          "name": "Ruthenium Tetroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 6000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 61,
+          "name": "Ruthenium Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        },
+        {
+          "amount": 6000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 12.0,
+      "energyPerTick": 1485.6593999999996,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Leach Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 62,
+          "name": "Saltpeter Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 63,
+          "name": "Salt Water",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 58,
+          "name": "Sodium Ruthenate Dust",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 64,
+          "name": "Rarest Metal Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 65,
+          "name": "Steam",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 3.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Reprecipitated Palladium Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 66,
+          "name": "Formic Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 67,
+          "name": "Palladium Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Ammonia",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 68,
+          "name": "Ethylene",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "2b631e47-5ea3-49c0-a334-5e007e5bce22",
+      "name": "item:gregtech:gt.blockmachines:2730",
+      "durationTicks": 19.0,
+      "energyPerTick": 1074.95424,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 37,
+          "name": "Potassium Disulfate Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 144.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Molten Potassium Disulfate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "2e174289-eba3-436c-9d9f-38416e8384b5",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 6.0,
+      "energyPerTick": 1485.6593999999996,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 64,
+          "name": "Rarest Metal Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 69,
+          "name": "Iridium Metal Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Acidic Osmium Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "35be3885-0627-464d-acd8-70b40df22f27",
+      "name": "item:gregtech:gt.blockmachines:15542",
+      "durationTicks": 60.0,
+      "energyPerTick": 1440.0,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 70,
+          "name": "Platinum Salt Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9.0,
+          "chance": 0.105555564,
+          "multiplier": 1.0,
+          "resource": 71,
+          "name": "Refined Platinum Salt Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "3fe150b0-9cac-4d85-9b0a-085e2c2119e3",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 960.0,
+      "throughputFactor": 2,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 42,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 38,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 5.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 57,
+          "name": "Sodium Nitrate Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4cbbce37-37aa-4a06-a98a-bc83b68618fd",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 15.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 64000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Ammonia",
+          "free": false
+        },
+        {
+          "amount": 64000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 64000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 72,
+          "name": "Ammonium Chloride",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4ce61e17-4ca0-479e-abbc-f2ef88b84fcc",
+      "name": "item:gregtech:gt.blockmachines:31077",
+      "durationTicks": 136.0,
+      "energyPerTick": 1728.0,
+      "throughputFactor": 4,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 59,
+          "name": "Ruthenium Tetroxide Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 40,
+          "name": "Hot Ruthenium Tetroxide Solution",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4fb867bb-57f1-4df8-ab82-4e03eea89faa",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 12.0,
+      "energyPerTick": 1485.6593999999996,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 69,
+          "name": "Iridium Metal Residue Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 73,
+          "name": "Sludge Dust Residue Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 55,
+          "name": "Iridium Dioxide Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "576a8330-97d3-46a2-a571-99b6f9f65b8d",
+      "name": "item:gregtech:gt.blockmachines:15514",
+      "durationTicks": 6.0,
+      "energyPerTick": 864.0,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 51,
+          "name": "Calcium Chloride Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Calcium Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 46,
+          "name": "Reprecipitated Rhodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 74,
+          "name": "Rhodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Ammonia",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "60cbba93-ef6c-4bda-82e7-bccf9dc18df5",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 50.0,
+      "energyPerTick": 1824.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 71,
+          "name": "Refined Platinum Salt Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 44,
+          "name": "Platinum Metallic Powder Dust",
+          "free": false
+        },
+        {
+          "amount": 87.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 175.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 36000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 45,
+          "name": "Platinum Concentrate",
+          "free": false
+        },
+        {
+          "amount": 3600.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 72,
+          "name": "Ammonium Chloride",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 70,
+          "name": "Platinum Salt Dust",
+          "free": false
+        },
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 49,
+          "name": "Reprecipitated Platinum Dust",
+          "free": false
+        },
+        {
+          "amount": 3600.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Palladium Enriched Ammonia",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 47,
+          "name": "Nitrogen Dioxide",
+          "free": false
+        },
+        {
+          "amount": 27000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Hydrochloric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "73d1653c-8eb0-44d7-9445-60ebf62a1465",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 4.0,
+      "energyPerTick": 1920.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 72,
+          "name": "Ammonium Chloride",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 56,
+          "name": "Acidic Iridium Solution",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Iridium Chloride Dust",
+          "free": false
+        },
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Ammonia",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "name": "item:gregtech:gt.blockmachines:15542",
+      "durationTicks": 60.0,
+      "energyPerTick": 1440.0,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Palladium Salt Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9.0,
+          "chance": 0.105555564,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Palladium Metallic Powder Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "7ad9cfaa-43fc-45f6-9395-72eab28a3c0f",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 15.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Sulfuric Acid",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 54,
+          "name": "Sodium Formate",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 7.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 75,
+          "name": "Sodium Sulfate Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 66,
+          "name": "Formic Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "7ae95a27-02a3-4e47-973d-d4b67b764fb4",
+      "name": "item:gregtech:gt.blockmachines:15539",
+      "durationTicks": 3.0,
+      "energyPerTick": 2048.0,
+      "throughputFactor": 8,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Potassium Ingot",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 34,
+          "name": "Potassium Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "7d980ea2-dec7-4cd5-a701-f4da7e25ef32",
+      "name": "item:gregtech:gt.blockmachines:15514",
+      "durationTicks": 2.0,
+      "energyPerTick": 1296.0,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 7.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 75,
+          "name": "Sodium Sulfate Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 35,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 36,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 48,
+          "name": "Liquid Sodium",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "83022098-94e2-4277-95c2-916f6aed552f",
+      "source": "60cbba93-ef6c-4bda-82e7-bccf9dc18df5",
+      "sourceOutput": 0,
+      "target": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+      "targetInput": 0
+    },
+    {
+      "id": "8b5e2e6f-5151-4c7f-8e19-760cb8f7435f",
+      "source": "35be3885-0627-464d-acd8-70b40df22f27",
+      "sourceOutput": 0,
+      "target": "60cbba93-ef6c-4bda-82e7-bccf9dc18df5",
+      "targetInput": 0
+    },
+    {
+      "id": "8c20ab18-a09d-4bc6-b0bd-60af1a8361dc",
+      "source": "adbf82cd-30c2-4711-8f5b-2932cc0b3675",
+      "sourceOutput": 0,
+      "target": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+      "targetInput": 0
+    },
+    {
+      "id": "8c539dbe-101c-4b8d-b236-5fb92cb267bb",
+      "source": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "sourceOutput": 0,
+      "target": "945544bf-4b66-45d6-b988-b2a8d91cf0dc",
+      "targetInput": 0
+    },
+    {
+      "id": "8e4068b7-e7fe-4ed1-a803-f933b4640e31",
+      "source": "12a6f852-3efb-4080-8ede-535f50e78bb6",
+      "sourceOutput": 0,
+      "target": "4ce61e17-4ca0-479e-abbc-f2ef88b84fcc",
+      "targetInput": 0
+    },
+    {
+      "id": "926db52a-2178-4781-be35-a21180a7ef7e",
+      "source": "ba3fc977-64f1-4131-8620-6b24d529ae98",
+      "sourceOutput": 1,
+      "target": "97b69bcc-ccea-49f6-acd7-c8cf4acd4fbc",
+      "targetInput": 0
+    },
+    {
+      "id": "933e8ab2-6d4e-41c2-afff-4a31c4388e95",
+      "source": "f9c2b985-5370-4dd2-a399-0903f112ae03",
+      "sourceOutput": 1,
+      "target": "576a8330-97d3-46a2-a571-99b6f9f65b8d",
+      "targetInput": 0
+    },
+    {
+      "id": "951f937a-42e6-4f10-a299-eafa866ebc9f",
+      "source": "4cbbce37-37aa-4a06-a98a-bc83b68618fd",
+      "sourceOutput": 0,
+      "target": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "targetInput": 1
+    },
+    {
+      "id": "9c6e4a74-de8d-4f7a-b752-03b84ab52775",
+      "source": "ece77bc2-b63b-41a7-85cb-1e5d047f883f",
+      "sourceOutput": 1,
+      "target": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+      "targetInput": 0
+    },
+    {
+      "id": "a6360619-eb69-4906-95a3-71f2ad9a3607",
+      "source": "4fb867bb-57f1-4df8-ab82-4e03eea89faa",
+      "sourceOutput": 1,
+      "target": "0456c608-807b-4f77-a9ab-daec3c4301ab",
+      "targetInput": 0
+    },
+    {
+      "id": "aa97e7c5-2c71-42e6-8bac-f93dbe35a9c7",
+      "source": "00ebddb9-5934-41dc-b1cd-8654eaa42cd1",
+      "sourceOutput": 0,
+      "target": "93c981a6-28ea-4f99-81f3-e2e11b1e2860",
+      "targetInput": 0
+    },
+    {
+      "id": "b44cca48-0194-4a88-bf41-e2cd72020662",
+      "source": "3fe150b0-9cac-4d85-9b0a-085e2c2119e3",
+      "sourceOutput": 0,
+      "target": "111f37f1-1776-4a34-a1f7-52969273235a",
+      "targetInput": 0
+    },
+    {
+      "id": "b796072c-16c1-4579-a0a2-069a0c848ea3",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 0,
+      "target": "35be3885-0627-464d-acd8-70b40df22f27",
+      "targetInput": 0
+    },
+    {
+      "id": "b7d33749-7bd5-40c4-b2a7-57b36e3a25ca",
+      "source": "edc1b1c2-b212-4311-8470-f60cfc78af19",
+      "sourceOutput": 0,
+      "target": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+      "targetInput": 0
+    },
+    {
+      "id": "c0df0fed-8d9c-476b-aa34-b1b48dabfe93",
+      "source": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+      "sourceOutput": 0,
+      "target": "adbf82cd-30c2-4711-8f5b-2932cc0b3675",
+      "targetInput": 0
+    },
+    {
+      "id": "c3f2d10a-00af-4759-8498-5cfc5e8fb50e",
+      "source": "945544bf-4b66-45d6-b988-b2a8d91cf0dc",
+      "sourceOutput": 1,
+      "target": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+      "targetInput": 0
+    },
+    {
+      "id": "cc3a0b47-5c8a-4551-b478-b2f9fd4da47b",
+      "source": "ece77bc2-b63b-41a7-85cb-1e5d047f883f",
+      "sourceOutput": 0,
+      "target": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "targetInput": 0
+    },
+    {
+      "id": "d5984546-83a2-4a3c-a7eb-ac34bfa1c963",
+      "source": "7ae95a27-02a3-4e47-973d-d4b67b764fb4",
+      "sourceOutput": 0,
+      "target": "c34f34ea-4078-411c-9625-e2484e118e7f",
+      "targetInput": 0
+    },
+    {
+      "id": "d84a964a-2fbc-4718-92c5-a94e87aad6ff",
+      "source": "c34f34ea-4078-411c-9625-e2484e118e7f",
+      "sourceOutput": 0,
+      "target": "2b631e47-5ea3-49c0-a334-5e007e5bce22",
+      "targetInput": 0
+    },
+    {
+      "id": "da3f87ac-eba1-4fdf-a9fa-e7121d2b0e7e",
+      "source": "7ad9cfaa-43fc-45f6-9395-72eab28a3c0f",
+      "sourceOutput": 1,
+      "target": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+      "targetInput": 1
+    },
+    {
+      "id": "dbc177f6-b1a9-4f88-b7b2-ac7b1b40c913",
+      "source": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+      "sourceOutput": 1,
+      "target": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "targetInput": 0
+    },
+    {
+      "id": "e2ea4e31-cd68-4372-99fc-d1209616b1cf",
+      "source": "945544bf-4b66-45d6-b988-b2a8d91cf0dc",
+      "sourceOutput": 0,
+      "target": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "targetInput": 0
+    },
+    {
+      "id": "e8753a3f-5340-45b5-a509-90df5df14283",
+      "source": "4ce61e17-4ca0-479e-abbc-f2ef88b84fcc",
+      "sourceOutput": 0,
+      "target": "d6e297d3-2b5f-49e4-9fee-bfdd87b3c529",
+      "targetInput": 0
+    },
+    {
+      "id": "ea05d668-57b6-4f1b-bfea-d0ca66d46169",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 1,
+      "target": "f9c2b985-5370-4dd2-a399-0903f112ae03",
+      "targetInput": 0
+    },
+    {
+      "id": "ee9c3031-fa26-43ec-9c69-aad1dc427fcc",
+      "source": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+      "sourceOutput": 2,
+      "target": "ba3fc977-64f1-4131-8620-6b24d529ae98",
+      "targetInput": 1
+    },
+    {
+      "id": "f36e14f6-f827-46f6-9cab-ce9a0f3ddba4",
+      "source": "0456c608-807b-4f77-a9ab-daec3c4301ab",
+      "sourceOutput": 0,
+      "target": "73d1653c-8eb0-44d7-9445-60ebf62a1465",
+      "targetInput": 1
+    },
+    {
+      "id": "f79d1d1b-685d-4f51-83b9-9fdcaa831777",
+      "source": "ba3fc977-64f1-4131-8620-6b24d529ae98",
+      "sourceOutput": 0,
+      "target": "938a6af4-918d-41d0-a1a1-a46e3b7242f3",
+      "targetInput": 0
+    },
+    {
+      "id": "01424c3d-8622-4beb-9e29-d5e2c064a2e3",
+      "source": "f8294176-1f2a-4c31-bbca-48a4ac59f5fc",
+      "sourceOutput": 0,
+      "target": "d8cece6d-6d21-44db-b70a-f5f381b268a4",
+      "targetInput": 0
+    },
+    {
+      "id": "0dd5cb34-24cb-4692-addc-0dc073bba71c",
+      "source": "b1a197df-f89f-4421-bde8-31bc2829d610",
+      "sourceOutput": 0,
+      "target": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "targetInput": 0
+    },
+    {
+      "id": "127e542d-e104-4d6d-91ad-cb6af476627a",
+      "source": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+      "sourceOutput": 1,
+      "target": "2e174289-eba3-436c-9d9f-38416e8384b5",
+      "targetInput": 0
+    },
+    {
+      "id": "12a6f6a7-150f-4c90-b671-985e1131892b",
+      "source": "adbf82cd-30c2-4711-8f5b-2932cc0b3675",
+      "sourceOutput": 1,
+      "target": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+      "targetInput": 1
+    },
+    {
+      "id": "185db68e-0d10-4338-a4a0-1ca9ce5fd832",
+      "source": "73d1653c-8eb0-44d7-9445-60ebf62a1465",
+      "sourceOutput": 0,
+      "target": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+      "targetInput": 0
+    },
+    {
+      "id": "2474c801-088a-415d-a046-6a9a6fdcaf48",
+      "source": "938a6af4-918d-41d0-a1a1-a46e3b7242f3",
+      "sourceOutput": 0,
+      "target": "ba3fc977-64f1-4131-8620-6b24d529ae98",
+      "targetInput": 0
+    },
+    {
+      "id": "269c04d4-acc5-4c2a-9427-6f9069eb431a",
+      "source": "2e174289-eba3-436c-9d9f-38416e8384b5",
+      "sourceOutput": 0,
+      "target": "4fb867bb-57f1-4df8-ab82-4e03eea89faa",
+      "targetInput": 0
+    },
+    {
+      "id": "26daae0e-de62-4a3a-ac47-a0cbe2db859e",
+      "source": "2b631e47-5ea3-49c0-a334-5e007e5bce22",
+      "sourceOutput": 0,
+      "target": "adbf82cd-30c2-4711-8f5b-2932cc0b3675",
+      "targetInput": 1
+    },
+    {
+      "id": "2a7a68a2-5d9f-4b1f-90d1-a336480f6dbb",
+      "source": "7ad9cfaa-43fc-45f6-9395-72eab28a3c0f",
+      "sourceOutput": 0,
+      "target": "7d980ea2-dec7-4cd5-a701-f4da7e25ef32",
+      "targetInput": 0
+    },
+    {
+      "id": "2feedb8e-b521-4767-8d3a-f2497985af1c",
+      "source": "9c233280-8794-4953-81ef-276d127b4038",
+      "sourceOutput": 0,
+      "target": "7ae95a27-02a3-4e47-973d-d4b67b764fb4",
+      "targetInput": 0
+    },
+    {
+      "id": "3865c820-bac9-4b93-8764-ccae0c9f8b53",
+      "source": "d8cece6d-6d21-44db-b70a-f5f381b268a4",
+      "sourceOutput": 0,
+      "target": "042411ac-ff1d-431c-8ac6-54b6bae96b0c",
+      "targetInput": 0
+    },
+    {
+      "id": "3b05a4c4-2b23-4d22-a0fc-f33b035232e8",
+      "source": "f702cec6-ad9b-4469-a854-6fc650804375",
+      "sourceOutput": 0,
+      "target": "cc5e503e-a106-4d4a-b6e9-20ebec1107ea",
+      "targetInput": 1
+    },
+    {
+      "id": "40974c35-53b5-4c91-8ec4-1166ea5aff41",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 4,
+      "target": "cc5e503e-a106-4d4a-b6e9-20ebec1107ea",
+      "targetInput": 0
+    },
+    {
+      "id": "4323fb81-dd5a-46df-ad95-4aa12b4f3664",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 3,
+      "target": "f702cec6-ad9b-4469-a854-6fc650804375",
+      "targetInput": 0
+    },
+    {
+      "id": "43cb7d10-6fd7-4e79-898f-ca3a8d6df525",
+      "source": "9d808eee-2d6c-4463-87d9-a1085ec9254a",
+      "sourceOutput": 0,
+      "target": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+      "targetInput": 1
+    },
+    {
+      "id": "44df0e67-cbe9-4f23-a09f-c6aaab2601d4",
+      "source": "da89ff14-39bd-4520-a7b7-9f727abf14fa",
+      "sourceOutput": 0,
+      "target": "4cbbce37-37aa-4a06-a98a-bc83b68618fd",
+      "targetInput": 1
+    },
+    {
+      "id": "4a30a7d1-c159-4c84-b1e1-fa137755bef8",
+      "source": "7d980ea2-dec7-4cd5-a701-f4da7e25ef32",
+      "sourceOutput": 2,
+      "target": "f8294176-1f2a-4c31-bbca-48a4ac59f5fc",
+      "targetInput": 0
+    },
+    {
+      "id": "4d04e8db-bbfa-4339-a82f-502d10b3ed73",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 2,
+      "target": "b1a197df-f89f-4421-bde8-31bc2829d610",
+      "targetInput": 0
+    },
+    {
+      "id": "4d47533a-bea9-4345-9644-7f50d6d308a3",
+      "source": "2e174289-eba3-436c-9d9f-38416e8384b5",
+      "sourceOutput": 1,
+      "target": "9d808eee-2d6c-4463-87d9-a1085ec9254a",
+      "targetInput": 0
+    },
+    {
+      "id": "523306e6-42e1-4d22-8562-cb9f8bd6aadc",
+      "source": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+      "sourceOutput": 0,
+      "target": "12a6f852-3efb-4080-8ede-535f50e78bb6",
+      "targetInput": 0
+    },
+    {
+      "id": "59744d8e-e522-4779-a6b7-f0fee7fa2a06",
+      "source": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+      "sourceOutput": 0,
+      "target": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+      "targetInput": 0
+    },
+    {
+      "id": "59907728-47c6-40b0-b328-27fd72d91bd8",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 2,
+      "target": "945544bf-4b66-45d6-b988-b2a8d91cf0dc",
+      "targetInput": 1
+    },
+    {
+      "id": "5cef2ba8-1d2d-48c4-9405-070c684ec848",
+      "source": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+      "sourceOutput": 1,
+      "target": "9c233280-8794-4953-81ef-276d127b4038",
+      "targetInput": 0
+    },
+    {
+      "id": "5e0afb64-0e97-4dff-9a52-f24368609694",
+      "source": "97b69bcc-ccea-49f6-acd7-c8cf4acd4fbc",
+      "sourceOutput": 0,
+      "target": "a494d65f-7a39-4364-91e6-2d747d096455",
+      "targetInput": 0
+    },
+    {
+      "id": "64837757-e1ee-4c11-9dfb-5252106a6b3d",
+      "source": "042411ac-ff1d-431c-8ac6-54b6bae96b0c",
+      "sourceOutput": 0,
+      "target": "7ad9cfaa-43fc-45f6-9395-72eab28a3c0f",
+      "targetInput": 1
+    },
+    {
+      "id": "697c3e69-9943-458e-b89f-2c13cceb6aca",
+      "source": "576a8330-97d3-46a2-a571-99b6f9f65b8d",
+      "sourceOutput": 0,
+      "target": "f9c2b985-5370-4dd2-a399-0903f112ae03",
+      "targetInput": 1
+    },
+    {
+      "id": "69ed1945-edac-4101-976c-98d5f9de5f0e",
+      "source": "93c981a6-28ea-4f99-81f3-e2e11b1e2860",
+      "sourceOutput": 0,
+      "target": "edc1b1c2-b212-4311-8470-f60cfc78af19",
+      "targetInput": 0
+    },
+    {
+      "id": "6d97cc3c-9df5-46f8-9488-46d348db4080",
+      "source": "a494d65f-7a39-4364-91e6-2d747d096455",
+      "sourceOutput": 0,
+      "target": "111f37f1-1776-4a34-a1f7-52969273235a",
+      "targetInput": 1
+    },
+    {
+      "id": "7013adcc-1f71-4b9a-a342-8508da67dd84",
+      "source": "cc5e503e-a106-4d4a-b6e9-20ebec1107ea",
+      "sourceOutput": 0,
+      "target": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+      "targetInput": 1
+    },
+    {
+      "id": "70d50ceb-eef0-4127-ae6b-6042e03ad886",
+      "source": "74253d5d-faf7-4540-91b8-d7d07e77fae1",
+      "sourceOutput": 0,
+      "target": "ece77bc2-b63b-41a7-85cb-1e5d047f883f",
+      "targetInput": 0
+    },
+    {
+      "id": "7212843c-0d09-4beb-b9af-f368f66e0688",
+      "source": "61d96127-ab32-4cb9-be65-9b9311f8f498",
+      "sourceOutput": 2,
+      "target": "ece77bc2-b63b-41a7-85cb-1e5d047f883f",
+      "targetInput": 1
+    },
+    {
+      "id": "76db1abf-c6bc-400d-a3c3-66596ce2292c",
+      "source": "bbead58e-7c7a-4a78-9607-e56a3328fb1f",
+      "sourceOutput": 0,
+      "target": "4cbbce37-37aa-4a06-a98a-bc83b68618fd",
+      "targetInput": 0
+    },
+    {
+      "id": "7c7ba81a-2e19-4dd1-9e10-150c5ffd7db3",
+      "source": "111f37f1-1776-4a34-a1f7-52969273235a",
+      "sourceOutput": 0,
+      "target": "00ebddb9-5934-41dc-b1cd-8654eaa42cd1",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "8529fc7a-e08f-442c-9164-41fccc5ffdba",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "7d980ea2-dec7-4cd5-a701-f4da7e25ef32",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "88e30a86-686f-4a3a-ba27-654d0dcf8975",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "93c981a6-28ea-4f99-81f3-e2e11b1e2860",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "966113d3-977d-46f5-96b8-f828872f2c09",
+      "label": "Chlorine",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "9dc38aca-8707-41c4-b729-02d3145b59e1",
+      "label": "Chlorine",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "9e58f121-41d4-4e5c-b79b-b373ffab1fde",
+      "label": "Chlorine",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "12a6f852-3efb-4080-8ede-535f50e78bb6",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "a107bd70-1639-494b-a843-0fe85f6fc420",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f702cec6-ad9b-4469-a854-6fc650804375",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "a8bc7d78-6ff8-4890-848c-281a195e4878",
+      "label": "Sludge Dust Residue Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "4fb867bb-57f1-4df8-ab82-4e03eea89faa",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "a92347c5-2796-4899-bd89-d9ecc25adf2d",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d8cece6d-6d21-44db-b70a-f5f381b268a4",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "ab526cad-b6b9-4d7f-8776-009319647627",
+      "label": "Metallic Sludge Dust Residue Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "aceb7462-37ff-4dc9-b16a-c6c000484bbf",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "aeceec15-ee9e-4877-b943-7781572159c9",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c34f34ea-4078-411c-9625-e2484e118e7f",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "b034ccae-058f-4645-9349-adca18fc08ad",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "b1b20e0c-2309-4bf3-9f30-79513db8892c",
+      "label": "Chlorine",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "60cbba93-ef6c-4bda-82e7-bccf9dc18df5",
+          "port": 1
+        },
+        {
+          "node": "576a8330-97d3-46a2-a571-99b6f9f65b8d",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "b2b62650-3e40-450c-b220-a79baa7918e5",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d6e297d3-2b5f-49e4-9fee-bfdd87b3c529",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "bb30b025-a3e0-4ecf-bdbe-a29bb64a947b",
+      "label": "Osmium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "bbd1641c-04ca-4ac1-a391-5c11f329717e",
+      "label": "Sulfuric Acid",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "938a6af4-918d-41d0-a1a1-a46e3b7242f3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "c55ba4d7-ad94-4db9-9f95-6da554a3deb2",
+      "label": "Ammonia",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "c73a7a95-0e1f-4a76-a287-308c29323704",
+      "label": "Hydrogen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "bbead58e-7c7a-4a78-9607-e56a3328fb1f",
+          "port": 1
+        },
+        {
+          "node": "da89ff14-39bd-4520-a7b7-9f727abf14fa",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "c7cc202b-c805-4f17-a572-9c3a6ca01dde",
+      "label": "Saltpeter Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "cdd9546f-5a32-4aea-a597-b81fb66a2474",
+      "label": "Rhodium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "cf82ffa0-3d91-469f-9440-4d383433fc1f",
+      "label": "Ruthenium Tetroxide",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d6e297d3-2b5f-49e4-9fee-bfdd87b3c529",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "d6576ce9-ebc8-4e05-8d61-3c0b835fb046",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a494d65f-7a39-4364-91e6-2d747d096455",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "daa5d755-bcad-4718-a42a-1f227be5432a",
+      "label": "Hydrogen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d8cece6d-6d21-44db-b70a-f5f381b268a4",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "de3e301c-9cff-452d-a9cc-40013ab6f1be",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f702cec6-ad9b-4469-a854-6fc650804375",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "e5e5fd28-3bee-4307-b8c1-0c5cb85b2246",
+      "label": "Hydrochloric Acid",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "e5ed1c18-3bc9-4f58-b0e3-3a770e2ce6b2",
+      "label": "Salt",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "111f37f1-1776-4a34-a1f7-52969273235a",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "e7c689ff-93f1-41cd-9fbc-30f7ee0d7f04",
+      "label": "Chlorine",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "f3489e65-e4e3-48ae-8c56-552265e33078",
+      "label": "Sodium Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "3fe150b0-9cac-4d85-9b0a-085e2c2119e3",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "fb1797f2-7626-4efb-8aac-a82e53b61df5",
+      "label": "Sulfur Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c34f34ea-4078-411c-9625-e2484e118e7f",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "0a672641-847c-4846-9979-b9962ce61edf",
+      "label": "Nitrogen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "bbead58e-7c7a-4a78-9607-e56a3328fb1f",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "0b03f0fa-8e68-4b84-b63d-68489291abf2",
+      "label": "Nitric Acid",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "3fe150b0-9cac-4d85-9b0a-085e2c2119e3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "0dc06143-5586-4f06-8191-eb1fb36a80fd",
+      "label": "Chlorine",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "da89ff14-39bd-4520-a7b7-9f727abf14fa",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "0f65a828-457a-4cb5-a789-83630fc60e7e",
+      "label": "Chlorine",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "97b69bcc-ccea-49f6-acd7-c8cf4acd4fbc",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "106b2d66-d885-4c4c-b93e-0c844d6be56a",
+      "label": "Salt Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "119b06a8-b132-4307-8172-1c1251ebf880",
+      "label": "Ethylene",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "12506d1b-fe9f-4523-8bfe-618a5d6e3af6",
+      "label": "Calcium Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "18bc4dd0-ebb8-4d27-bddc-fbcb3fed720c",
+      "label": "Steam",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e6f05d4-8d8d-4ef5-9db0-13c6a452d3a9",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "1e49a0a3-e0be-462f-a582-07e71a6d6179",
+      "label": "Hydrochloric Acid",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2e174289-eba3-436c-9d9f-38416e8384b5",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "214574f1-de15-43e7-9996-65c21f76788d",
+      "label": "Hydrochloric Acid",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "22731cc1-e61a-41ed-b8d3-230537ab89ac",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1162180a-9aa4-42b2-bcee-9ccea16e3c58",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "27052411-b12e-490a-9104-04380e5038d3",
+      "label": "Salt",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d6e297d3-2b5f-49e4-9fee-bfdd87b3c529",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "2ba70dcf-2d1c-4edd-b709-e5f38d7be439",
+      "label": "Hydrochloric Acid",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "5fda40b7-85e8-4740-8af0-547bffc6a5c9",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "2cbc8d88-6f6c-42cb-85fd-06bee8173b0e",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0bfb8b4-2909-4c3d-b745-53f3a2fc5d7e",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "2e8622bc-c5e8-4e70-8aaf-83165b683a52",
+      "label": "Ammonia",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "351ae2f8-8351-42b9-ac44-a08ea9f8b572",
+      "label": "Palladium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2a6e41be-ac8e-4060-bb4a-ce53b36b4794",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "3f833f7b-3622-4f5e-be83-dfbcfd1e1158",
+      "label": "Ruthenium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "3fa02e79-74fe-49fa-92eb-cd8460711138",
+      "label": "Hydrogen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "938a6af4-918d-41d0-a1a1-a46e3b7242f3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "45ab4262-0917-496c-88c6-52173fef0cca",
+      "label": "Hydrogen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "3fe150b0-9cac-4d85-9b0a-085e2c2119e3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "4d06e88a-3c8a-46e1-a418-716e3472f659",
+      "label": "Ruthenium Tetroxide Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1e3a7500-8a47-4535-94f7-c2ca97a36325",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "516265ca-3653-442b-a9ba-1b7be10facba",
+      "label": "Calcium Chloride",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "55112250-6851-4f3c-a4b4-6977e87fc87a",
+      "label": "Platinum Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f9c2b985-5370-4dd2-a399-0903f112ae03",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "56b43a11-a322-4ec6-bfe2-d7a2fb6b2b44",
+      "label": "Carbon Monoxide",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "042411ac-ff1d-431c-8ac6-54b6bae96b0c",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "586670be-414e-47b7-9d56-37fcacbecdeb",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "9d808eee-2d6c-4463-87d9-a1085ec9254a",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "5906250a-92ad-4b66-b513-fcc2e1aa1ad7",
+      "label": "Salt",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "97b69bcc-ccea-49f6-acd7-c8cf4acd4fbc",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "62f256f8-528d-4833-8953-115530ea63c5",
+      "label": "Sulfur Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "7d980ea2-dec7-4cd5-a701-f4da7e25ef32",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "656274b5-ff6c-45e7-b8da-c6f7e0c8cd98",
+      "label": "Ammonia",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "73d1653c-8eb0-44d7-9445-60ebf62a1465",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "667ef9fc-980b-4c60-ad57-4fc73a2a4d22",
+      "label": "Platinum Metallic Powder Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e026cdd3-f765-4f4d-9b04-bd49b90c6e53",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7738c792-2d80-4384-84d2-3324bc0081c4",
+      "label": "Iridium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b59083f3-dd60-4384-bdf3-a944eb73e303",
+          "port": 1
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

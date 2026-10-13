@@ -70,6 +70,7 @@ public final class WorldLinks {
         final int at = indexOf(node, dim, x, y, z);
         if (at < 0) return;
         PlanAPI.recordEdit(graph, () -> node.worldLinks.remove(at));
+        WorldIndex.changed();
         PlanAPI.save();
     }
 
@@ -142,6 +143,7 @@ public final class WorldLinks {
             if (!another) keep.worldLinks.clear();
             keep.worldLinks.add(at.clone());
         }
+        WorldIndex.changed();
     }
 
     /**
@@ -170,6 +172,7 @@ public final class WorldLinks {
             final int at = indexOf(node, from[0], from[1], from[2], from[3]);
             if (at >= 0) node.worldLinks.set(at, now);
         });
+        WorldIndex.changed();
         PlanAPI.save();
         return true;
     }
@@ -198,6 +201,7 @@ public final class WorldLinks {
     public static void clear(final Graph graph, final Node node) {
         if (node.worldLinks.isEmpty()) return;
         PlanAPI.recordEdit(graph, node.worldLinks::clear);
+        WorldIndex.changed();
         PlanAPI.save();
     }
 
@@ -210,22 +214,7 @@ public final class WorldLinks {
         final net.minecraft.entity.EntityLivingBase eye = mc.renderViewEntity;
         final Plan plan = Plan.loaded();
         if (eye == null || mc.theWorld == null || plan == null) return null;
-        final net.minecraft.util.Vec3 from = eye.getPosition(1f), dir = eye.getLook(1f);
-        final int dim = mc.theWorld.provider.dimensionId;
-        Spot best = null;
-        double bestT = range;
-        for (final Graph g : plan.getGraphs()) {
-            if (only != null && g != only) continue;
-            for (final Node n : g.nodes.values()) for (final int[] l : n.worldLinks) {
-                if (l[0] != dim) continue;
-                final double t = enter(from, dir, extent(g, n, l));
-                if (t >= 0 && t < bestT) {
-                    bestT = t;
-                    best = new Spot(new Hit(g, n), l[1], l[2], l[3], t);
-                }
-            }
-        }
-        return best;
+        return WorldIndex.ray(mc.theWorld.provider.dimensionId, eye.getPosition(1f), eye.getLook(1f), range, only);
     }
 
     /**

@@ -524,19 +524,20 @@ final class OverviewRail extends ParentWidget<OverviewRail>
         for (final BoardSession.TotalLine line : shown) {
             final boolean hot = hover != null && hover.data() == line && hover.kind() == Kind.RESOURCE;
             final double amount = amounts.get(line);
-            // What sets it: its drawers, then the ports set to a rate on their cards.
-            final List<Object> drawers = new ArrayList<>();
-            if (!internal) {
-                drawers.addAll(drawersFor(line, sources));
-                drawers.addAll(pinsFor(line, sources));
-            }
             // One line per drawer or port: the resource's own line carries the first; any more get a short line each.
-            final int rows = Math.max(1, drawers.size());
+            final int setters = internal ? 0 : drawersFor(line, sources).size() + pinsFor(line, sources).size();
+            final int rows = Math.max(1, setters);
             final int h = ROW_H + (rows - 1) * DRAWER_H;
             // Scrolled out of the list: nothing to draw (a long plan has hundreds of rows, and every icon costs).
             if (y + h <= LIST_Y || y >= getArea().height) {
                 y += h;
                 continue;
+            }
+            // What sets it: its drawers, then the ports set to a rate on their cards.
+            final List<Object> drawers = new ArrayList<>(setters);
+            if (!internal) {
+                drawers.addAll(drawersFor(line, sources));
+                drawers.addAll(pinsFor(line, sources));
             }
             Hyb.rect(0, y, w - 1, h, hot ? HOVER : tint);
             final boolean eu = Resources.isPower(line.key());
@@ -559,6 +560,8 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                 setterControls(drawers.get(0), y + 1, w, hover);
                 for (int i = 1; i < drawers.size(); i++) {
                     final int dy = y + ROW_H + (i - 1) * DRAWER_H;
+                    // Out of the list: a resource made in hundreds of places has a row for each.
+                    if (dy + DRAWER_H <= LIST_Y || dy >= getArea().height) continue;
                     // A branch from the resource down to each further drawer.
                     final int bx = ICON_X + ICON / 2;
                     Hyb.rect(bx, y + ROW_H - 1, 1, dy - y - ROW_H + DRAWER_H / 2 + 1, Hyb.MUTED);
@@ -679,15 +682,8 @@ final class OverviewRail extends ParentWidget<OverviewRail>
 
     /** The drawers holding a resource on one side (sources for inputs, products for outputs) that take a rule. */
     private List<DrawerModel> drawersFor(final BoardSession.TotalLine line, final boolean sources) {
-        final List<DrawerModel> out = new ArrayList<>();
-        for (final DrawerModel d : session.drawerModels()
-            .values()) {
-            if ((d.kind == Drawer.Kind.SOURCE) == sources && d.kind.hasRule()
-                && session.canonicalKey(d.drawer.getResourceKey())
-                    .equals(line.key()))
-                out.add(d);
-        }
-        return out;
+        return index().drawers(sources)
+            .getOrDefault(line.key(), List.of());
     }
 
     /**
@@ -695,43 +691,114 @@ final class OverviewRail extends ParentWidget<OverviewRail>
      * outputs), where nothing is wired to them: there it is the plan's edge, as a drawer is.
      */
     private List<PortPin> pinsFor(final BoardSession.TotalLine line, final boolean sources) {
-        final List<PortPin> out = new ArrayList<>();
-        final com.gtnhplanner.data.flowchart.Graph graph = session.graph();
-        for (final com.gtnhplanner.data.flowchart.Node n : graph.getNodes()) {
-            final Map<Integer, Double> rates = sources ? n.targetInputRates : n.targetOutputRates;
-            if (rates.isEmpty()) continue;
-            final List<com.gtnhplanner.data.flowchart.Port<?>> ports = sources ? n.inputs : n.outputs;
-            for (final Map.Entry<Integer, Double> r : rates.entrySet()) {
-                final int i = r.getKey();
-                if (r.getValue() == null || r.getValue() <= 0 || i < 0 || i >= ports.size()) continue;
-                if (!session.canonicalKey(Resources.key(ports.get(i)))
-                    .equals(line.key())) continue;
-                boolean wired = false;
-                for (final com.gtnhplanner.data.flowchart.Edge e : graph.getEdges())
-                    wired |= sources ? e.targetNodeId.equals(n.id) && e.targetInputIndex == i
-                        : e.sourceNodeId.equals(n.id) && e.sourceOutputIndex == i;
-                if (wired) continue;
-                final CardModel m = session.model(n.id);
-                out.add(new PortPin(n, !sources, i, r.getValue(), m != null ? m.machineName : n.machineName));
-            }
-        }
-        return out;
+        return index().pins(sources)
+            .getOrDefault(line.key(), List.of());
     }
 
     /** The ports of a line's resource on one side with nothing wired to them and no drawer. */
     private List<OpenPort> openPorts(final BoardSession.TotalLine line, final boolean sources) {
-        final List<OpenPort> out = new ArrayList<>();
-        for (final CardModel m : session.models()
+        return index().open(sources)
+            .getOrDefault(line.key(), List.of());
+    }
+
+    /**
+     * What sets each resource, by its canonical key and side: its drawers, the ports set to a rate with nothing wired,
+     * and the open ports. Worked out once per state of the plan (the list asks for every line every frame, and a plan
+     * of thousands of cards made that the frame's whole cost).
+     */
+    private record Index(Object graph, long version, Object models, Object drawerModels, Object totals,
+        Map<String, List<DrawerModel>> sourceDrawers, Map<String, List<DrawerModel>> productDrawers,
+        Map<String, List<PortPin>> inputPins, Map<String, List<PortPin>> outputPins,
+        Map<String, List<OpenPort>> openInputs, Map<String, List<OpenPort>> openOutputs) {
+
+        Map<String, List<DrawerModel>> drawers(final boolean sources) {
+            return sources ? sourceDrawers : productDrawers;
+        }
+
+        Map<String, List<PortPin>> pins(final boolean sources) {
+            return sources ? inputPins : outputPins;
+        }
+
+        Map<String, List<OpenPort>> open(final boolean sources) {
+            return sources ? openInputs : openOutputs;
+        }
+    }
+
+    private Index index;
+
+    private Index index() {
+        final com.gtnhplanner.data.flowchart.Graph graph = session.graph();
+        final Index was = index;
+        if (was != null && was.graph() == graph
+            && was.version() == graph.version()
+            && was.models() == session.models()
+            && was.drawerModels() == session.drawerModels()
+            && was.totals() == session.totals()) return was;
+        final Map<String, List<DrawerModel>> sourceDrawers = new HashMap<>(), productDrawers = new HashMap<>();
+        for (final DrawerModel d : session.drawerModels()
             .values()) {
-            for (final CardModel.PortView p : sources ? m.inputs : m.outputs) {
-                if (p.wired() || session.graph()
-                    .drawerAt(m.node.id, p.index(), sources) != null) continue;
-                if (session.canonicalKey(p.key())
-                    .equals(line.key()))
-                    out.add(new OpenPort(m.node, !sources, p.index(), p.perSecond(), m.machineName));
+            if (!d.kind.hasRule()) continue;
+            (d.kind == Drawer.Kind.SOURCE ? sourceDrawers : productDrawers)
+                .computeIfAbsent(session.canonicalKey(d.drawer.getResourceKey()), k -> new ArrayList<>())
+                .add(d);
+        }
+        // Every wired port, and every port a drawer holds, once.
+        final Set<String> wired = new java.util.HashSet<>(), held = new java.util.HashSet<>();
+        for (final com.gtnhplanner.data.flowchart.Edge e : graph.getEdges()) {
+            wired.add(portKey(e.targetNodeId, true, e.targetInputIndex));
+            wired.add(portKey(e.sourceNodeId, false, e.sourceOutputIndex));
+        }
+        for (final Drawer d : graph.getDrawers()) {
+            final boolean input = d.getKind()
+                .linksInputs();
+            for (final Drawer.Link l : d.getLinks()) held.add(portKey(l.nodeId(), input, l.portIndex()));
+        }
+        final Map<String, List<PortPin>> inputPins = new HashMap<>(), outputPins = new HashMap<>();
+        for (final com.gtnhplanner.data.flowchart.Node n : graph.getNodes()) {
+            for (final boolean sources : new boolean[] { true, false }) {
+                final Map<Integer, Double> rates = sources ? n.targetInputRates : n.targetOutputRates;
+                if (rates.isEmpty()) continue;
+                final List<com.gtnhplanner.data.flowchart.Port<?>> ports = sources ? n.inputs : n.outputs;
+                for (final Map.Entry<Integer, Double> r : rates.entrySet()) {
+                    final int i = r.getKey();
+                    if (r.getValue() == null || r.getValue() <= 0 || i < 0 || i >= ports.size()) continue;
+                    if (wired.contains(portKey(n.id, sources, i))) continue;
+                    final CardModel m = session.model(n.id);
+                    (sources ? inputPins : outputPins)
+                        .computeIfAbsent(session.canonicalKey(Resources.key(ports.get(i))), k -> new ArrayList<>())
+                        .add(new PortPin(n, !sources, i, r.getValue(), m != null ? m.machineName : n.machineName));
+                }
             }
         }
-        return out;
+        final Map<String, List<OpenPort>> openInputs = new HashMap<>(), openOutputs = new HashMap<>();
+        for (final CardModel m : session.models()
+            .values()) {
+            for (final boolean sources : new boolean[] { true, false }) {
+                for (final CardModel.PortView p : sources ? m.inputs : m.outputs) {
+                    if (p.wired() || held.contains(portKey(m.node.id, sources, p.index()))) continue;
+                    (sources ? openInputs : openOutputs)
+                        .computeIfAbsent(session.canonicalKey(p.key()), k -> new ArrayList<>())
+                        .add(new OpenPort(m.node, !sources, p.index(), p.perSecond(), m.machineName));
+                }
+            }
+        }
+        index = new Index(
+            graph,
+            graph.version(),
+            session.models(),
+            session.drawerModels(),
+            session.totals(),
+            sourceDrawers,
+            productDrawers,
+            inputPins,
+            outputPins,
+            openInputs,
+            openOutputs);
+        return index;
+    }
+
+    private static String portKey(final UUID node, final boolean input, final int index) {
+        return node + (input ? "<" : ">") + index;
     }
 
     /** A line nothing sets yet: the rule key on Any and a "Set" box, as a port's on the card. */
@@ -853,19 +920,34 @@ final class OverviewRail extends ParentWidget<OverviewRail>
         }
     }
 
+    /**
+     * The machine lines grouped by machine, and the whole machines in all and shown, for a set of totals and filter.
+     */
+    private record MachineGroups(Object totals, String filter, Map<String, List<BoardSession.MachineLine>> groups,
+        int whole, int shown) {}
+
+    private MachineGroups machineGroups;
+
     private int machines(final BoardSession.Totals t, int y, final int w, final float z, final Hit hover) {
-        final Map<String, List<BoardSession.MachineLine>> groups = new LinkedHashMap<>();
-        for (final BoardSession.MachineLine m : t.machines()) {
-            if (matches(m.name())) groups.computeIfAbsent(m.name(), k -> new ArrayList<>())
-                .add(m);
+        if (machineGroups == null || machineGroups.totals() != t
+            || !machineGroups.filter()
+                .equals(filter)) {
+            final Map<String, List<BoardSession.MachineLine>> made = new LinkedHashMap<>();
+            for (final BoardSession.MachineLine m : t.machines()) {
+                if (matches(m.name())) made.computeIfAbsent(m.name(), k -> new ArrayList<>())
+                    .add(m);
+            }
+            // Whole machines to build: all of them, and those the filter lets through.
+            int all = 0, through = 0;
+            for (final BoardSession.MachineLine m : t.machines()) {
+                final int n = (int) Math.ceil(m.machines() - 1e-9);
+                all += n;
+                if (made.containsKey(m.name())) through += n;
+            }
+            machineGroups = new MachineGroups(t, filter, made, all, through);
         }
-        // Whole machines to build: all of them, and those the filter lets through.
-        int whole = 0, shown = 0;
-        for (final BoardSession.MachineLine m : t.machines()) {
-            final int n = (int) Math.ceil(m.machines() - 1e-9);
-            whole += n;
-            if (groups.containsKey(m.name())) shown += n;
-        }
+        final Map<String, List<BoardSession.MachineLine>> groups = machineGroups.groups();
+        final int whole = machineGroups.whole(), shown = machineGroups.shown();
         y = section("MACHINES", whole, shown, y, w, Hyb.INK, hover);
         // Peak / average, at the right of the section heading.
         final int px = w - 6 - TOGGLE_W;
@@ -928,7 +1010,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                 && g.getKey()
                     .equals(hover.data());
             if (groupHot) Hyb.rect(0, y, w - 1, ROW_H, HOVER);
-            Hyb.icon(
+            if (y + ROW_H > LIST_Y) Hyb.icon(
                 lines.get(0)
                     .stack(),
                 null,
@@ -942,6 +1024,11 @@ final class OverviewRail extends ParentWidget<OverviewRail>
             hits.add(new Hit(Kind.GROUP, 0, y, w - 1, y + ROW_H, g.getKey()));
             y += ROW_H;
             for (final BoardSession.MachineLine m : lines) {
+                // A line scrolled out of the list keeps its room and draws nothing (a machine on hundreds of cards).
+                if (y + ROW_H <= LIST_Y || y >= getArea().height) {
+                    y += ROW_H;
+                    continue;
+                }
                 final boolean pinHot = hover != null && hover.kind() == Kind.PIN && hover.data() == m;
                 final boolean countHot = hover != null && hover.kind() == Kind.COUNT && hover.data() == m;
                 final boolean ruleHot = hover != null && hover.kind() == Kind.MACHINE_RULE && hover.data() == m;

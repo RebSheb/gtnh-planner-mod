@@ -27,7 +27,7 @@ import org.ojalgo.optimisation.Variable;
  * shortfalls, so with one shared bottleneck it may starve one product rather than split the
  * shortage. For each unmet drawer the constraints holding it back are found by dropping them one
  * at a time (pins, other drawers' rules, machine groups) and seeing whether it is then kept;
- * capped at {@link #MAX_PROBES} models and the relaxation's own budget.
+ * capped at {@link #MAX_PROBES} models.
  */
 final class DrawerRelaxation {
 
@@ -35,8 +35,6 @@ final class DrawerRelaxation {
     private static final double LOOSEN = 1e-7;
     /** Cap on the drop-one probes across all unmet drawers. */
     private static final int MAX_PROBES = 32;
-    /** Wall budget for the relaxation and its probes, scaled by effort. */
-    private static final long BUDGET_MILLIS = 4_000;
 
     private DrawerRelaxation() {}
 
@@ -58,12 +56,10 @@ final class DrawerRelaxation {
 
     /**
      * Relaxes the drawer bounds of a stalled run, or returns null when the drawers are not why it
-     * stalled. Leaves {@code ctx}'s pins and bounds as it found them; swaps its budget.
+     * stalled. Leaves {@code ctx}'s pins and bounds as it found them.
      */
     @Nullable
     static Outcome run(final SolveContext ctx) {
-        final Numerics numerics = ctx.heuristics.numerics();
-        ctx.budget = Budget.of(numerics.effort(BUDGET_MILLIS));
         final Relaxed base = solve(ctx);
         if (base == null) return null;
 
@@ -103,7 +99,7 @@ final class DrawerRelaxation {
             final List<Note> limits = new ArrayList<>();
             for (int m = 0; m < ctx.model.machines.size(); m++) {
                 if (Double.isNaN(ctx.pinnedExtent[m])) continue;
-                if (probes++ >= MAX_PROBES || ctx.budget.expired()) break;
+                if (probes++ >= MAX_PROBES) break;
                 final double saved = ctx.pinnedExtent[m];
                 ctx.pinnedExtent[m] = Double.NaN;
                 try {
@@ -118,7 +114,7 @@ final class DrawerRelaxation {
             }
             for (int e = 0; e < drawers; e++) {
                 if (e == d || Double.isNaN(ctx.drawerLower[e]) && Double.isNaN(ctx.drawerUpper[e])) continue;
-                if (probes++ >= MAX_PROBES || ctx.budget.expired()) break;
+                if (probes++ >= MAX_PROBES) break;
                 final double savedLower = ctx.drawerLower[e];
                 final double savedUpper = ctx.drawerUpper[e];
                 ctx.drawerLower[e] = Double.NaN;
@@ -135,7 +131,7 @@ final class DrawerRelaxation {
                 }
             }
             for (int p = 0; p < ctx.model.pools.size(); p++) {
-                if (probes++ >= MAX_PROBES || ctx.budget.expired()) break;
+                if (probes++ >= MAX_PROBES) break;
                 ctx.droppedPools.add(p);
                 try {
                     if (keptWithout(ctx, d)) {

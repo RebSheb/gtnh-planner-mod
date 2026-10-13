@@ -66,6 +66,9 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
     private final Map<UUID, com.gtnhplanner.ui.note.NoteCard> notes = new HashMap<>();
     private final WireLayer wires;
     private int builtStructure = -1;
+    /** The models every card and drawer, in view or not, last caught up with. */
+    private Object syncedModels, syncedDrawers;
+    private long syncedPins = Long.MIN_VALUE;
     /** When the widgets were last built afresh: the screen finds what is under the mouse again a frame later. */
     private long builtAt;
 
@@ -89,8 +92,16 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
         session.tick();
         Popup.openPending();
         boolean rebuild = builtStructure != session.structure();
-        for (final RecipeCard card : cards.values()) rebuild |= card.shapeChanged();
+        final boolean modelsMoved = session.models() != syncedModels
+            || com.gtnhplanner.ui.card.SettingPins.version() != syncedPins;
+        if (!rebuild && modelsMoved) for (final RecipeCard card : cards.values()) rebuild |= card.shapeChanged();
         if (rebuild) rebuildCards();
+        else if (modelsMoved) for (final RecipeCard card : new java.util.HashSet<>(cards.values())) card.syncModels();
+        if (session.drawerModels() != syncedDrawers)
+            for (final DrawerCard drawer : drawers.values()) drawer.syncModel();
+        syncedModels = session.models();
+        syncedDrawers = session.drawerModels();
+        syncedPins = com.gtnhplanner.ui.card.SettingPins.version();
         if (graph().unstackPending() && !session.solving() && !cards.isEmpty()) unstack();
         if (editNote != null && notes.containsKey(editNote)) {
             notes.get(editNote)
@@ -157,6 +168,22 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
     }
 
     private void rebuildCards() {
+        allChildren = true;
+        adding = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        try {
+            buildCards();
+        } finally {
+            adding = null;
+            allChildren = false;
+            inViewFrame = -1;
+        }
+    }
+
+    /** How many times the children were built afresh. */
+    private long builds;
+
+    private void buildCards() {
+        builds++;
         builtStructure = session.structure();
         builtAt = System.currentTimeMillis();
         removeAll();
@@ -168,12 +195,14 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             final com.gtnhplanner.ui.note.NoteCard note = new com.gtnhplanner.ui.note.NoteCard(session, id);
             notes.put(id, note);
             child(note);
+            adding.add(note);
         }
         for (final DrawerModel model : session.drawerModels()
             .values()) {
             final DrawerCard drawer = new DrawerCard(session, model.drawer.getId());
             drawers.put(model.drawer.getId(), drawer);
             child(drawer);
+            adding.add(drawer);
         }
         for (final CardModel model : session.models()
             .values()) {
@@ -183,6 +212,7 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             final RecipeCard card = new RecipeCard(session, host);
             for (final UUID section : session.sectionsOf(host)) cards.put(section, card);
             child(card);
+            adding.add(card);
         }
         scheduleResize();
     }
@@ -230,6 +260,7 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
 
     @Override
     public void draw(final ModularGuiContext context, final WidgetThemeEntry<?> widgetTheme) {
+        frame++;
         if (!com.gtnhplanner.dev.DevPerf.on()) {
             drawCanvas(context, widgetTheme);
             return;
@@ -348,14 +379,14 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
         labels.clear();
         if (PlanPicture.drawing()) {
             routed = wires.wires(cards, drawers, false);
-            wires.draw(routed, com.gtnhplanner.ui.HoverScope.NONE);
+            wires.draw(routed, com.gtnhplanner.ui.HoverScope.NONE, Float.MAX_VALUE);
             return;
         }
         final boolean timed = com.gtnhplanner.dev.DevPerf.on();
         final long started = timed ? System.nanoTime() : 0;
         routed = wires.wires(cards, drawers, moveStart != null || glideStart >= 0 || lifting);
         final long drawing = timed ? System.nanoTime() : 0;
-        wires.draw(routed, session.lit());
+        wires.draw(routed, session.lit(), graph().getZoom() * com.gtnhplanner.ui.PlannerScale.board());
         // A port in hand is not on the plan yet: the minimap and the world see it once it is put down.
         if (!lifting) publishSnapshot(routed);
         if (timed) {
@@ -552,12 +583,201 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
     private final java.util.LinkedHashSet<UUID> raised = new java.util.LinkedHashSet<>();
 
     /**
+     * Whether {@link #getChildren} is every child, as while the board builds or lets go of them. Else it is those in
+     * view and whatever is in hand, so ModularUI's walks over the widgets every frame and tick (drawing, hover,
+     * updates) cost what is on screen, not the plan: a plan of thousands of cards made those the frame's whole cost.
+     */
+    private boolean allChildren;
+    /** While children are added: those added so far, so ModularUI's check for one already there is not a scan. */
+    private java.util.Set<IWidget> adding;
+    private final List<IWidget> addingView = new java.util.AbstractList<>() {
+
+        @Override
+        public IWidget get(final int i) {
+            return BoardCanvas.super.getChildren().get(i);
+        }
+
+        @Override
+        public int size() {
+            return BoardCanvas.super.getChildren().size();
+        }
+
+        @Override
+        public boolean contains(final Object o) {
+            return adding.contains(o);
+        }
+    };
+    /** The children in view, worked out once a frame ({@link #frame} moves as the canvas draws). */
+    private List<IWidget> inView = List.of();
+    private long frame, inViewFrame = -1;
+    /** Beyond the edges of the view, in screen pixels, a child still counts as in view. */
+    private static final int VIEW_MARGIN = 48;
+
+    private List<IWidget> inView() {
+        final List<IWidget> all = super.getChildren();
+        if (inViewFrame == frame) return inView;
+        inViewFrame = frame;
+        final Area a = getArea();
+        final float zoom = graph().getZoom(), m = VIEW_MARGIN / zoom;
+        final float x0 = worldX(a.x) - m, y0 = worldY(a.y) - m, x1 = worldX(a.x + a.width) + m,
+            y1 = worldY(a.y + a.height) + m;
+        final com.cleanroommc.modularui.screen.viewport.LocatedWidget located = getContext().getFocusedWidget();
+        final IWidget focused = located == null ? null : located.getElement();
+        final List<IWidget> out = new ArrayList<>();
+        for (final IWidget w : candidates(all, x0, y0, x1, y1, focused)) {
+            final boolean seen;
+            if (w instanceof final RecipeCard card) {
+                final Node n = card.model() != null ? card.model().node : graph().nodes.get(card.nodeId);
+                final float h = card.layout() != null ? card.layout().height : 300;
+                seen = n == null || n.x < x1 && n.x + CardLayout.W > x0 && n.y < y1 && n.y + h > y0
+                    || raised.contains(card.nodeId)
+                    || isCarried(card.nodeId);
+            } else if (w instanceof final DrawerCard drawer) {
+                final Drawer d = drawer.model() != null ? drawer.model().drawer : graph().getDrawer(drawer.drawerId);
+                seen = d == null || d.getX() < x1 && d.getX() + DrawerCard.W > x0
+                    && d.getY() < y1
+                    && d.getY() + DrawerCard.H > y0
+                    || raised.contains(drawer.drawerId)
+                    || isCarried(drawer.drawerId);
+            } else seen = true;
+            if (seen || focused != null && holds(w, focused)) out.add(w);
+        }
+        inView = out;
+        return out;
+    }
+
+    /**
+     * The children that may be in a box of the board, in their order: those whose cell of {@link #CELL} board units
+     * the box touches (cards and drawers), and every other kind. Filed afresh when the plan, its models or the board's
+     * placing moved anything; otherwise a frame looks only at the cells in view.
+     */
+    private List<IWidget> candidates(final List<IWidget> all, final float x0, final float y0, final float x1,
+        final float y1, @Nullable final IWidget focused) {
+        final long key = (((graph().version() * 31 + System.identityHashCode(graph())) * 31
+            + System.identityHashCode(session.models())) * 31 + placedMoves) * 31 + builds;
+        if (key != filedFor || filed == null) {
+            filed = new HashMap<>();
+            filedAlways = new ArrayList<>();
+            filedWidgets = all.toArray(new IWidget[0]);
+            filedById = new HashMap<>();
+            filedAt = new java.util.IdentityHashMap<>();
+            for (int i = 0; i < filedWidgets.length; i++) {
+                filedAt.put(filedWidgets[i], i);
+                if (filedWidgets[i] instanceof final RecipeCard c) filedById.putIfAbsent(c.nodeId, i);
+                else if (filedWidgets[i] instanceof final DrawerCard d) filedById.putIfAbsent(d.drawerId, i);
+                final float[] box = boxOf(filedWidgets[i]);
+                if (box == null) {
+                    filedAlways.add(i);
+                    continue;
+                }
+                for (int cx = cell(box[0]); cx <= cell(box[2]); cx++)
+                    for (int cy = cell(box[1]); cy <= cell(box[3]); cy++)
+                        filed.computeIfAbsent(cellKey(cx, cy), k -> new ArrayList<>())
+                            .add(i);
+            }
+            filedFor = key;
+        }
+        final java.util.BitSet picked = new java.util.BitSet(filedWidgets.length);
+        for (final int i : filedAlways) picked.set(i);
+        final long cells = (long) (cell(x1) - cell(x0) + 1) * (cell(y1) - cell(y0) + 1);
+        if (cells > filed.size()) {
+            // Zoomed far out: every filed cell is cheaper than every cell in view.
+            for (final List<Integer> in : filed.values()) for (final int i : in) picked.set(i);
+        } else for (int cx = cell(x0); cx <= cell(x1); cx++) for (int cy = cell(y0); cy <= cell(y1); cy++) {
+            final List<Integer> in = filed.get(cellKey(cx, cy));
+            if (in != null) for (final int i : in) picked.set(i);
+        }
+        // Whatever is in hand, raised or being written in may be anywhere now.
+        for (final UUID id : raised) pick(picked, id);
+        if (moveStart != null && moveStarted) for (final UUID id : moveStart.keySet()) pick(picked, id);
+        if (focused != null) {
+            IWidget child = focused;
+            while (child != null && child.getParent() != this) child = child.getParent();
+            final Integer at = child == null ? null : filedAt.get(child);
+            if (at != null) picked.set(at);
+        }
+        final List<IWidget> out = new ArrayList<>(picked.cardinality());
+        for (int i = picked.nextSetBit(0); i >= 0; i = picked.nextSetBit(i + 1)) out.add(filedWidgets[i]);
+        return out;
+    }
+
+    /** Where a card or drawer is on the board {x0, y0, x1, y1}; null for any other child. */
+    @Nullable
+    private float[] boxOf(final IWidget w) {
+        if (w instanceof final RecipeCard card) {
+            final Node n = card.model() != null ? card.model().node : graph().nodes.get(card.nodeId);
+            if (n == null) return null;
+            final float h = card.layout() != null ? card.layout().height : 300;
+            return new float[] { n.x, n.y, n.x + CardLayout.W, n.y + h };
+        }
+        if (w instanceof final DrawerCard drawer) {
+            final Drawer d = drawer.model() != null ? drawer.model().drawer : graph().getDrawer(drawer.drawerId);
+            if (d == null) return null;
+            return new float[] { d.getX(), d.getY(), d.getX() + DrawerCard.W, d.getY() + DrawerCard.H };
+        }
+        return null;
+    }
+
+    private static final int CELL = 512;
+    private Map<Long, List<Integer>> filed;
+    private List<Integer> filedAlways;
+    private IWidget[] filedWidgets;
+    private Map<UUID, Integer> filedById;
+    private Map<IWidget, Integer> filedAt;
+
+    private void pick(final java.util.BitSet picked, final UUID id) {
+        Integer at = filedById.get(id);
+        // A recipe on a shared machine is filed under its card's first recipe.
+        if (at == null) {
+            final RecipeCard card = cards.get(id);
+            at = card == null ? null : filedAt.get(card);
+        }
+        if (at != null) picked.set(at);
+    }
+
+    private long filedFor = Long.MIN_VALUE;
+    /** Moves whenever the board puts things somewhere or a card changes size outside an edit. */
+    private long placedMoves;
+
+    private static int cell(final float v) {
+        return (int) Math.floor(v / CELL);
+    }
+
+    private static long cellKey(final int cx, final int cy) {
+        return (long) cx << 32 | cy & 0xFFFFFFFFL;
+    }
+
+    /** A card's size changed (a solve, its pinned settings): its wires and where it is filed look again. */
+    public void cardResized() {
+        placedMoves++;
+        wires.moved();
+    }
+
+    /** Whether a widget is, or holds, another. */
+    private static boolean holds(final IWidget parent, final IWidget w) {
+        for (IWidget at = w; at != null; at = at.getParent()) if (at == parent) return true;
+        return false;
+    }
+
+    /** Every child, not only those in view: ModularUI lets go of each of them. */
+    @Override
+    public void dispose() {
+        allChildren = true;
+        try {
+            super.dispose();
+        } finally {
+            allChildren = false;
+        }
+    }
+
+    /**
      * Children in draw and hit order: drawers, then cards, then whatever was moved last, then whatever a move is
      * carrying right now, so the thing in hand is always on top.
      */
     @Override
     public @NotNull List<IWidget> getChildren() {
-        final List<IWidget> all = super.getChildren();
+        if (allChildren) return adding == null ? super.getChildren() : addingView;
+        final List<IWidget> all = inView();
         final boolean carrying = moveStart != null && moveStarted;
         if (raised.isEmpty() && !carrying) return all;
         final List<IWidget> out = new ArrayList<>(all.size()), carried = new ArrayList<>();
@@ -2523,6 +2743,8 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             final DrawerCard drawer = drawers.get(d.getId());
             if (drawer != null) drawer.pos(d.getX(), d.getY());
         }
+        placedMoves++;
+        wires.moved();
     }
 
     /** One frame of the arrange glide; at the end everything sits exactly where it was arranged. */

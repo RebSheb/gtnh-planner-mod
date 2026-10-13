@@ -1,0 +1,378 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Oxygen Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b66a123d-5657-4e7c-9b6b-6030dc93eaf4",
+      "name": "item:gregtech:gt.blockmachines:422",
+      "durationTicks": 20.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Phosphorus Dust",
+          "free": false
+        },
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 14.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Phosphorus Pentoxide Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c1e72b89-6af8-49ea-bc3f-b47f8f04b0ca",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Hydrogen Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f3e32214-4900-4708-be5e-592033f8deb0",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Phosphoric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Phosphoric Acid Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "161d4ebf-86b6-422a-a630-a88012f74f00",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 40.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 14.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Phosphorus Pentoxide Dust",
+          "free": false
+        },
+        {
+          "amount": 6000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Phosphoric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "name": "item:gregtech:gt.blockmachines:373",
+      "durationTicks": 270.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Phosphoric Acid Cell",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Hydrogen Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Phosphorus Dust",
+          "free": false
+        },
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Oxygen Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "889428e4-9772-41d3-986e-285f2bbc7d44",
+      "source": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+      "sourceOutput": 1,
+      "target": "b66a123d-5657-4e7c-9b6b-6030dc93eaf4",
+      "targetInput": 1
+    },
+    {
+      "id": "d78fa352-8470-45dc-8e1c-08219b372cc8",
+      "source": "b66a123d-5657-4e7c-9b6b-6030dc93eaf4",
+      "sourceOutput": 0,
+      "target": "161d4ebf-86b6-422a-a630-a88012f74f00",
+      "targetInput": 0
+    },
+    {
+      "id": "dd7a0e3f-ee7f-4342-8971-03e75944cd41",
+      "source": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "sourceOutput": 1,
+      "target": "b66a123d-5657-4e7c-9b6b-6030dc93eaf4",
+      "targetInput": 0
+    },
+    {
+      "id": "e5a28b8e-1684-4864-a63b-f80134906770",
+      "source": "f3e32214-4900-4708-be5e-592033f8deb0",
+      "sourceOutput": 0,
+      "target": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "targetInput": 0
+    },
+    {
+      "id": "04ee5ae2-2e49-4cfb-8dda-d75b67539bc1",
+      "source": "c1e72b89-6af8-49ea-bc3f-b47f8f04b0ca",
+      "sourceOutput": 0,
+      "target": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "targetInput": 1
+    },
+    {
+      "id": "1744b202-379d-4820-b1d0-02ab77204028",
+      "source": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+      "sourceOutput": 0,
+      "target": "f3e32214-4900-4708-be5e-592033f8deb0",
+      "targetInput": 0
+    },
+    {
+      "id": "34bdfd26-cc85-461b-965f-447431376552",
+      "source": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "sourceOutput": 0,
+      "target": "c1e72b89-6af8-49ea-bc3f-b47f8f04b0ca",
+      "targetInput": 0
+    },
+    {
+      "id": "45f8ec8e-ce7a-4e1d-bfd3-537f76e36627",
+      "source": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "sourceOutput": 2,
+      "target": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+      "targetInput": 0
+    },
+    {
+      "id": "5723bbf4-495a-4937-8cf3-597f188c3865",
+      "source": "161d4ebf-86b6-422a-a630-a88012f74f00",
+      "sourceOutput": 0,
+      "target": "f3e32214-4900-4708-be5e-592033f8deb0",
+      "targetInput": 1
+    },
+    {
+      "id": "5e7b183d-559b-4063-8f6b-d914a2fa7820",
+      "source": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+      "sourceOutput": 0,
+      "target": "354d09d7-85d4-440f-8d48-d991043313b0",
+      "targetInput": 1
+    },
+    {
+      "id": "68822ce4-aa01-4c3f-9f1f-c9d93b62708a",
+      "source": "c1e72b89-6af8-49ea-bc3f-b47f8f04b0ca",
+      "sourceOutput": 0,
+      "target": "f3e32214-4900-4708-be5e-592033f8deb0",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "bd55a2bb-1f63-480a-9bb2-b5fa431d2be2",
+      "label": "Hydrogen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c1e72b89-6af8-49ea-bc3f-b47f8f04b0ca",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "f859865c-54af-4161-b7a8-5bece0aea6ac",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b153f3d9-0da4-4335-adc0-f2f71bf1f8d4",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "580b5ef3-a0cb-43e6-bb12-e9d5f55b6bdd",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "161d4ebf-86b6-422a-a630-a88012f74f00",
+          "port": 1
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

@@ -179,6 +179,8 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             layout = nextLayout;
             size(CardLayout.W, layout.height);
             scheduleResize();
+            final BoardCanvas board = canvas();
+            if (board != null) board.cardResized();
             for (final com.cleanroommc.modularui.api.widget.IWidget child : getChildren()) {
                 if (child instanceof final PortSlot slot) slot.place(layout);
             }
@@ -203,10 +205,18 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
     @Override
     public void onUpdate() {
         super.onUpdate();
+        syncModels();
+        if (model != null) commitWheel();
+    }
+
+    /**
+     * Takes up the models the last solve made, and the pinned settings: every tick while the card is in view, and from
+     * the board when they change while it is not.
+     */
+    public void syncModels() {
         boolean changed = false;
         for (int s = 0; s < sections.size() && !changed; s++) changed = session.model(sections.get(s)) != models.get(s);
         if (changed || sections.isEmpty()) refresh();
-        if (model != null) commitWheel();
         if (layout != null && layout.pinsVersion != SettingPins.version()) refresh();
     }
 

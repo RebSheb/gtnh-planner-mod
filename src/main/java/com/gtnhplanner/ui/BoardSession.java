@@ -927,8 +927,26 @@ public final class BoardSession {
      * made. A card whose recipe NEI no longer knows is left out, with its wires.
      */
     public List<UUID> paste(final int worldX, final int worldY) {
+        return pasteAt(List.of(new int[] { worldX, worldY }));
+    }
+
+    /**
+     * Pastes the last copy once at each board point, all as one undoable edit (the dev harness's stress plans tile a
+     * plan this way), and selects and returns what it made.
+     */
+    public List<UUID> pasteAt(final List<int[]> origins) {
         final Clip clip = clipboard;
-        if (clip == null) return List.of();
+        if (clip == null || origins.isEmpty()) return List.of();
+        final List<Runnable> adds = new ArrayList<>();
+        selection.clear();
+        for (final int[] origin : origins) adds.add(pasteOnce(clip, origin[0], origin[1]));
+        edit(() -> { for (final Runnable add : adds) add.run(); });
+        (selection.size() > 1 ? Sfx.SWEEP : Sfx.PLACE).play();
+        return List.copyOf(selection);
+    }
+
+    /** One copy of the clip at a board point: its cards made now, the returned step adds everything to the graph. */
+    private Runnable pasteOnce(final Clip clip, final int worldX, final int worldY) {
         final List<Node> made = new ArrayList<>();
         for (final ClipNode c : clip.nodes()) {
             if (c.powerSource() != null) {
@@ -952,7 +970,7 @@ public final class BoardSession {
         }
         final List<Drawer> madeDrawers = new ArrayList<>();
         final List<UUID> madeNotes = new ArrayList<>();
-        edit(() -> {
+        return () -> {
             for (final Node n : made) if (n != null) graph.addNode(n);
             for (final ClipEdge e : clip.edges()) {
                 final Node from = made.get(e.from()), to = made.get(e.to());
@@ -980,13 +998,10 @@ public final class BoardSession {
                 graph.notes.put(note.getId(), note);
                 madeNotes.add(note.getId());
             }
-        });
-        selection.clear();
-        for (final Node n : made) if (n != null) selection.add(n.id);
-        for (final Drawer d : madeDrawers) selection.add(d.getId());
-        selection.addAll(madeNotes);
-        (selection.size() > 1 ? Sfx.SWEEP : Sfx.PLACE).play();
-        return List.copyOf(selection);
+            for (final Node n : made) if (n != null) selection.add(n.id);
+            for (final Drawer d : madeDrawers) selection.add(d.getId());
+            selection.addAll(madeNotes);
+        };
     }
 
     // endregion

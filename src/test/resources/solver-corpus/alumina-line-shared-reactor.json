@@ -1,0 +1,1072 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "be0e225f-7702-42e8-af0c-725678c8f013",
+      "name": "item:gregtech:gt.blockmachines:31077",
+      "durationTicks": 18.0,
+      "energyPerTick": 7776.0,
+      "throughputFactor": 18,
+      "inputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Bauxite Slurry",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Heated Bauxite Slurry",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 6.0,
+      "energyPerTick": 30720.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Carbon Monoxide",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+      "name": "item:gregtech:gt.blockmachines:15512",
+      "durationTicks": 13.0,
+      "energyPerTick": 4320.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Bauxite Slag Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.3,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Gallium Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Quicklime Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.9,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Silicon Dioxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.8,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Iron Dust",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+      "name": "item:gregtech:gt.blockmachines:15512",
+      "durationTicks": 13.0,
+      "energyPerTick": 4320.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Sluice Juice",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Stone Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.4,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Iron Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Copper Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Tin Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Nickel Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.2,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Antimony Dust",
+          "free": false
+        },
+        {
+          "amount": 500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 18.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Aluminium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Carbon Dioxide",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Heated Bauxite Slurry",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 80.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Alumina Dust",
+          "free": false
+        },
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Sodium Carbonate Dust",
+          "free": false
+        },
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Calcite Dust",
+          "free": false
+        },
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Bauxite Slag Dust",
+          "free": false
+        },
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Sluice Juice",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f6426b54-7815-462d-b336-0787c4ab3577",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 2,
+      "inputs": [
+        {
+          "amount": 5.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Calcite Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Quicklime Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Carbon Dioxide",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "14e2caad-fe64-4ed1-846a-f31508429184",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 25.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Lazurite Dust",
+          "free": false
+        },
+        {
+          "amount": 48.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 64.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Sodium Aluminate Dust",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "396aa626-430a-4fe4-81f6-02ec787ec102",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 6.0,
+      "energyPerTick": 30720.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "478260b5-1a46-4050-8968-f35a072e32df",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 12.0,
+      "energyPerTick": 21452.921735999993,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Hot Titanium Ingot",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+      "name": "item:gregtech:gt.blockmachines:15566",
+      "durationTicks": 66.0,
+      "energyPerTick": 4800.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 32.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 32,
+          "name": "Crushed Bauxite Ore",
+          "free": false
+        },
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Quicklime Dust",
+          "free": false
+        },
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Bauxite Slurry",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 2,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Sodium Aluminate Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Aluminium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "94a13683-0df3-496a-8229-576ef5115129",
+      "source": "396aa626-430a-4fe4-81f6-02ec787ec102",
+      "sourceOutput": 0,
+      "target": "478260b5-1a46-4050-8968-f35a072e32df",
+      "targetInput": 0
+    },
+    {
+      "id": "9b786d5a-bf23-4934-b296-d8aac6bea201",
+      "source": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+      "sourceOutput": 0,
+      "target": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+      "targetInput": 0
+    },
+    {
+      "id": "9e9d9952-3360-4a22-886b-08475d8484dd",
+      "source": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "sourceOutput": 3,
+      "target": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+      "targetInput": 0
+    },
+    {
+      "id": "b6e861f8-6e96-4fae-945f-39215c742d35",
+      "source": "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37",
+      "sourceOutput": 0,
+      "target": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "targetInput": 0
+    },
+    {
+      "id": "bbb5949d-e758-480e-aa92-7b5e9aec6eec",
+      "source": "478260b5-1a46-4050-8968-f35a072e32df",
+      "sourceOutput": 1,
+      "target": "396aa626-430a-4fe4-81f6-02ec787ec102",
+      "targetInput": 1
+    },
+    {
+      "id": "d18713b4-4227-41d5-9798-638fad325143",
+      "source": "be0e225f-7702-42e8-af0c-725678c8f013",
+      "sourceOutput": 0,
+      "target": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "targetInput": 2
+    },
+    {
+      "id": "d349ce87-dc9e-4523-b597-17bc4fbce926",
+      "source": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+      "sourceOutput": 1,
+      "target": "478260b5-1a46-4050-8968-f35a072e32df",
+      "targetInput": 1
+    },
+    {
+      "id": "e52bf5de-8ea3-4933-a9e0-80a8d936b2aa",
+      "source": "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37",
+      "sourceOutput": 1,
+      "target": "14e2caad-fe64-4ed1-846a-f31508429184",
+      "targetInput": 1
+    },
+    {
+      "id": "e9a8baa4-3ad0-442e-99b1-a59dfea63570",
+      "source": "14e2caad-fe64-4ed1-846a-f31508429184",
+      "sourceOutput": 0,
+      "target": "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37",
+      "targetInput": 0
+    },
+    {
+      "id": "4c30bc66-f591-4a42-a2a2-7c723363d113",
+      "source": "f6426b54-7815-462d-b336-0787c4ab3577",
+      "sourceOutput": 1,
+      "target": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "targetInput": 1
+    },
+    {
+      "id": "7484e22a-cc41-44d6-be12-2d581eefa3e6",
+      "source": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+      "sourceOutput": 0,
+      "target": "be0e225f-7702-42e8-af0c-725678c8f013",
+      "targetInput": 0
+    },
+    {
+      "id": "75e0521c-690e-4e60-8c7d-3a366ec80ad8",
+      "source": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+      "sourceOutput": 4,
+      "target": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+      "targetInput": 0
+    }
+  ],
+  "pools": [
+    {
+      "machines": [
+        "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+        "f6426b54-7815-462d-b336-0787c4ab3577",
+        "14e2caad-fe64-4ed1-846a-f31508429184",
+        "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37"
+      ],
+      "capacity": 1,
+      "exact": true
+    },
+    {
+      "machines": [
+        "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+        "e51d7803-7212-425e-a6a8-bee5f94a0bc5"
+      ],
+      "capacity": 1,
+      "exact": true
+    }
+  ],
+  "drawers": [
+    {
+      "id": "863dd0d1-172b-4875-913c-3d0176b15fe6",
+      "label": "Chlorine",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "86948d36-16bc-43bd-96d8-abedf500ab56",
+      "label": "Sodium Carbonate Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "9533f84c-33e2-48f9-85af-283759bab226",
+      "label": "Quicklime Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "a05456a3-042a-4973-b6ce-0dba9ff30290",
+      "label": "Quicklime Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "a6d5bc96-68fe-4938-b5e3-9df32a0f9070",
+      "label": "Lazurite Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "14e2caad-fe64-4ed1-846a-f31508429184",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "a9a2b3cc-dd08-490a-9157-6284c36ac7fd",
+      "label": "Tin Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "b4152843-2b52-4c49-8f96-7d545278d2c6",
+      "label": "Alumina Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "b94d59bd-8f27-4c34-9cc4-03363f37be83",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "bac39708-546b-49a8-b6d6-0b509731a37d",
+      "label": "Sodium Hydroxide Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "e47c6acd-19a2-4399-9ada-6e55d29d6a49",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "7bd0de04-8a65-41ee-96b2-a0ab6b3d2f37",
+          "port": 1
+        },
+        {
+          "node": "14e2caad-fe64-4ed1-846a-f31508429184",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "f147c77c-6e65-4ca8-a783-31d6c81d9dc7",
+      "label": "Antimony Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 5
+        }
+      ]
+    },
+    {
+      "id": "f37fe1ce-2d33-4def-aac0-2f5e16033033",
+      "label": "Carbon Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "f7802672-224d-4c08-ac8e-bb10587198f7",
+      "label": "Stone Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "01eceb21-a5b9-4878-8ac5-73fc82620a2b",
+      "label": "Iron Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "10105107-8867-4d84-8bb0-709f519a1ad1",
+      "label": "Crushed Bauxite Ore",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "6544557f-54e6-40cb-ad4d-6baebd6683da",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "106cba4f-2492-4fe6-bb19-ad8ecb2565da",
+      "label": "Nickel Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 4
+        }
+      ]
+    },
+    {
+      "id": "2ae0f8a3-59f4-4f88-9496-1a48ee3c6405",
+      "label": "Silicon Dioxide Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "3537a30e-379c-4ffe-bd78-c39bb0f09cc9",
+      "label": "Water",
+      "kind": "TRASH",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 6
+        }
+      ]
+    },
+    {
+      "id": "3a0b1318-0a22-4639-9f00-9cd3bd003544",
+      "label": "Calcite Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f6426b54-7815-462d-b336-0787c4ab3577",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "3c07a0ae-efd1-4771-844e-4409bad9bee6",
+      "label": "Iron Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+          "port": 4
+        }
+      ]
+    },
+    {
+      "id": "422596a9-78cd-434a-be1b-bf13f6eb808b",
+      "label": "Quicklime Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f6426b54-7815-462d-b336-0787c4ab3577",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "4e644049-d7cc-4c92-9364-bf8deaf814b2",
+      "label": "Hot Titanium Ingot",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "478260b5-1a46-4050-8968-f35a072e32df",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "5a7bc869-fa66-410f-9a9a-9948fc22f13a",
+      "label": "Salt",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "396aa626-430a-4fe4-81f6-02ec787ec102",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "5fa40339-7b5e-4f73-96a6-73cd77fe282a",
+      "label": "Gallium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "d4eb2853-8579-4f5a-8ee4-31260ee3fa11",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "637fbd00-675c-4894-b12b-c9342a4acc3a",
+      "label": "Carbon Monoxide",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "cf324751-096c-4648-8e4b-9f2032c79ee5",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "643190bc-6817-4000-a269-cff434588914",
+      "label": "Copper Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e51d7803-7212-425e-a6a8-bee5f94a0bc5",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "6768f5db-75fe-4780-a8d7-9bdaa5210782",
+      "label": "Sodium Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "396aa626-430a-4fe4-81f6-02ec787ec102",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7f89ce87-8a59-4af0-8c50-b3906978d6d7",
+      "label": "Calcite Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ef90d2c5-a8b0-465a-b988-48d68941fd5a",
+          "port": 2
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

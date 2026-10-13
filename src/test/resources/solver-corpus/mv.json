@@ -1,0 +1,2150 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "87ccb716-efde-4642-b04f-89939f9d7423",
+      "name": "item:gregtech:gt.blockmachines:512",
+      "durationTicks": 15.0,
+      "energyPerTick": 60.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Charcoal",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 0.1,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Ashes",
+          "free": false
+        },
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "88e0c186-56cc-459c-81c7-fe5d66cbfcd6",
+      "name": "Fluid Tank",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 20,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9215fedb-1748-472a-bda3-d267b11bd4af",
+      "name": "Fluid Tank",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 20,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9ef7e919-d7f9-4531-ba18-7024e43e1399",
+      "name": "item:gregtech:gt.blockmachines:423",
+      "durationTicks": 320.0,
+      "energyPerTick": 384.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Nitrogen Cell",
+          "free": false
+        },
+        {
+          "amount": 3000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Ammonia",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "a0ce7c79-6ba9-40df-8f16-de05c6355594",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 36.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Rock Salt",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Potassium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "a7228e91-cc91-40e4-8296-2f9afa3d2768",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Phenol Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Phenol",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b4c4be87-1a44-484c-999c-8e2b519f415e",
+      "name": "item:gregtech:gt.blockmachines:232",
+      "durationTicks": 8.0,
+      "energyPerTick": 4.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Carbon Monoxide Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 1920.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Propene Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Phosphoric Acid Cell",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Benzene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Isopropylbenzene",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "cf496d73-dcc7-4c41-b5a7-2b03507b025b",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 160.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Nitric Oxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Nitrogen Dioxide Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e0d49633-b166-41fd-b6bc-699474ffddd9",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Nitrogen Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e2c76404-dc1f-4fde-bd40-3e63d0852962",
+      "name": "Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 8.024691358024691,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Benzene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2560.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 32,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f09fba72-dba6-463e-a511-5f16a8155801",
+      "name": "item:gregtech:gt.blockmachines:542",
+      "durationTicks": 50.0,
+      "energyPerTick": 16.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 8,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f4a3a382-ffad-4ff7-a2de-dbbca247aa3b",
+      "name": "item:gregtech:gt.blockmachines:422",
+      "durationTicks": 480.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Ethenone Cell",
+          "free": false
+        },
+        {
+          "amount": 8000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Tetranitromethane",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ff654464-e1ab-4bf7-a9a2-cd82830446a3",
+      "name": "item:gregtech:gt.blockmachines:623",
+      "durationTicks": 160.0,
+      "energyPerTick": 160.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Acetone",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Ethenone",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "047036af-1d7b-4bf0-93b5-c264256ead18",
+      "name": "item:gregtech:gt.blockmachines:232",
+      "durationTicks": 8.0,
+      "energyPerTick": 4.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Ethenone",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Ethenone Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+      "name": "item:gregtech:gt.blockmachines:15546",
+      "durationTicks": 320.0,
+      "energyPerTick": 96.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 32,
+          "name": "Oak Wood",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 20.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Charcoal",
+          "free": false
+        },
+        {
+          "amount": 1500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 10,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0aa114d4-02d2-4dfb-b93e-68cb25b10fbe",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 320.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Ammonia",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Nitric Oxide",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0eb656ec-c8d6-4b11-962d-d8a74fab4ea2",
+      "name": "item:gregtech:gt.blockmachines:532",
+      "durationTicks": 8.0,
+      "energyPerTick": 64.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 40.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "Benzene",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 8,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0ee804b0-4514-4d08-accb-6e4160804739",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 240.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Nitrogen Dioxide Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+      "name": "item:gregtech:gt.blockmachines:362",
+      "durationTicks": 3000.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 36.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Ashes",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 18.0,
+          "chance": 0.64,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Quicklime Dust",
+          "free": false
+        },
+        {
+          "amount": 9.0,
+          "chance": 0.6,
+          "multiplier": 1.0,
+          "resource": 34,
+          "name": "Potash Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 0.45,
+          "multiplier": 1.0,
+          "resource": 35,
+          "name": "Magnesia Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 36,
+          "name": "Phosphorus Pentoxide Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 37,
+          "name": "Soda Ash Dust",
+          "free": false
+        },
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 38,
+          "name": "Banded Iron Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "1f6af305-2fe9-4446-856b-a98267850602",
+      "name": "item:gregtech:gt.blockmachines:421",
+      "durationTicks": 160.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Isopropylbenzene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Phenol Cell",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Acetone",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "377a499f-2288-4981-997e-75aa8ba3d707",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 120.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 39,
+          "name": "Bio Diesel",
+          "free": false
+        },
+        {
+          "amount": 400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Tetranitromethane",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 40,
+          "name": "Cetane-Boosted Diesel",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "3ba27523-3df4-48b0-9c34-6758946090ec",
+      "name": "Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 123.80952380952381,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2560.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 12,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "name": "item:gregtech:gt.blockmachines:231",
+      "durationTicks": 16.0,
+      "energyPerTick": 1.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "41ce918e-044a-4ea7-8d56-dbd55054050b",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 448.0,
+      "energyPerTick": 60.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 32.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 41,
+          "name": "Sugar",
+          "free": false
+        },
+        {
+          "amount": 25.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 42,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 25.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 12,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "520a24dc-88b1-4083-a0c3-3313823c5619",
+      "name": "Large Combustion Engine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 80.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 40,
+          "name": "Cetane-Boosted Diesel",
+          "free": false
+        },
+        {
+          "amount": 0.5588822355289421,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 43,
+          "name": "Lubricant",
+          "free": false
+        },
+        {
+          "amount": 40.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 122880.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 16,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "61bb0c34-56bc-47e2-9126-6a8a3c9f0d4b",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 160.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 44,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 24,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "name": "item:gregtech:gt.blockmachines:422",
+      "durationTicks": 360.0,
+      "energyPerTick": 28.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Charcoal",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Ashes",
+          "free": false
+        },
+        {
+          "amount": 9000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 8,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "64d19cf9-c9f6-4ccb-a702-4a068612a0ca",
+      "name": "item:gregtech:gt.blockmachines:232",
+      "durationTicks": 8.0,
+      "energyPerTick": 4.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 45,
+          "name": "Glycerol Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 46,
+          "name": "Glycerol",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "65c7d501-36ec-4643-9216-81305b3edb5a",
+      "name": "item:gregtech:gt.blockmachines:422",
+      "durationTicks": 2700.0,
+      "energyPerTick": 120.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Sodium Hydroxide Dust",
+          "free": false
+        },
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 47,
+          "name": "Methanol Cell",
+          "free": false
+        },
+        {
+          "amount": 54000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 48,
+          "name": "Seed Oil",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 9.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 45,
+          "name": "Glycerol Cell",
+          "free": false
+        },
+        {
+          "amount": 54000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 39,
+          "name": "Bio Diesel",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+      "name": "item:gregtech:gt.blockmachines:372",
+      "durationTicks": 100.0,
+      "energyPerTick": 60.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 5.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 49,
+          "name": "Saltpeter Dust",
+          "free": false
+        },
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Empty Cell",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Potassium Dust",
+          "free": false
+        },
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Oxygen Cell",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "747c0180-d902-44d4-a39c-9a80aefbf435",
+      "name": "Large Semifluid Burner",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 240.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 46,
+          "name": "Glycerol",
+          "free": false
+        },
+        {
+          "amount": 0.5588822355289421,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 43,
+          "name": "Lubricant",
+          "free": false
+        },
+        {
+          "amount": 80.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 122880.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "789f1738-b577-4590-b789-0760d18c98fb",
+      "name": "item:gregtech:gt.blockmachines:422",
+      "durationTicks": 120.0,
+      "energyPerTick": 96.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Carbon Monoxide Cell",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 47,
+          "name": "Methanol Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "803d01cf-4203-420b-a3b1-0850e0dfafeb",
+      "source": "64d19cf9-c9f6-4ccb-a702-4a068612a0ca",
+      "sourceOutput": 1,
+      "target": "747c0180-d902-44d4-a39c-9a80aefbf435",
+      "targetInput": 0
+    },
+    {
+      "id": "8abe6c0f-a8f3-41bd-847a-b0c2d18c3178",
+      "source": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+      "sourceOutput": 0,
+      "target": "87ccb716-efde-4642-b04f-89939f9d7423",
+      "targetInput": 0
+    },
+    {
+      "id": "948fc18f-8eac-4dba-9e05-17367b979cb6",
+      "source": "b4c4be87-1a44-484c-999c-8e2b519f415e",
+      "sourceOutput": 0,
+      "target": "789f1738-b577-4590-b789-0760d18c98fb",
+      "targetInput": 0
+    },
+    {
+      "id": "9c4abe28-eef4-4c5a-b764-5c7135d7eee3",
+      "source": "e0d49633-b166-41fd-b6bc-699474ffddd9",
+      "sourceOutput": 0,
+      "target": "9ef7e919-d7f9-4531-ba18-7024e43e1399",
+      "targetInput": 0
+    },
+    {
+      "id": "9e90c111-e810-40cc-96bf-f8132032e18e",
+      "source": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+      "sourceOutput": 0,
+      "target": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "targetInput": 0
+    },
+    {
+      "id": "a08a4431-1ddf-49e3-bb49-e766d5cfbf16",
+      "source": "f4a3a382-ffad-4ff7-a2de-dbbca247aa3b",
+      "sourceOutput": 1,
+      "target": "377a499f-2288-4981-997e-75aa8ba3d707",
+      "targetInput": 1
+    },
+    {
+      "id": "a21c47a5-3509-4fb3-8d78-b200a2881a1e",
+      "source": "0aa114d4-02d2-4dfb-b93e-68cb25b10fbe",
+      "sourceOutput": 0,
+      "target": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "targetInput": 0
+    },
+    {
+      "id": "aaf20427-3908-4906-bcf4-6e5edaeb72ce",
+      "source": "1f6af305-2fe9-4446-856b-a98267850602",
+      "sourceOutput": 2,
+      "target": "ff654464-e1ab-4bf7-a9a2-cd82830446a3",
+      "targetInput": 0
+    },
+    {
+      "id": "ad39d3a7-457d-47a7-a8fe-841d748dedd1",
+      "source": "0ee804b0-4514-4d08-accb-6e4160804739",
+      "sourceOutput": 0,
+      "target": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "targetInput": 0
+    },
+    {
+      "id": "b2defed5-6f59-4014-ae62-3fe14f1009cf",
+      "source": "9215fedb-1748-472a-bda3-d267b11bd4af",
+      "sourceOutput": 0,
+      "target": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "targetInput": 1
+    },
+    {
+      "id": "b4211f59-1c9b-4ba2-9eae-1fbe6cd31334",
+      "source": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+      "sourceOutput": 1,
+      "target": "88e0c186-56cc-459c-81c7-fe5d66cbfcd6",
+      "targetInput": 0
+    },
+    {
+      "id": "b5da79e6-6149-42e1-821a-1259617f0142",
+      "source": "f09fba72-dba6-463e-a511-5f16a8155801",
+      "sourceOutput": 0,
+      "target": "65c7d501-36ec-4643-9216-81305b3edb5a",
+      "targetInput": 0
+    },
+    {
+      "id": "bb9166d7-3f27-4ba6-b182-40b92ce64909",
+      "source": "ff654464-e1ab-4bf7-a9a2-cd82830446a3",
+      "sourceOutput": 0,
+      "target": "047036af-1d7b-4bf0-93b5-c264256ead18",
+      "targetInput": 1
+    },
+    {
+      "id": "c024fac5-7ffa-43af-83c3-33dfd13b18fa",
+      "source": "88e0c186-56cc-459c-81c7-fe5d66cbfcd6",
+      "sourceOutput": 1,
+      "target": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+      "targetInput": 1
+    },
+    {
+      "id": "c0a6ec53-093a-43bf-af14-4a368afae6c9",
+      "source": "a7228e91-cc91-40e4-8296-2f9afa3d2768",
+      "sourceOutput": 0,
+      "target": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "targetInput": 0
+    },
+    {
+      "id": "cbcb4756-6ab6-4cf8-b3de-c3fd20809c55",
+      "source": "0ee804b0-4514-4d08-accb-6e4160804739",
+      "sourceOutput": 1,
+      "target": "f4a3a382-ffad-4ff7-a2de-dbbca247aa3b",
+      "targetInput": 1
+    },
+    {
+      "id": "d4a17c01-6881-41b3-984b-7f817c02157d",
+      "source": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "sourceOutput": 1,
+      "target": "b4c4be87-1a44-484c-999c-8e2b519f415e",
+      "targetInput": 1
+    },
+    {
+      "id": "dc0cd775-c474-4be3-bc05-49811467096e",
+      "source": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+      "sourceOutput": 1,
+      "target": "0eb656ec-c8d6-4b11-962d-d8a74fab4ea2",
+      "targetInput": 0
+    },
+    {
+      "id": "dcf506af-df39-4f50-aa9f-16a38314bcdb",
+      "source": "64d19cf9-c9f6-4ccb-a702-4a068612a0ca",
+      "sourceOutput": 0,
+      "target": "b4c4be87-1a44-484c-999c-8e2b519f415e",
+      "targetInput": 0
+    },
+    {
+      "id": "e3bfd034-2a9f-4a3c-8ae1-35a8199c68b9",
+      "source": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "sourceOutput": 0,
+      "target": "1f6af305-2fe9-4446-856b-a98267850602",
+      "targetInput": 0
+    },
+    {
+      "id": "e7d1533c-56e0-4140-a7c2-f3112ebce182",
+      "source": "65c7d501-36ec-4643-9216-81305b3edb5a",
+      "sourceOutput": 0,
+      "target": "64d19cf9-c9f6-4ccb-a702-4a068612a0ca",
+      "targetInput": 0
+    },
+    {
+      "id": "f1c3b921-721d-4568-b857-656b6ffb0646",
+      "source": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "sourceOutput": 1,
+      "target": "3ba27523-3df4-48b0-9c34-6758946090ec",
+      "targetInput": 0
+    },
+    {
+      "id": "f74f2f72-ce31-4871-a69a-8dd93813689d",
+      "source": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "sourceOutput": 0,
+      "target": "cf496d73-dcc7-4c41-b5a7-2b03507b025b",
+      "targetInput": 0
+    },
+    {
+      "id": "fb07945c-e863-465b-899a-ec234ae6daec",
+      "source": "87ccb716-efde-4642-b04f-89939f9d7423",
+      "sourceOutput": 0,
+      "target": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+      "targetInput": 0
+    },
+    {
+      "id": "017ea97a-7aa0-450d-a334-61dae71f6985",
+      "source": "789f1738-b577-4590-b789-0760d18c98fb",
+      "sourceOutput": 0,
+      "target": "65c7d501-36ec-4643-9216-81305b3edb5a",
+      "targetInput": 1
+    },
+    {
+      "id": "0491404a-f14c-4586-8cd2-4fa4d0cd2633",
+      "source": "64194438-2957-4218-a0bf-3ba38a52ccdd",
+      "sourceOutput": 0,
+      "target": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+      "targetInput": 0
+    },
+    {
+      "id": "06eaff63-6653-4b03-b9af-8d0b31377573",
+      "source": "0eb656ec-c8d6-4b11-962d-d8a74fab4ea2",
+      "sourceOutput": 0,
+      "target": "e2c76404-dc1f-4fde-bd40-3e63d0852962",
+      "targetInput": 0
+    },
+    {
+      "id": "0794da85-4e3b-4364-bf72-c9aaf0ceccbc",
+      "source": "41ce918e-044a-4ea7-8d56-dbd55054050b",
+      "sourceOutput": 1,
+      "target": "9215fedb-1748-472a-bda3-d267b11bd4af",
+      "targetInput": 0
+    },
+    {
+      "id": "1983888c-dc43-4c20-890b-168f59d1a989",
+      "source": "047036af-1d7b-4bf0-93b5-c264256ead18",
+      "sourceOutput": 0,
+      "target": "f4a3a382-ffad-4ff7-a2de-dbbca247aa3b",
+      "targetInput": 0
+    },
+    {
+      "id": "1e07f859-1201-417b-a877-f8d8b8adec56",
+      "source": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "sourceOutput": 0,
+      "target": "0ee804b0-4514-4d08-accb-6e4160804739",
+      "targetInput": 1
+    },
+    {
+      "id": "1e2aa432-4c7f-4468-8481-b57f10f284d4",
+      "source": "9ef7e919-d7f9-4531-ba18-7024e43e1399",
+      "sourceOutput": 1,
+      "target": "0aa114d4-02d2-4dfb-b93e-68cb25b10fbe",
+      "targetInput": 1
+    },
+    {
+      "id": "22911a4a-cdd6-42f9-977f-d04451f8eb9e",
+      "source": "f09fba72-dba6-463e-a511-5f16a8155801",
+      "sourceOutput": 1,
+      "target": "9ef7e919-d7f9-4531-ba18-7024e43e1399",
+      "targetInput": 1
+    },
+    {
+      "id": "24a536cb-2237-49b2-8537-fbe7825cb7e7",
+      "source": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+      "sourceOutput": 2,
+      "target": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+      "targetInput": 1
+    },
+    {
+      "id": "255e9c20-edba-4d07-b44f-cdcffbc988ec",
+      "source": "f4a3a382-ffad-4ff7-a2de-dbbca247aa3b",
+      "sourceOutput": 0,
+      "target": "047036af-1d7b-4bf0-93b5-c264256ead18",
+      "targetInput": 0
+    },
+    {
+      "id": "27a2eba8-7d94-4ac5-9d68-7306f49c483d",
+      "source": "87ccb716-efde-4642-b04f-89939f9d7423",
+      "sourceOutput": 1,
+      "target": "0eb656ec-c8d6-4b11-962d-d8a74fab4ea2",
+      "targetInput": 0
+    },
+    {
+      "id": "288bdca0-e6e6-47f4-bde2-54f34ac7cf20",
+      "source": "377a499f-2288-4981-997e-75aa8ba3d707",
+      "sourceOutput": 0,
+      "target": "520a24dc-88b1-4083-a0c3-3313823c5619",
+      "targetInput": 0
+    },
+    {
+      "id": "2898f05c-c23e-4334-b4eb-762e465f0748",
+      "source": "1f6af305-2fe9-4446-856b-a98267850602",
+      "sourceOutput": 0,
+      "target": "a7228e91-cc91-40e4-8296-2f9afa3d2768",
+      "targetInput": 0
+    },
+    {
+      "id": "2b0ea97c-5751-4df7-a133-6a6ad1a2ea5a",
+      "source": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "sourceOutput": 0,
+      "target": "0aa114d4-02d2-4dfb-b93e-68cb25b10fbe",
+      "targetInput": 0
+    },
+    {
+      "id": "2cd603b5-6605-4191-b594-992e1f213497",
+      "source": "9215fedb-1748-472a-bda3-d267b11bd4af",
+      "sourceOutput": 1,
+      "target": "41ce918e-044a-4ea7-8d56-dbd55054050b",
+      "targetInput": 1
+    },
+    {
+      "id": "3f0b3e5d-4f19-4f8d-9261-040adb282bec",
+      "source": "cf496d73-dcc7-4c41-b5a7-2b03507b025b",
+      "sourceOutput": 0,
+      "target": "0ee804b0-4514-4d08-accb-6e4160804739",
+      "targetInput": 0
+    },
+    {
+      "id": "42e32e44-fe51-49b1-9874-8a09a509e95f",
+      "source": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+      "sourceOutput": 2,
+      "target": "e0d49633-b166-41fd-b6bc-699474ffddd9",
+      "targetInput": 1
+    },
+    {
+      "id": "5110a3ed-f076-4fb3-8e43-b56ab6b12c10",
+      "source": "1f6af305-2fe9-4446-856b-a98267850602",
+      "sourceOutput": 1,
+      "target": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "targetInput": 0
+    },
+    {
+      "id": "55a8c736-ba4e-4c35-bfe4-67bb684c0b88",
+      "source": "0eb656ec-c8d6-4b11-962d-d8a74fab4ea2",
+      "sourceOutput": 0,
+      "target": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+      "targetInput": 2
+    },
+    {
+      "id": "5d88f0ab-e3c8-4c52-a579-8fc55ebf1d09",
+      "source": "9ef7e919-d7f9-4531-ba18-7024e43e1399",
+      "sourceOutput": 0,
+      "target": "e0d49633-b166-41fd-b6bc-699474ffddd9",
+      "targetInput": 0
+    },
+    {
+      "id": "5d9d8913-8ba2-48d2-94a1-dd96255fe840",
+      "source": "65c7d501-36ec-4643-9216-81305b3edb5a",
+      "sourceOutput": 1,
+      "target": "377a499f-2288-4981-997e-75aa8ba3d707",
+      "targetInput": 0
+    },
+    {
+      "id": "60569b31-6aed-44fb-a205-767b7270c728",
+      "source": "61bb0c34-56bc-47e2-9126-6a8a3c9f0d4b",
+      "sourceOutput": 0,
+      "target": "f09fba72-dba6-463e-a511-5f16a8155801",
+      "targetInput": 0
+    },
+    {
+      "id": "63cbe91a-f973-4eef-b8bb-15390d19e431",
+      "source": "9215fedb-1748-472a-bda3-d267b11bd4af",
+      "sourceOutput": 0,
+      "target": "3c22b8b9-01e8-499d-a0f0-6cd9b4de462b",
+      "targetInput": 1
+    },
+    {
+      "id": "79135b9c-e061-4767-a7d6-e733c44df4ec",
+      "source": "0aa114d4-02d2-4dfb-b93e-68cb25b10fbe",
+      "sourceOutput": 1,
+      "target": "cf496d73-dcc7-4c41-b5a7-2b03507b025b",
+      "targetInput": 1
+    },
+    {
+      "id": "7a3d367b-7a89-4a7d-b126-6e7e8acc9792",
+      "source": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+      "sourceOutput": 1,
+      "target": "1f6af305-2fe9-4446-856b-a98267850602",
+      "targetInput": 1
+    },
+    {
+      "id": "7d3a99b0-5db1-467b-8adb-9db3238ff78e",
+      "source": "f09fba72-dba6-463e-a511-5f16a8155801",
+      "sourceOutput": 1,
+      "target": "789f1738-b577-4590-b789-0760d18c98fb",
+      "targetInput": 1
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "8e08fcc8-8c04-4199-8172-6560352e0b02",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "f09fba72-dba6-463e-a511-5f16a8155801",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "9081a48e-40d5-4415-a6ec-fcac2e378c40",
+      "label": "Carbon Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "41ce918e-044a-4ea7-8d56-dbd55054050b",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "9d072769-0c05-443c-af65-1c5800da78a1",
+      "label": "Empty Cell",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "a42828eb-e1fb-44ee-859f-1e5f4a3aa2bc",
+      "label": "Chlorine",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0ce7c79-6ba9-40df-8f16-de05c6355594",
+          "port": 1
+        },
+        {
+          "node": "61bb0c34-56bc-47e2-9126-6a8a3c9f0d4b",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "b1c09f98-ccdf-4ca4-8001-727627e07f39",
+      "label": "Banded Iron Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 5
+        }
+      ]
+    },
+    {
+      "id": "b4817ae6-7d71-4892-93ca-d1a3e566422a",
+      "label": "Propene Cell",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "b670521f-5ec4-46d6-89df-68ecf07180f6",
+      "label": "Phenol",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a7228e91-cc91-40e4-8296-2f9afa3d2768",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "bc2370d4-a70f-4ec0-98ef-b5610bf391ee",
+      "label": "Phosphorous Pentoxide Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 3
+        }
+      ]
+    },
+    {
+      "id": "bd63e63c-60f4-4ee4-9f29-6f025b640a14",
+      "label": "Phosphoric Acid Cell",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c902e1bc-a541-425e-83b1-4eb325bb5bf1",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "ccaaa14c-65d0-4546-900d-b18019c1d2c8",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e2c76404-dc1f-4fde-bd40-3e63d0852962",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "cd2ed24e-0ee5-4dae-ba9d-0196d8899475",
+      "label": "Potassium Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "a0ce7c79-6ba9-40df-8f16-de05c6355594",
+          "port": 0
+        },
+        {
+          "node": "6ab1fe5e-3680-41b0-960c-619133a57b5a",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "d9bfc31a-13ef-42bd-8c42-df0f46e4d2be",
+      "label": "Lubricant",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "520a24dc-88b1-4083-a0c3-3313823c5619",
+          "port": 1
+        },
+        {
+          "node": "747c0180-d902-44d4-a39c-9a80aefbf435",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "db2c6947-5070-43b0-8f8f-88c3b69056d6",
+      "label": "Magnesia Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "e011889e-05a9-441c-b759-18754c21eb2f",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "747c0180-d902-44d4-a39c-9a80aefbf435",
+          "port": 2
+        },
+        {
+          "node": "520a24dc-88b1-4083-a0c3-3313823c5619",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "e7877c6b-9eb0-4170-ac4f-ced056b8e602",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "88e0c186-56cc-459c-81c7-fe5d66cbfcd6",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "38bf41a2-0ae6-474d-9014-adc5c10105a2",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "3ba27523-3df4-48b0-9c34-6758946090ec",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "3bbf82bd-3d61-4a3f-97f8-226263dca320",
+      "label": "Soda Ash Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 4
+        }
+      ]
+    },
+    {
+      "id": "420fd9c2-3dd5-47d2-acfc-db620cab4aa2",
+      "label": "Charcoal",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "07f84300-64b1-4d35-84e5-e19402ad6dab",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "461ca716-3064-4573-9b0b-00e9beafb8f7",
+      "label": "Potash Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "5278afe1-bde5-4286-948f-a922be3b8020",
+      "label": "Quicklime Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "1b5c5b51-7abe-48d2-8ae7-a46789dd4e72",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "64f8ff03-878e-45cb-91a4-4713f23e18f9",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "520a24dc-88b1-4083-a0c3-3313823c5619",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "6be66b93-bb6a-48bf-b55c-fd184c04bc37",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "0ee804b0-4514-4d08-accb-6e4160804739",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "6bfcefcb-1926-41f9-8620-e3cf8d4cd6c6",
+      "label": "Empty Cell",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "b4c4be87-1a44-484c-999c-8e2b519f415e",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "75e1ffa1-87cd-4a8f-b1e4-18a73fa24a8a",
+      "label": "Water",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "41ce918e-044a-4ea7-8d56-dbd55054050b",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "782ce3df-1194-4c02-8c68-b0897a11a4a8",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "747c0180-d902-44d4-a39c-9a80aefbf435",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

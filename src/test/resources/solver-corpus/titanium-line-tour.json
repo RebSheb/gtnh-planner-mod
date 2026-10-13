@@ -1,0 +1,403 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "80747d2c-d8ee-4c1b-b6e5-e5c6ffe8e03e",
+      "name": "item:gregtech:gt.blockmachines:423",
+      "durationTicks": 400.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "80dd9ac4-9630-4ca4-96d4-b74b875d06a0",
+      "name": "item:gregtech:gt.blockmachines:423",
+      "durationTicks": 400.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "8dff4411-e404-4416-8f3a-fb2ca62f1283",
+      "name": "item:gregtech:gt.blockmachines:371",
+      "durationTicks": 320.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Salt",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Sodium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Chlorine",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "90505b31-e7a9-4eff-b958-e2975efbd4d2",
+      "name": "item:gregtech:gt.blockmachines:1002",
+      "durationTicks": 144.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Hot Titanium Ingot",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Titanium Ingot",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ad605ca1-ab84-4ba3-9b08-1fb9dd6e1795",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 800.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Magnesium Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Titaniumtetrachloride",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Hot Titanium Ingot",
+          "free": false
+        },
+        {
+          "amount": 6.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Magnesiumchloride Dust",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+      "name": "item:gregtech:gt.blockmachines:1000",
+      "durationTicks": 3200.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 5.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Ilmenite Dust",
+          "free": false
+        },
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Carbon Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Cast Iron Ingot",
+          "free": false
+        },
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Rutile Dust",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Carbon Monoxide",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "84059cd2-9174-4033-b8f9-5104a8087d8d",
+      "source": "80747d2c-d8ee-4c1b-b6e5-e5c6ffe8e03e",
+      "sourceOutput": 0,
+      "target": "ad605ca1-ab84-4ba3-9b08-1fb9dd6e1795",
+      "targetInput": 1
+    },
+    {
+      "id": "86754cdf-373b-4c9a-acfc-5df8995761a2",
+      "source": "ad605ca1-ab84-4ba3-9b08-1fb9dd6e1795",
+      "sourceOutput": 0,
+      "target": "90505b31-e7a9-4eff-b958-e2975efbd4d2",
+      "targetInput": 0
+    },
+    {
+      "id": "94028047-dfa7-4f4f-8d67-0f208957ced6",
+      "source": "8dff4411-e404-4416-8f3a-fb2ca62f1283",
+      "sourceOutput": 1,
+      "target": "80747d2c-d8ee-4c1b-b6e5-e5c6ffe8e03e",
+      "targetInput": 2
+    },
+    {
+      "id": "c74ce44e-8bb4-4381-a594-77ba3c67d77d",
+      "source": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+      "sourceOutput": 1,
+      "target": "80747d2c-d8ee-4c1b-b6e5-e5c6ffe8e03e",
+      "targetInput": 0
+    },
+    {
+      "id": "22c6227d-f383-4489-901c-c6bde49b1911",
+      "source": "8dff4411-e404-4416-8f3a-fb2ca62f1283",
+      "sourceOutput": 0,
+      "target": "80dd9ac4-9630-4ca4-96d4-b74b875d06a0",
+      "targetInput": 0
+    },
+    {
+      "id": "48194d3b-6283-4660-8ced-0811164336ff",
+      "source": "ad605ca1-ab84-4ba3-9b08-1fb9dd6e1795",
+      "sourceOutput": 1,
+      "target": "80dd9ac4-9630-4ca4-96d4-b74b875d06a0",
+      "targetInput": 1
+    },
+    {
+      "id": "644609ff-5a99-40c3-a17b-cb9afc750a89",
+      "source": "80dd9ac4-9630-4ca4-96d4-b74b875d06a0",
+      "sourceOutput": 1,
+      "target": "8dff4411-e404-4416-8f3a-fb2ca62f1283",
+      "targetInput": 0
+    },
+    {
+      "id": "7e2b158f-955a-4f57-932c-c1bb99a7828d",
+      "source": "80dd9ac4-9630-4ca4-96d4-b74b875d06a0",
+      "sourceOutput": 0,
+      "target": "ad605ca1-ab84-4ba3-9b08-1fb9dd6e1795",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "9b75f607-6fe8-457f-84ee-72530d7fb501",
+      "label": "Titanium Ingot",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "90505b31-e7a9-4eff-b958-e2975efbd4d2",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "b494388d-af25-48b0-8d03-0320d6c6fa7e",
+      "label": "Ilmenite Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "4930d5bd-2dd1-4ccf-9313-86c0b1af1497",
+      "label": "Carbon Monoxide",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "5d9824c7-f5a2-4cb2-b31a-ae58d67d9942",
+      "label": "Cast Iron Ingot",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7dbc6595-977e-4747-9c72-617c78307a9b",
+      "label": "Carbon Dust",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "fe1d8caf-9636-4ed6-8c40-987eebfea30b",
+          "port": 1
+        },
+        {
+          "node": "80747d2c-d8ee-4c1b-b6e5-e5c6ffe8e03e",
+          "port": 1
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

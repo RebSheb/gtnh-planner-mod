@@ -1,0 +1,1441 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "8d63f755-2c2b-43c3-a83b-48583efd2a97",
+      "name": "Large Combustion Engine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 420.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Ethanol",
+          "free": false
+        },
+        {
+          "amount": 0.5588822355289421,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Lubricant",
+          "free": false
+        },
+        {
+          "amount": 40.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 122880.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 7,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "91f03221-7282-4474-9a2c-9f74e29bcdb2",
+      "name": "item:gregtech:gt.blockmachines:15543",
+      "durationTicks": 256.0,
+      "energyPerTick": 86.77639649279999,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oak Wood",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 20.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Charcoal",
+          "free": false
+        },
+        {
+          "amount": 1500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9b00bbf6-096b-4001-b2a5-bebc41921257",
+      "name": "item:gregtech:gt.blockmachines:15512",
+      "durationTicks": 100.0,
+      "energyPerTick": 20736.0,
+      "throughputFactor": 48,
+      "inputs": [
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Nether Air",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Nitrogen Dioxide",
+          "free": false
+        },
+        {
+          "amount": 3800.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Sulfur Dioxide",
+          "free": false
+        },
+        {
+          "amount": 2100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Sulfur Trioxide",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 7,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "9e097011-fe72-4ba1-89cd-63582158b8ce",
+      "name": "item:gregtech:gt.blockmachines:1126",
+      "durationTicks": 50.0,
+      "energyPerTick": 7680.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Creosote Oil",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Lubricant",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ae4c4e79-b60a-4807-85b4-4e9b3b8ecd82",
+      "name": "item:gregtech:gt.blockmachines:31021",
+      "durationTicks": 2.0,
+      "energyPerTick": 23040.0,
+      "throughputFactor": 12,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Distilled Water",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "name": "item:gregtech:gt.blockmachines:31021",
+      "durationTicks": 6.0,
+      "energyPerTick": 12288.0,
+      "throughputFactor": 12,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 250.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Creosote Oil",
+          "free": false
+        },
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Phenol",
+          "free": false
+        },
+        {
+          "amount": 400.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Benzene",
+          "free": false
+        },
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Toluene",
+          "free": false
+        },
+        {
+          "amount": 150.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "1,2-Dimethylbenzene",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 6,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "c6cac4de-92b8-4eca-b487-bd42a42e3b0f",
+      "name": "Large Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1840.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 15,
+          "name": "Phenol",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 689680.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 14,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e2094842-10ff-492c-b597-7f45675eabef",
+      "name": "item:gregtech:gt.blockmachines:15514",
+      "durationTicks": 154.0,
+      "energyPerTick": 108.0,
+      "throughputFactor": 2,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 18,
+          "name": "1,2-Dimethylbenzene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 19,
+          "name": "Carbon Dust",
+          "free": false
+        },
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ef410c3b-d7b4-4d4b-a9cb-612f92f443cd",
+      "name": "item:gregtech:gt.blockmachines:998",
+      "durationTicks": 80.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 9,
+          "name": "Nitrogen Dioxide",
+          "free": false
+        },
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Air",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Nitric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 6,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "f37347d5-312a-4e3f-9a23-3f9520ae7569",
+      "name": "Large Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 26740.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 20,
+          "name": "Hydrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 696040.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 10,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "name": "item:gregtech:gt.blockmachines:998",
+      "durationTicks": 171.0,
+      "energyPerTick": 480.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 16,
+          "name": "Benzene",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Sulfuric Acid",
+          "free": false
+        },
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 22,
+          "name": "Nitric Acid",
+          "free": false
+        },
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 14,
+          "name": "Distilled Water",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 5000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Nitrobenzene",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 9,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0229b532-c212-4af9-9dac-3867ffec2a4f",
+      "name": "item:gregtech:gt.blockmachines:15512",
+      "durationTicks": 25.0,
+      "energyPerTick": 2304.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Plant Mass",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Bio Chaff",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "12d52c70-1610-4dce-b8ec-682dd43a002a",
+      "name": "Large Combustion Engine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 10240.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 12,
+          "name": "Creosote Oil",
+          "free": false
+        },
+        {
+          "amount": 0.5588822355289421,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Lubricant",
+          "free": false
+        },
+        {
+          "amount": 40.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 122880.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 6,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "2137a3a3-abd3-412c-8fae-7ad15d3cdbe3",
+      "name": "item:gregtech:gt.blockmachines:15546",
+      "durationTicks": 213.0,
+      "energyPerTick": 96.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 16.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Oak Wood",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 20.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Charcoal",
+          "free": false
+        },
+        {
+          "amount": 1500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 3,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "26646917-adf1-441f-914b-d0711f0100af",
+      "name": "item:gregtech:gt.blockmachines:2730",
+      "durationTicks": 1.0,
+      "energyPerTick": 8062.156800000001,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Charcoal",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 0.1,
+          "multiplier": 1.0,
+          "resource": 27,
+          "name": "Ashes",
+          "free": false
+        },
+        {
+          "amount": 100.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Wood Tar",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 5,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "29053e73-d89d-41aa-b247-3ff15a9ac71d",
+      "name": "item:gregtech:gt.blockmachines:15514",
+      "durationTicks": 107.0,
+      "energyPerTick": 108.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 10,
+          "name": "Sulfur Dioxide",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 28,
+          "name": "Sulfur Dust",
+          "free": false
+        },
+        {
+          "amount": 2000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "37473dca-d59e-47e8-8d99-aeed410b70f9",
+      "name": "item:gregtech:gt.blockmachines:3005",
+      "durationTicks": 9.0,
+      "energyPerTick": 4608.0,
+      "throughputFactor": 10,
+      "inputs": [
+        {
+          "amount": 8.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 29,
+          "name": "Rainforest Oak Sapling",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Plantball",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "440d8e78-d09e-4ea2-9f53-96df31ae000e",
+      "name": "item:gregtech:gt.blockmachines:15543",
+      "durationTicks": 80.0,
+      "energyPerTick": 578.509309952,
+      "throughputFactor": 16,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 26,
+          "name": "Bio Chaff",
+          "free": false
+        },
+        {
+          "amount": 1500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1500.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 31,
+          "name": "Fermented Biomass",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "45f16d03-d65c-4ccd-a9aa-412bf32cdacf",
+      "name": "Large Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 5140.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 32,
+          "name": "Methane",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 695720.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4623c533-6cc9-4ee2-85f0-4b4c21c64915",
+      "name": "Large Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1620.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 17,
+          "name": "Toluene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 691560.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 16,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "4f661338-f99d-4070-8a36-3f30ea86575e",
+      "name": "item:gregtech:gt.blockmachines:1169",
+      "durationTicks": 1.0,
+      "energyPerTick": 7168.0,
+      "throughputFactor": 4,
+      "inputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 11,
+          "name": "Sulfur Trioxide",
+          "free": false
+        },
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 13,
+          "name": "Water",
+          "free": true
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 23,
+          "name": "Sulfuric Acid",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "57ffa9b8-605d-4898-b47d-d0a2d097176e",
+      "name": "Large Combustion Engine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 960.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 33,
+          "name": "Methanol",
+          "free": false
+        },
+        {
+          "amount": 0.5588822355289421,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Lubricant",
+          "free": false
+        },
+        {
+          "amount": 40.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 122880.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 3,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "6848bdb6-d2b2-4754-b12a-9909a1421e15",
+      "name": "Large Gas Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 0.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 320.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 24,
+          "name": "Nitrobenzene",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 666360.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "EU",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 300,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "73758383-0af6-44ca-ac73-312aecee9041",
+      "name": "item:gregtech:gt.blockmachines:15512",
+      "durationTicks": 66.0,
+      "energyPerTick": 16128.0,
+      "throughputFactor": 40,
+      "inputs": [
+        {
+          "amount": 10000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 21,
+          "name": "Air",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1000.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Oxygen",
+          "free": false
+        },
+        {
+          "amount": 3900.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Nitrogen",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 2,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "7b4ccbb4-ff9c-43f8-9d73-559126c55a5e",
+      "name": "item:gregtech:gt.blockmachines:15539",
+      "durationTicks": 31.0,
+      "energyPerTick": 4800.0,
+      "throughputFactor": 10,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 30,
+          "name": "Plantball",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 4.0,
+          "chance": 0.6875,
+          "multiplier": 1.0,
+          "resource": 25,
+          "name": "Plant Mass",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "8377ac3e-e3ae-4cc4-946c-8183422ef96a",
+      "source": "7b4ccbb4-ff9c-43f8-9d73-559126c55a5e",
+      "sourceOutput": 0,
+      "target": "0229b532-c212-4af9-9dac-3867ffec2a4f",
+      "targetInput": 0
+    },
+    {
+      "id": "96ced523-5ad5-49fa-b160-c645647ecf6c",
+      "source": "73758383-0af6-44ca-ac73-312aecee9041",
+      "sourceOutput": 1,
+      "target": "91f03221-7282-4474-9a2c-9f74e29bcdb2",
+      "targetInput": 1
+    },
+    {
+      "id": "a1eb0e6e-f589-4a6f-9f75-7f79e5315df3",
+      "source": "91f03221-7282-4474-9a2c-9f74e29bcdb2",
+      "sourceOutput": 1,
+      "target": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "targetInput": 0
+    },
+    {
+      "id": "b3582050-f69e-43eb-8d7a-96ee012281eb",
+      "source": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "sourceOutput": 0,
+      "target": "6848bdb6-d2b2-4754-b12a-9909a1421e15",
+      "targetInput": 0
+    },
+    {
+      "id": "bc85d34f-717c-4a6c-996f-1547c4faf880",
+      "source": "ef410c3b-d7b4-4d4b-a9cb-612f92f443cd",
+      "sourceOutput": 0,
+      "target": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "targetInput": 2
+    },
+    {
+      "id": "c08be05b-f42a-4ca1-b36d-ae37a270d606",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 0,
+      "target": "9e097011-fe72-4ba1-89cd-63582158b8ce",
+      "targetInput": 0
+    },
+    {
+      "id": "c1ff8349-8934-443f-9500-d1b5138bf9d2",
+      "source": "ae4c4e79-b60a-4807-85b4-4e9b3b8ecd82",
+      "sourceOutput": 0,
+      "target": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "targetInput": 3
+    },
+    {
+      "id": "c22db429-efde-43ff-a00d-09409edc6e68",
+      "source": "91f03221-7282-4474-9a2c-9f74e29bcdb2",
+      "sourceOutput": 0,
+      "target": "26646917-adf1-441f-914b-d0711f0100af",
+      "targetInput": 0
+    },
+    {
+      "id": "cf29f0a6-02cd-4657-b0a6-7fe743d782cb",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 2,
+      "target": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "targetInput": 0
+    },
+    {
+      "id": "d09763bb-d263-4b34-960c-4abb6af3c5bd",
+      "source": "9b00bbf6-096b-4001-b2a5-bebc41921257",
+      "sourceOutput": 1,
+      "target": "29053e73-d89d-41aa-b247-3ff15a9ac71d",
+      "targetInput": 0
+    },
+    {
+      "id": "d1bf9941-9296-4ef8-adac-f83e31aaf629",
+      "source": "4f661338-f99d-4070-8a36-3f30ea86575e",
+      "sourceOutput": 0,
+      "target": "ff541067-cda9-4388-a08c-b92979dff04e",
+      "targetInput": 1
+    },
+    {
+      "id": "d7b74175-1414-403c-a338-2c41c562b8d8",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 4,
+      "target": "e2094842-10ff-492c-b597-7f45675eabef",
+      "targetInput": 0
+    },
+    {
+      "id": "d960d5d1-a4fb-4270-b938-1e62d831ceb2",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 1,
+      "target": "c6cac4de-92b8-4eca-b487-bd42a42e3b0f",
+      "targetInput": 0
+    },
+    {
+      "id": "e10452c8-3657-4fe2-be37-6b19f8d07537",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 0,
+      "target": "12d52c70-1610-4dce-b8ec-682dd43a002a",
+      "targetInput": 0
+    },
+    {
+      "id": "ed6134d6-e97e-4db7-894b-4da041c666fe",
+      "source": "26646917-adf1-441f-914b-d0711f0100af",
+      "sourceOutput": 1,
+      "target": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "targetInput": 0
+    },
+    {
+      "id": "ee75669b-d6e1-4496-984f-3a1c064ce6e8",
+      "source": "9e097011-fe72-4ba1-89cd-63582158b8ce",
+      "sourceOutput": 0,
+      "target": "8d63f755-2c2b-43c3-a83b-48583efd2a97",
+      "targetInput": 1
+    },
+    {
+      "id": "f40a4fce-ca38-4182-ba46-4f9d987bdf6b",
+      "source": "e2094842-10ff-492c-b597-7f45675eabef",
+      "sourceOutput": 1,
+      "target": "f37347d5-312a-4e3f-9a23-3f9520ae7569",
+      "targetInput": 0
+    },
+    {
+      "id": "18052ad1-bdc2-4fee-a6dc-fc7da5f374b4",
+      "source": "0229b532-c212-4af9-9dac-3867ffec2a4f",
+      "sourceOutput": 0,
+      "target": "440d8e78-d09e-4ea2-9f53-96df31ae000e",
+      "targetInput": 0
+    },
+    {
+      "id": "1eb92b4b-04bb-441e-9865-ef9a5a74494e",
+      "source": "9e097011-fe72-4ba1-89cd-63582158b8ce",
+      "sourceOutput": 0,
+      "target": "12d52c70-1610-4dce-b8ec-682dd43a002a",
+      "targetInput": 1
+    },
+    {
+      "id": "2ae2e36b-3051-4897-8d31-9d46f7dd49e8",
+      "source": "b33aad74-0f8b-465a-b47a-ca3c884ccffa",
+      "sourceOutput": 3,
+      "target": "4623c533-6cc9-4ee2-85f0-4b4c21c64915",
+      "targetInput": 0
+    },
+    {
+      "id": "410ed9e0-fc1a-4f31-ad4b-17305b02c040",
+      "source": "9e097011-fe72-4ba1-89cd-63582158b8ce",
+      "sourceOutput": 0,
+      "target": "57ffa9b8-605d-4898-b47d-d0a2d097176e",
+      "targetInput": 1
+    },
+    {
+      "id": "4c398d49-6723-47d9-8a35-8f3f1d09102f",
+      "source": "9b00bbf6-096b-4001-b2a5-bebc41921257",
+      "sourceOutput": 0,
+      "target": "ef410c3b-d7b4-4d4b-a9cb-612f92f443cd",
+      "targetInput": 0
+    },
+    {
+      "id": "613cc913-8f40-4205-bd32-d18cd1094efe",
+      "source": "9b00bbf6-096b-4001-b2a5-bebc41921257",
+      "sourceOutput": 2,
+      "target": "4f661338-f99d-4070-8a36-3f30ea86575e",
+      "targetInput": 0
+    },
+    {
+      "id": "76d809a4-c62f-4368-a02a-e943bfa110f0",
+      "source": "37473dca-d59e-47e8-8d99-aeed410b70f9",
+      "sourceOutput": 0,
+      "target": "7b4ccbb4-ff9c-43f8-9d73-559126c55a5e",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "b4e74af6-892b-4a33-9e87-54439cdc926b",
+      "label": "Air",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "73758383-0af6-44ca-ac73-312aecee9041",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "baf8ecb1-9df6-4aad-afc1-aba80dc7553d",
+      "label": "Wood Tar",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2137a3a3-abd3-412c-8fae-7ad15d3cdbe3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "cdaca78e-2c02-4be3-a949-11b84002e058",
+      "label": "Ashes",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "26646917-adf1-441f-914b-d0711f0100af",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "d0338d22-b474-407f-a6e5-8cc447e79faa",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "440d8e78-d09e-4ea2-9f53-96df31ae000e",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "dde3affc-0382-4505-97cf-a6e18ee39add",
+      "label": "Sulfur Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "29053e73-d89d-41aa-b247-3ff15a9ac71d",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "e847382f-dc17-4d01-9598-74581f99a86f",
+      "label": "EU",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "c6cac4de-92b8-4eca-b487-bd42a42e3b0f",
+          "port": 0
+        },
+        {
+          "node": "4623c533-6cc9-4ee2-85f0-4b4c21c64915",
+          "port": 0
+        },
+        {
+          "node": "6848bdb6-d2b2-4754-b12a-9909a1421e15",
+          "port": 0
+        },
+        {
+          "node": "12d52c70-1610-4dce-b8ec-682dd43a002a",
+          "port": 0
+        },
+        {
+          "node": "f37347d5-312a-4e3f-9a23-3f9520ae7569",
+          "port": 0
+        },
+        {
+          "node": "45f16d03-d65c-4ccd-a9aa-412bf32cdacf",
+          "port": 0
+        },
+        {
+          "node": "57ffa9b8-605d-4898-b47d-d0a2d097176e",
+          "port": 0
+        },
+        {
+          "node": "8d63f755-2c2b-43c3-a83b-48583efd2a97",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "002a8f96-2569-4a26-98cd-66ad32d0163e",
+      "label": "Nether Air",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "9b00bbf6-096b-4001-b2a5-bebc41921257",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "0bf8dd1b-430a-43f5-bd3b-521ee34ef8e9",
+      "label": "Nitrogen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2137a3a3-abd3-412c-8fae-7ad15d3cdbe3",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "17506ac8-9c40-49fc-afc1-d85a6beead07",
+      "label": "Oak Log",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2137a3a3-abd3-412c-8fae-7ad15d3cdbe3",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "2dadfb55-1910-4f50-bbf5-133aa1ba5d17",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ef410c3b-d7b4-4d4b-a9cb-612f92f443cd",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "3354c594-38fb-4329-a8be-12c15ff9b808",
+      "label": "Oxygen",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "12d52c70-1610-4dce-b8ec-682dd43a002a",
+          "port": 2
+        },
+        {
+          "node": "57ffa9b8-605d-4898-b47d-d0a2d097176e",
+          "port": 2
+        },
+        {
+          "node": "8d63f755-2c2b-43c3-a83b-48583efd2a97",
+          "port": 2
+        }
+      ]
+    },
+    {
+      "id": "4b165494-9104-46b2-b3c6-97a747626c0e",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "73758383-0af6-44ca-ac73-312aecee9041",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "4e3fef97-ea17-414d-83c0-da02f3078c56",
+      "label": "Air",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ef410c3b-d7b4-4d4b-a9cb-612f92f443cd",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "53018384-a44b-40bc-b870-9fda320a4cb8",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "ae4c4e79-b60a-4807-85b4-4e9b3b8ecd82",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "617b398f-081c-48c5-8f35-ee6c0644bb47",
+      "label": "Carbon Dust",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "e2094842-10ff-492c-b597-7f45675eabef",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7313b620-669d-4aed-87e6-b56a06b0f35e",
+      "label": "Oxygen",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "29053e73-d89d-41aa-b247-3ff15a9ac71d",
+          "port": 1
+        }
+      ]
+    },
+    {
+      "id": "7d53a94f-e9e0-4a70-b459-4c147faf5311",
+      "label": "Charcoal",
+      "kind": "PRODUCT",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "2137a3a3-abd3-412c-8fae-7ad15d3cdbe3",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7f129cad-1b87-411f-abbc-aa1737751654",
+      "label": "Water",
+      "kind": "SOURCE",
+      "rule": "ANY",
+      "rate": 0.0,
+      "links": [
+        {
+          "node": "4f661338-f99d-4070-8a36-3f30ea86575e",
+          "port": 1
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

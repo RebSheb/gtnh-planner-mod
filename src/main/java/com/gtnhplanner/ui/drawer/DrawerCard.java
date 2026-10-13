@@ -89,6 +89,11 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
     @Override
     public void onUpdate() {
         super.onUpdate();
+        syncModel();
+    }
+
+    /** Takes up the model the last solve made: every tick while in view, and from the board when it is not. */
+    public void syncModel() {
         if (session.drawerModel(drawerId) != model) refresh();
     }
 
