@@ -202,7 +202,7 @@ final class StructureGhostBuilder {
                     maxZ = Math.max(maxZ, dz);
                 }
         final Sizing sizing = sizing(meta);
-        return new StructureGhosts.Ghost(
+        final StructureGhosts.Ghost ghost = new StructureGhosts.Ghost(
             new Built(world, new RenderBlocks(world), blocks, triggerOf(channels)),
             blocks.size(),
             minX,
@@ -213,6 +213,13 @@ final class StructureGhostBuilder {
             maxZ,
             sizing == null ? 0 : channels.get(sizing.channel()),
             sizing == null ? 0 : sizing.steps());
+        // Seats are read from this world before anything draws it. The ghost's mesh is captured by rendering into the
+        // same world, and that changes blocks, so a scan afterwards finds no hatch and a large machine never joins a
+        // pipe.
+        try {
+            HatchSeats.of(ghost);
+        } catch (final RuntimeException | LinkageError ignored) {}
+        return ghost;
     }
 
     private static ItemStack triggerOf(final Map<String, Integer> channels) {

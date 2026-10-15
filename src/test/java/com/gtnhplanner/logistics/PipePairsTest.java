@@ -37,6 +37,16 @@ class PipePairsTest {
     }
 
     @Test
+    void aStackLinesUpOnY() {
+        assertEquals(1, PipePairs.alignAxis(new double[] { 1, 8, 1 }, new double[] { 2, 6, 0 }));
+    }
+
+    @Test
+    void aRowLinesUpOnX() {
+        assertEquals(0, PipePairs.alignAxis(new double[] { 10, 0, 1 }, new double[] { 12, 1, 0 }));
+    }
+
+    @Test
     void missingASideIsNoPair() {
         assertEquals(List.of(), PipePairs.pair(0, 2, 10));
         assertEquals(List.of(), PipePairs.pair(2, 0, 10));

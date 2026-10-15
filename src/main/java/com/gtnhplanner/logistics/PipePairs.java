@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * How a card's placed machines join another card's: first to first when both are placed, a leftover source to another
- * hatch on the last target, a leftover target from the last source. The wire's rate is split across those runs.
+ * How a card's placed machines join another card's. The two sides are lined up along the way they both spread, so the
+ * upper machine feeds the upper one, and a leftover source takes another hatch on the last target. The wire's rate is
+ * split across those runs.
  */
 public final class PipePairs {
 
@@ -18,6 +19,24 @@ public final class PipePairs {
      * {@code fromCount} and {@code toCount} are how many of each card are in the world. Empty when either side has
      * none. One of each keeps the whole rate; more than one splits it so each machine is sized on its own.
      */
+    /**
+     * Which axis both rows spread on, so they can be lined up: 0 is x, 1 is y, 2 is z. Each value of {@code fromRange}
+     * and {@code toRange} is how far that side stretches on that axis. A single machine spreads nothing, and y is no
+     * more special than x.
+     */
+    public static int alignAxis(final double[] fromRange, final double[] toRange) {
+        int best = 0;
+        double score = -1;
+        for (int i = 0; i < 3; i++) {
+            final double spread = Math.min(fromRange[i], toRange[i]);
+            if (spread > score) {
+                score = spread;
+                best = i;
+            }
+        }
+        return best;
+    }
+
     public static List<Pair> pair(final int fromCount, final int toCount, final double rate) {
         if (fromCount <= 0 || toCount <= 0) return List.of();
         final int n = Math.max(fromCount, toCount);

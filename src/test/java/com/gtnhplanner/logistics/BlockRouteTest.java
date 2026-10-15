@@ -39,6 +39,13 @@ class BlockRouteTest {
     }
 
     @Test
+    void outsideClearsAThickMachine() {
+        final Set<Cell> self = new HashSet<>();
+        for (int x = 1; x <= 12; x++) self.add(new Cell(x, 0, 0));
+        assertEquals(new Cell(13, 0, 0), BlockRoute.outside(new Cell(0, 0, 0), 1, 0, 0, self));
+    }
+
+    @Test
     void outsideStopsAtANeighbour() {
         final Cell start = new Cell(0, 0, 0);
         assertEquals(new Cell(1, 0, 0), BlockRoute.outside(start, 1, 0, 0, Set.of(start)));

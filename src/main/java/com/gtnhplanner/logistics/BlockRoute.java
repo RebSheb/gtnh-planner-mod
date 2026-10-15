@@ -67,7 +67,9 @@ public final class BlockRoute {
         int sx = Integer.signum(dx), sy = Integer.signum(dy), sz = Integer.signum(dz);
         if (sx == 0 && sy == 0 && sz == 0) sx = 1;
         Cell cell = new Cell(at.x + sx, at.y + sy, at.z + sz);
-        for (int i = 0; i < 8 && self.contains(cell); i++) cell = new Cell(cell.x + sx, cell.y + sy, cell.z + sz);
+        // Far enough to leave a large multiblock. A neighbour is not in {@code self}, so the walk still stops on its
+        // first block.
+        for (int i = 0; i < 256 && self.contains(cell); i++) cell = new Cell(cell.x + sx, cell.y + sy, cell.z + sz);
         return cell;
     }
 

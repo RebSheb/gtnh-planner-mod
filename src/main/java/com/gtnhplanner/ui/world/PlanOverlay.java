@@ -263,12 +263,21 @@ public final class PlanOverlay {
         }
         final List<Placed> list = new ArrayList<>();
         for (final Placed p : all) {
-            final double dx = p.home[0] - eye.posX, dy = p.home[1] - eye.posY, dz = p.home[2] - eye.posZ;
-            p.distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            // The near face, not the centre: a large multiblock beside the player stays in range, so its pipes still
+            // run to the machines it feeds.
+            p.distance = distanceToBox(p.box, eye.posX, eye.posY, eye.posZ);
             if (p.distance <= range) list.add(p);
         }
         list.sort(Comparator.comparingDouble(p -> p.distance));
         return list;
+    }
+
+    /** How far (x, y, z) is from a box {x0, y0, z0, x1, y1, z1}: 0 when the point is inside. */
+    private static double distanceToBox(final double[] box, final double x, final double y, final double z) {
+        final double dx = x < box[0] ? box[0] - x : x > box[3] ? x - box[3] : 0;
+        final double dy = y < box[1] ? box[1] - y : y > box[4] ? y - box[4] : 0;
+        final double dz = z < box[2] ? box[2] - z : z > box[5] ? z - box[5] : 0;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     /** The placed spot under the crosshair, as far as the overlay reaches. */
@@ -465,6 +474,9 @@ public final class PlanOverlay {
             if (w.from() == null || w.to() == null) continue;
             final List<Placed> froms = byNode.get(w.from()), tos = byNode.get(w.to());
             if (froms == null || tos == null) continue;
+            // Placement order crosses a stack: the machine placed first on the left feeds the one placed first on
+            // the right, even when that one stands at the bottom. Line them up by where they stand.
+            align(froms, tos);
             PlanSnapshot.Flow flow = null;
             for (final PlanSnapshot.Flow f : froms.get(0).card.outputs()) if (f.key()
                 .equals(w.resource())) flow = f;
@@ -476,6 +488,30 @@ public final class PlanOverlay {
             }
         }
         return out;
+    }
+
+    /**
+     * Put both rows in the same order along the way they both spread, so the upper machine feeds the upper one. Where
+     * they stand is a tie, the order they were placed keeps its place.
+     */
+    private static void align(final List<Placed> froms, final List<Placed> tos) {
+        final int axis = com.gtnhplanner.logistics.PipePairs.alignAxis(span(froms), span(tos));
+        final Comparator<Placed> order = Comparator.comparingDouble((Placed p) -> p.home[axis])
+            .thenComparingInt(p -> p.nth);
+        froms.sort(order);
+        tos.sort(order);
+    }
+
+    /** How far these machines stretch on x, y and z, centre to centre. */
+    private static double[] span(final List<Placed> placed) {
+        if (placed.isEmpty()) return new double[] { 0, 0, 0 };
+        final double[] min = { Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY };
+        final double[] max = { Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY };
+        for (final Placed p : placed) for (int i = 0; i < 3; i++) {
+            min[i] = Math.min(min[i], p.home[i]);
+            max[i] = Math.max(max[i], p.home[i]);
+        }
+        return new double[] { max[0] - min[0], max[1] - min[1], max[2] - min[2] };
     }
 
     // endregion
