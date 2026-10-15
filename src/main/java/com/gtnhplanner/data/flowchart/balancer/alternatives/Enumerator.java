@@ -15,6 +15,7 @@ import com.gtnhplanner.data.flowchart.balancer.External;
 import com.gtnhplanner.data.flowchart.balancer.ModelData;
 import com.gtnhplanner.data.flowchart.balancer.Note;
 import com.gtnhplanner.data.flowchart.balancer.Numerics;
+import com.gtnhplanner.data.flowchart.balancer.Outcome;
 import com.gtnhplanner.data.flowchart.balancer.Parallel;
 import com.gtnhplanner.data.flowchart.balancer.PortRef;
 import com.gtnhplanner.data.flowchart.balancer.SolveContext;
@@ -22,12 +23,13 @@ import com.gtnhplanner.data.flowchart.balancer.SolveResult;
 import com.gtnhplanner.data.flowchart.balancer.Solver;
 import com.gtnhplanner.data.flowchart.balancer.SolverMessage;
 import com.gtnhplanner.data.flowchart.balancer.StageOutcome;
+import com.gtnhplanner.data.flowchart.balancer.stages.TradeStage;
 
 /**
  * The choices/alternatives search for AUTO: every answer worth showing for the chart the solve
  * just answered, the solver's own first. Separate from the stages because it costs an LP per
  * candidate swap, worth paying only when somebody is looking. It REUSES the stage machinery -
- * {@link Solver#fixedQuantity}, {@link Solver#flowMinimal} and {@link Solver#canonicalize} - it
+ * {@link TradeStage#settle}, {@link Solver#leastFlowHolding} and {@link Solver#canonicalHolding} - it
  * does not run as a stage itself.
  *
  * <p>
@@ -57,8 +59,8 @@ public final class Enumerator {
      * ({@link com.gtnhplanner.data.flowchart.balancer.Spares}).
      *
      * <p>
-     * Every leftover the answer shows (an open gate) that not every answer has ({@link SolveContext#neededGates}) is a
-     * decision: each closed gate is tried in its place, the canonical point {@link #evaluateSupport} finds, side by
+     * Every leftover the answer shows (an open gate) that the plan could balance without is a decision: each closed
+     * gate is tried in its place, the canonical point {@link #evaluateSupport} finds, side by
      * side
      * ({@link Parallel}). A swap that balances with the same gate count is an option for that decision, ranked by why
      * it
@@ -86,10 +88,11 @@ public final class Enumerator {
         final double flowStar = sum(ctx.flows());
         final double qtyStar = ctx.normalizedQuantity(ctx.externals());
         // The incumbent measured once, in the same order an alternative will be measured against it.
-        final double[] incumbentCost = new double[Preference.ORDER.size()];
+        final double[][] incumbentCost = new double[Preference.ORDER.size()][];
         for (int i = 0; i < incumbentCost.length; i++) {
             incumbentCost[i] = Preference.ORDER.get(i)
-                .measure(ctx, incumbent, ctx.externals(), ctx.flows());
+                .measure()
+                .of(ctx, ctx.externals(), ctx.flows());
         }
         final double tol = ctx.heuristics.numerics().tieRel
             * Math.max(Math.max(flowStar, qtyStar), ctx.solutionScale(ctx.extents(), ctx.flows(), ctx.externals()));
@@ -97,9 +100,18 @@ public final class Enumerator {
 
         // What the answer opens, gates carrying too little to show included: a swap keeps them open.
         final Set<Integer> open = ctx.openGates.isEmpty() ? incumbent : ctx.openGates;
+        // A leftover the plan cannot balance without, every other place open, has nowhere else to go: one LP each.
+        final List<Integer> decisions = sorted(incumbent);
+        final List<Boolean> movable = Parallel.map(ctx, decisions, out -> {
+            final Set<Integer> without = new HashSet<>();
+            for (int g = 0; g < ctx.model.gates.size(); g++) if (g != out) without.add(g);
+            return !Solver.fixedQuantity(ctx, without)
+                .isRejected();
+        });
         final List<int[]> swaps = new ArrayList<>();
-        for (final int out : sorted(incumbent)) {
-            if (ctx.neededGates.contains(out)) continue;
+        for (int i = 0; i < decisions.size(); i++) {
+            final int out = decisions.get(i);
+            if (!movable.get(i)) continue;
             for (int in = 0; in < ctx.model.gates.size(); in++) {
                 if (!open.contains(in)) swaps.add(new int[] { out, in });
             }
@@ -236,15 +248,16 @@ public final class Enumerator {
     }
 
     /**
-     * The canonical point with exactly {@code open}'s gates allowed: least quantity, then least flow, then the
-     * canonical tie-break. Null when they do not balance. A property of the set, however the LPs reach it.
+     * The canonical point with exactly {@code open}'s gates allowed, settled as AUTO settles a plan: its trading level by
+     * level ({@link TradeStage#settle}), then least flow and the canonical tie-break. Null when they do not
+     * balance. A property of the set, however the LPs reach it.
      */
     public static StageOutcome evaluateSupport(final SolveContext ctx, final Set<Integer> open) {
-        final SolveResult s2Result = Solver.fixedQuantity(ctx, open);
-        if (s2Result.isRejected()) return null;
-        final SolveResult s3Result = Solver.flowMinimal(ctx, open, s2Result.point().externalQuantity);
+        if (!(TradeStage.settle(ctx, open) instanceof final Outcome.Continue<Solver.Trades> held))
+            return null;
+        final SolveResult s3Result = Solver.leastFlowHolding(ctx, held.value());
         if (s3Result.isRejected()) return null;
-        return Solver.canonicalize(ctx, open, s3Result.point());
+        return Solver.canonicalHolding(ctx, held.value(), s3Result.point());
     }
 
     /** One answer packaged for the UI, carrying only the flows at the gate it opens. */

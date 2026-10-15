@@ -28,12 +28,13 @@ public final class UndoHistory {
         return encodeNormalized(graph);
     }
 
-    /** Records the pre-edit state; no-op edits leave no trace. */
-    public void commitEdit(final String before, final Graph graph) {
-        if (before == null || before.equals(encodeNormalized(graph))) return;
+    /** Records the pre-edit state; no-op edits leave no trace. Whether the edit changed anything. */
+    public boolean commitEdit(final String before, final Graph graph) {
+        if (before == null || before.equals(encodeNormalized(graph))) return false;
         undoStack.push(before);
         if (undoStack.size() > MAX_DEPTH) undoStack.removeLast();
         redoStack.clear();
+        return true;
     }
 
     public boolean canUndo() {

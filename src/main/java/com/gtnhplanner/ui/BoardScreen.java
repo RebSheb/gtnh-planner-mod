@@ -69,10 +69,12 @@ public final class BoardScreen extends ModularScreen {
             .left(0)
             // Clear of NEI's search box along the bottom.
             .marginBottom(22)
-            .widthRelOffset(
-                () -> (double) Math.max(120, LayoutManager.itemPanel.x - 4)
-                    / Minecraft.getMinecraft().currentScreen.width,
-                0);
+            .widthRelOffset(() -> {
+                sizedPanelX = LayoutManager.itemPanel.x;
+                sizedScreenW = Minecraft.getMinecraft().currentScreen.width;
+                return (double) Math.max(120, sizedPanelX - 4) / sizedScreenW;
+            }, 0);
+        session.setPanel(panel);
         final BoardCanvas canvas = new BoardCanvas(session, panel);
         final OverviewRail rail = new OverviewRail(session, canvas);
         final java.util.Map<String, IWidget> parts = new java.util.HashMap<>();
@@ -214,7 +216,7 @@ public final class BoardScreen extends ModularScreen {
                 key(
                     () -> "Share",
                     () -> true,
-                    "Share this plan: to the library, or as a plan code",
+                    "Share this plan: to the library, as a code or in chat",
                     fit("Share"),
                     () -> openShare(panel, session, canvas, parts.get("share")))));
         topBar.child(
@@ -342,32 +344,24 @@ public final class BoardScreen extends ModularScreen {
 
     /**
      * The Share key's menu, under the key: the open plan to the library (or an update of what it shared), its plan
-     * code to the clipboard, and a picture of it.
+     * code to the clipboard, a line in the game's chat that opens it (client/ChatShare), and a picture of it. Labels
+     * only, as narrow as they are: each says what it does.
      */
     private static void openShare(final ModularPanel panel, final BoardSession session, final BoardCanvas canvas,
         final IWidget key) {
         final List<com.gtnhplanner.ui.popup.PickList.Entry> rows = new ArrayList<>();
-        rows.add(com.gtnhplanner.ui.library.AccountForms.shareRow(panel, session, session.graph()));
+        final com.gtnhplanner.ui.popup.PickList.Entry library = com.gtnhplanner.ui.library.AccountForms
+            .shareRow(panel, session, session.graph());
+        rows.add(com.gtnhplanner.ui.popup.PickList.Entry.of(library.label(), library.action()));
         final int slot = session.activeSlot();
+        rows.add(com.gtnhplanner.ui.popup.PickList.Entry.of("Copy plan code", () -> session.copyPlan(slot)));
+        rows.add(com.gtnhplanner.ui.popup.PickList.Entry.of("Share in chat", () -> session.shareInChat(slot)));
         rows.add(
-            new com.gtnhplanner.ui.popup.PickList.Entry(
-                null,
-                "Copy plan code",
-                "to paste anywhere",
-                Hyb.INK,
-                false,
-                () -> session.copyPlan(slot)));
-        rows.add(
-            new com.gtnhplanner.ui.popup.PickList.Entry(
-                null,
-                "Screenshot...",
-                "a picture of it",
-                Hyb.INK,
-                false,
-                () -> com.gtnhplanner.ui.popup.ScreenshotPanel.open(panel, session, canvas)));
+            com.gtnhplanner.ui.popup.PickList.Entry
+                .of("Screenshot...", () -> com.gtnhplanner.ui.popup.ScreenshotPanel.open(panel, session, canvas)));
         com.gtnhplanner.ui.popup.Popup.open(
             panel,
-            com.gtnhplanner.ui.popup.PickList.popup("gtnhplanner_share_menu", null, rows, false, 190),
+            com.gtnhplanner.ui.popup.PickList.popup("gtnhplanner_share_menu", null, rows, false, 0),
             key.getArea().x,
             TOP_BAR + 2);
     }
@@ -499,7 +493,13 @@ public final class BoardScreen extends ModularScreen {
             .clickSound(Hyb::click)
             .onMousePressed(b -> {
                 // True makes ModularUI play the click: only when the key did something.
-                if (b != 0 || !enabled.getAsBoolean()) return false;
+                if (!enabled.getAsBoolean()) return false;
+                // A key that goes round its choices goes back one on a right-click, as the card's chips do.
+                if (b == 1 && wheel != null) {
+                    wheel.accept(-1);
+                    return true;
+                }
+                if (b != 0) return false;
                 action.run();
                 return true;
             });
@@ -752,6 +752,19 @@ public final class BoardScreen extends ModularScreen {
     }
 
     /**
+     * Where NEI's item list was, and how wide the screen, when the board last measured its width against it. ModularUI
+     * measures as the screen opens, before NEI has laid itself out for the board (back from a recipe page it still
+     * holds the recipe page's layout), so FlowchartLayoutStyle has the board measure again whenever the list is
+     * elsewhere.
+     */
+    private static int sizedPanelX = -1, sizedScreenW = -1;
+
+    /** Whether the board's width was measured against NEI's item list where it is now. */
+    public static boolean sizedFor(final int panelX, final int screenW) {
+        return panelX == sizedPanelX && screenW == sizedScreenW;
+    }
+
+    /**
      * The board lays out on the screen measured in its own pixels ({@link PlannerScale}), a step or two smaller than
      * the game's that NEI keeps; it keeps clear of NEI's search box, which is measured in the game's.
      */
@@ -950,7 +963,7 @@ public final class BoardScreen extends ModularScreen {
         // Unwired and running: a forced input or output, told as the overview's are.
         if (RecipeCard.isOpen(view)) {
             final CardModel model = session.model(slot.node());
-            return actions(SpareTips.open(session, slot.node(), model == null ? "" : model.machineName, view));
+            return actions(SpareTips.open(session, slot.node(), model == null ? "" : model.machineName, view), slot);
         }
         final ItemStack stack = slot.stack();
         final boolean chanced = view.output() && view.chance() < 0.9999f;
@@ -965,14 +978,21 @@ public final class BoardScreen extends ModularScreen {
             final List<String> nei = GuiContainerManager.itemDisplayNameMultiline(stack, null, true);
             for (int i = 1; i < Math.min(nei.size(), 5); i++) tip.note(nei.get(i), Tip.SUBTLE);
         }
-        return actions(tip);
+        return actions(tip, slot);
     }
 
-    /** What the mouse does with a port. */
-    private static Tip actions(final Tip tip) {
-        return tip.action(Tip.Input.LEFT, "Recipes: what makes it")
-            .action(Tip.Input.RIGHT, "Uses: what uses it")
-            .action(Tip.Input.DRAG, "Connect")
+    /** What the mouse does with a port; the wheel changes the item of an input whose slot takes several. */
+    private Tip actions(final Tip tip, final PortSlot slot) {
+        final com.gtnhplanner.data.flowchart.Node node = slot.hasChoices() ? session.graph().nodes.get(slot.node())
+            : null;
+        if (node != null) tip.muted(
+            "Takes any of " + node.inputs.get(slot.index)
+                .getAlternatives()
+                .size() + " items.");
+        tip.action(Tip.Input.LEFT, "Recipes: what makes it")
+            .action(Tip.Input.RIGHT, "Uses: what uses it");
+        if (node != null) tip.action(Tip.Input.WHEEL, "Change item");
+        return tip.action(Tip.Input.DRAG, "Connect")
             .action(Tip.Input.KEY, "R, U");
     }
 }

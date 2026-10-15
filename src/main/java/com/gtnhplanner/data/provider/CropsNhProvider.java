@@ -76,13 +76,20 @@ public final class CropsNhProvider implements PropertyProvider {
         if (card == null) return PropertyProvider.super.extract(node, handler, recipeIndex);
         final List<CropsNh.Drop> drops = new ArrayList<>();
         final List<ItemStack> stacks = new ArrayList<>();
-        // Heaviest first, as NEI lists them.
-        final List<Map.Entry<ItemStack, Integer>> table = new ArrayList<>(
-            card.getDropTable()
-                .entrySet());
-        table.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+        // Heaviest first, as NEI lists them; drops of one weight by their item, so the ports keep their places from
+        // one game to the next (the table is keyed by the stacks themselves, in no fixed order) and wires stay put.
+        final List<Map.Entry<ItemStack, Integer>> table = new ArrayList<>();
+        for (final Map.Entry<ItemStack, Integer> e : card.getDropTable()
+            .entrySet())
+            if (e.getKey() != null && e.getKey()
+                .getItem() != null && e.getValue() != null && e.getValue() > 0) table.add(e);
+        table.sort(
+            java.util.Comparator.<Map.Entry<ItemStack, Integer>>comparingInt(e -> -e.getValue())
+                .thenComparing(e -> MachineModels.websiteId(e.getKey()))
+                .thenComparingInt(e -> e.getKey().stackSize));
+        // Every drop is a port of its own, Lapis Lazuli beside Lapis Dust though they share an ore name (Node keeps
+        // outputs apart unless they are the same item).
         for (final Map.Entry<ItemStack, Integer> e : table) {
-            if (e.getKey() == null || e.getValue() == null || e.getValue() <= 0) continue;
             drops.add(
                 new CropsNh.Drop(MachineModels.websiteId(e.getKey()), Math.max(1, e.getKey().stackSize), e.getValue()));
             stacks.add(e.getKey());

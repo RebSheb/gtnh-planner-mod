@@ -287,6 +287,162 @@ class PlanExportTest {
     }
 
     @Test
+    void aBeePostsAsTheWebsitesBeeCard() throws IOException {
+        GtnhFlowLoader.ensureDefaultMachineProfile();
+        final Graph g = new Graph("Bees");
+        final Node apiary = new Node(java.util.UUID.randomUUID(), 0, 0);
+        apiary.outputs.add(com.gtnhplanner.harness.TestIngredients.port("Parched Comb", 0.1));
+        apiary.outputs.add(com.gtnhplanner.harness.TestIngredients.port("Pulsating Iron Comb", 0.05));
+        apiary.machineConfig.settings.put(com.gtnhplanner.machines.Bees.FRAME + 1, "forestry:proven");
+        g.addNode(apiary);
+        final Node ia = new Node(java.util.UUID.randomUUID(), 400, 0);
+        ia.outputs.add(com.gtnhplanner.harness.TestIngredients.port("Parched Comb", 5));
+        ia.machineConfig.settings.put(com.gtnhplanner.machines.Bees.HOUSING, "industrial-apiary");
+        ia.machineConfig.settings.put(com.gtnhplanner.machines.Bees.IA_SPEED, "speed-4");
+        ia.machineConfig.settings.put(com.gtnhplanner.machines.Bees.CLIMATE, "tolerated");
+        g.addNode(ia);
+        final com.gtnhplanner.machines.Bees.Species species = new com.gtnhplanner.machines.Bees.Species(
+            "gregtech.bee.speciesPulsatingiron",
+            "Pulsating Iron",
+            0.6f,
+            30,
+            false,
+            List.of(
+                new com.gtnhplanner.machines.Bees.Product("forestry:beecombs@7", "Parched Comb", 1, 0.3f, false),
+                new com.gtnhplanner.machines.Bees.Product(
+                    "gregtech:gt.comb@18",
+                    "Pulsating Iron Comb",
+                    1,
+                    0.15f,
+                    true)));
+        final JsonObject p = PlanExport.project(g, "Bees", new PlanExport.World() {
+
+            @Override
+            public PlanExport.Res port(final Port<?> port) {
+                return WORLD.port(port);
+            }
+
+            @Override
+            public PlanExport.Res resource(final String key) {
+                return WORLD.resource(key);
+            }
+
+            @Override
+            public String machine(final Node node) {
+                return "Apiary";
+            }
+
+            @Override
+            public double machines(final Node node) {
+                return 4;
+            }
+
+            @Override
+            public String tier(final Node node) {
+                return "LV";
+            }
+
+            @Override
+            public com.gtnhplanner.machines.Bees.Species bee(final Node node) {
+                return species;
+            }
+        });
+        final JsonObject recipe = p.getAsJsonArray("recipes")
+            .get(0)
+            .getAsJsonObject();
+        assertEquals(
+            "bee_produce",
+            recipe.get("kind")
+                .getAsString());
+        assertEquals(
+            "Bee Produce",
+            recipe.get("machineType")
+                .getAsString(),
+            "the site knows a bee's recipe by its map");
+        assertEquals(
+            550,
+            recipe.get("durationTicks")
+                .getAsInt(),
+            "a bee cycle");
+        final JsonObject bee = recipe.getAsJsonArray("inputs")
+            .get(0)
+            .getAsJsonObject();
+        assertEquals(
+            "factoryflow:bee_species:gregtech-bee-speciespulsatingiron",
+            bee.get("id")
+                .getAsString(),
+            "the bee, as the site's dataset names it");
+        assertFalse(
+            bee.get("consumed")
+                .getAsBoolean());
+        final JsonArray outputs = recipe.getAsJsonArray("outputs");
+        assertEquals(
+            0.3,
+            outputs.get(0)
+                .getAsJsonObject()
+                .get("chance")
+                .getAsDouble(),
+            1e-6,
+            "the species' base chance, which the site scales");
+        assertTrue(
+            outputs.get(1)
+                .getAsJsonObject()
+                .get("byproduct")
+                .getAsBoolean(),
+            "a specialty is the site's byproduct");
+        assertEquals(
+            "apiary",
+            recipe.getAsJsonArray("machineHandlers")
+                .get(0)
+                .getAsJsonObject()
+                .get("id")
+                .getAsString(),
+            "the plain Apiary comes with the recipe: the site has none of its own");
+        final JsonObject first = nodeOf(p, apiary), second = nodeOf(p, ia);
+        assertEquals(
+            "apiary",
+            first.get("machineHandlerId")
+                .getAsString());
+        final JsonObject apiarySettings = first.getAsJsonObject("machineConfigTiers");
+        assertEquals(
+            "forestry:proven",
+            apiarySettings.get("beeFrameSlot1")
+                .getAsString());
+        assertEquals(
+            "slower",
+            apiarySettings.get("beeSpeedGene")
+                .getAsString(),
+            "the species' own speed, said outright: the site's unset one is Normal");
+        assertFalse(apiarySettings.has("beeHousing"), "the housing goes as the machine, not a setting");
+        assertEquals(
+            "industrial-apiary",
+            second.get("machineHandlerId")
+                .getAsString());
+        assertEquals(
+            "speed-4",
+            second.getAsJsonObject("machineConfigTiers")
+                .get("beeIndustrialSpeed")
+                .getAsString());
+        assertEquals(
+            "tolerated",
+            second.getAsJsonObject("machineConfigTiers")
+                .get("beeEnvironment")
+                .getAsString());
+        final Path out = Path.of("build", "tmp", "gtnhplanner-export-bees.json");
+        Files.createDirectories(out.getParent());
+        Files.writeString(out, p.toString(), StandardCharsets.UTF_8);
+    }
+
+    /** A card's node in a posted plan (the plan keeps its cards in no set order). */
+    private static JsonObject nodeOf(final JsonObject plan, final Node card) {
+        for (final JsonElement n : plan.getAsJsonArray("nodes")) if (n.getAsJsonObject()
+            .get("id")
+            .getAsString()
+            .equals(card.id.toString())) return n.getAsJsonObject();
+        throw new AssertionError("no node for card " + card.id);
+    }
+
+    @Test
     void aPlanBecomesAFactoryFlowProject() throws IOException {
         final Graph g = GtnhFlowLoader.load("mk1")
             .graph();

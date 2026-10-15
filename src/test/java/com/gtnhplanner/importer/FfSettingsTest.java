@@ -363,6 +363,132 @@ class FfSettingsTest {
     }
 
     @Test
+    void aBeesHousingAndSettingsComeOverAsTheBeeCardsOwn() {
+        final FfRecipe bee = new FfRecipe(
+            "oracle:local-2.9.0-beta-2:forestry-bee:gregtech-bee-speciespulsatingiron",
+            "Pulsating Iron Produce",
+            "bee_produce",
+            "forestry-bee",
+            "Bee Produce",
+            "NONE",
+            550,
+            0,
+            null,
+            null,
+            List.of(
+                new FfPlan.FfSlot(
+                    "item",
+                    "factoryflow:bee_species:gregtech-bee-speciespulsatingiron",
+                    1,
+                    1,
+                    false,
+                    List.of(),
+                    "Pulsating Iron Bee")),
+            List.of(),
+            List.of(),
+            null,
+            "gregtech.bee.speciesPulsatingiron",
+            null);
+        assertTrue(bee.isBee());
+        assertEquals("gregtech-bee-speciespulsatingiron", bee.beeSlug());
+        final FfSettings.Mapped ia = FfSettings.map(
+            card(
+                "MV",
+                null,
+                null,
+                null,
+                null,
+                0,
+                "industrial-apiary",
+                null,
+                1,
+                Map.of("beeIndustrialSpeed", "speed-4", "beeIndustrialProduction", "2", "beeEnvironment", "tolerated"),
+                3,
+                3.0),
+            bee,
+            0,
+            true,
+            true);
+        assertEquals(
+            "industrial-apiary",
+            ia.settings()
+                .get(com.gtnhplanner.machines.Bees.HOUSING));
+        assertEquals(
+            "speed-4",
+            ia.settings()
+                .get(com.gtnhplanner.machines.Bees.IA_SPEED));
+        assertEquals(
+            "tolerated",
+            ia.settings()
+                .get(com.gtnhplanner.machines.Bees.CLIMATE),
+            "not jubilant");
+        assertEquals(
+            "normal",
+            ia.settings()
+                .get(com.gtnhplanner.machines.Bees.SPEED),
+            "the website's speed gene unset is Normal");
+        assertNull(
+            ia.settings()
+                .get("voltage"),
+            "a housing has no voltage to pick");
+        assertEquals(3, ia.machines());
+        // The website's bee card with no machine is its first, the Magic Apiary; its Alveary is not modelled yet.
+        final FfSettings.Mapped plain = FfSettings.map(
+            card("NONE", null, null, null, null, 0, null, null, 1, Map.of("beeSpeedGene", "fast"), 1, null),
+            bee,
+            0,
+            true,
+            true);
+        assertEquals(
+            "magic-apiary",
+            plain.settings()
+                .get(com.gtnhplanner.machines.Bees.HOUSING));
+        assertEquals(
+            "fast",
+            plain.settings()
+                .get(com.gtnhplanner.machines.Bees.SPEED));
+        // A plan the mod posted lists only its Apiary among the recipe's machines: the card's own still wins.
+        final FfRecipe posted = new FfRecipe(
+            "gtnhplanner:card",
+            bee.name(),
+            bee.kind(),
+            bee.category(),
+            bee.machineType(),
+            "NONE",
+            550,
+            0,
+            null,
+            null,
+            bee.inputs(),
+            List.of(),
+            List.of(new FfPlan.FfHandler("apiary", "Apiary", "single", false)),
+            null,
+            bee.rawRecipeId(),
+            null);
+        assertEquals(
+            "industrial-apiary",
+            FfSettings.map(card("MV", null, null, null, null, 0, "industrial-apiary"), posted, 0, true, true)
+                .settings()
+                .get(com.gtnhplanner.machines.Bees.HOUSING));
+        assertEquals(
+            "apiary",
+            FfSettings.map(card("NONE", null, null, null, null, 0, "apiary"), posted, 0, true, true)
+                .settings()
+                .get(com.gtnhplanner.machines.Bees.HOUSING));
+        final FfSettings.Mapped alveary = FfSettings
+            .map(card("NONE", null, null, null, null, 0, "alveary", null, 1, Map.of(), 1, null), bee, 0, true, true);
+        assertEquals(
+            "apiary",
+            alveary.settings()
+                .get(com.gtnhplanner.machines.Bees.HOUSING));
+        assertTrue(
+            alveary.notes()
+                .stream()
+                .anyMatch(n -> n.contains("alveary")),
+            "the report says so");
+    }
+
+    @Test
     void aCropsHarvesterAndSettingsComeOverAsTheCropCardsOwn() {
         final FfRecipe crop = new FfRecipe(
             "oracle:local-2.9.0-beta-2:cropsnh-crop:cropsnh:cropsnh-sugarbeet",

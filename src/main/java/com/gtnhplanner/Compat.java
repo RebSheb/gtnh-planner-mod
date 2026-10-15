@@ -8,6 +8,7 @@ import com.gtnhplanner.data.MachineProfileRegistry;
 import com.gtnhplanner.data.properties.PropertyProvider;
 import com.gtnhplanner.data.provider.AE2Provider;
 import com.gtnhplanner.data.provider.AvaritiaProvider;
+import com.gtnhplanner.data.provider.BeeProvider;
 import com.gtnhplanner.data.provider.BinnieProvider;
 import com.gtnhplanner.data.provider.BloodMagicProvider;
 import com.gtnhplanner.data.provider.BotaniaProvider;
@@ -59,7 +60,8 @@ public enum Compat {
     TINKERSCONSTRUCT(IDs.TINKERSCONSTRUCT, TinkersConstructProvider.class),
     WITCHINGGADGETS(IDs.WITCHINGGADGETS, WitchingGadgetsProvider.class),
     EFR(IDs.EFR, EFRProvider.class),
-    CROPSNH(IDs.CROPSNH, CropsNhProvider.class);
+    CROPSNH(IDs.CROPSNH, CropsNhProvider.class),
+    BEES(IDs.NEIADDONS, BeeProvider.class);
 
     public static class IDs {
 
@@ -86,6 +88,8 @@ public enum Compat {
         public static final String WITCHINGGADGETS = "WitchingGadgets";
         public static final String EFR = "etfuturum";
         public static final String CROPSNH = "cropsnh";
+        /** NEI Addons: its bee products page is what bee cards are made from (BeeProvider, with Forestry). */
+        public static final String NEIADDONS = "NEIAddons";
     }
 
     public final String modid;

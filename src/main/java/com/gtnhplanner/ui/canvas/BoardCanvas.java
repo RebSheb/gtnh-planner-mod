@@ -89,6 +89,13 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
     @Override
     public void onUpdate() {
         super.onUpdate();
+        // The keyboard on a widget the board let go of (a note deleted, undone or left with its plan while being
+        // written in): nothing holds it any more.
+        final com.cleanroommc.modularui.screen.viewport.LocatedWidget held = getContext().getFocusedWidget();
+        if (held != null && held.getElement() != null
+            && !held.getElement()
+                .isValid())
+            getContext().removeFocus();
         session.tick();
         Popup.openPending();
         boolean rebuild = builtStructure != session.structure();
@@ -622,7 +629,10 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
         final float x0 = worldX(a.x) - m, y0 = worldY(a.y) - m, x1 = worldX(a.x + a.width) + m,
             y1 = worldY(a.y + a.height) + m;
         final com.cleanroommc.modularui.screen.viewport.LocatedWidget located = getContext().getFocusedWidget();
-        final IWidget focused = located == null ? null : located.getElement();
+        // One the board let go of still holding the keyboard is none: asking it for its parent throws (onUpdate drops
+        // it, but the tree asks for the children before that).
+        final IWidget focused = located == null || located.getElement() == null || !located.getElement()
+            .isValid() ? null : located.getElement();
         final List<IWidget> out = new ArrayList<>();
         for (final IWidget w : candidates(all, x0, y0, x1, y1, focused)) {
             final boolean seen;
@@ -1022,8 +1032,11 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             .key() : null;
     }
 
-    /** Whether a port on this card, on that side, would take the wire being dragged. */
-    public boolean acceptsDrag(final UUID nodeId, final boolean output, final String key) {
+    /**
+     * Whether port {@code index} on this card, on that side, would take the wire being dragged: it carries the same
+     * thing, or one end is an input that can be set to what the other carries.
+     */
+    public boolean acceptsDrag(final UUID nodeId, final boolean output, final int index, final String key) {
         // An empty holder's socket (a custom rate card's, a fluid tank's) takes what it can from a port on the other
         // side, of any other card: the custom rate card anything, the tank a cell or a fluid with cells.
         if (portDrag != null && portDrag.socket()) return key != null && !key.isEmpty()
@@ -1035,7 +1048,11 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
         return dragging != null && !dragging.isEmpty()
             && !nodeId.equals(portDrag.nodeId())
             && output != portDrag.output()
-            && dragging.equals(key);
+            && (dragging.equals(key) || !output && session.choiceKeys(nodeId, false, index)
+                .contains(dragging)
+                || output && key != null
+                    && session.choiceKeys(portDrag.nodeId(), false, portDrag.port())
+                        .contains(key));
     }
 
     /**
@@ -1048,11 +1065,13 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             return d != null && drawerWireHeard
                 && output == !d.getKind()
                     .linksInputs()
-                && d.getResourceKey()
+                && (d.getResourceKey()
                     .equals(key)
+                    || !output && session.choiceKeys(node, false, index)
+                        .contains(d.getResourceKey()))
                 && !d.isLinked(node, index);
         }
-        return portDrag != null && dragHeard && acceptsDrag(node, output, key);
+        return portDrag != null && dragHeard && acceptsDrag(node, output, index, key);
     }
 
     /** The port what is in hand would go to if let go now: green and brighter. */
@@ -1102,7 +1121,7 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             final CardModel m = portModel(section);
             if (m == null) continue;
             for (final CardModel.PortView p : portDrag.output() ? m.inputs : m.outputs)
-                if (acceptsDrag(section, !portDrag.output(), p.key())) return true;
+                if (acceptsDrag(section, !portDrag.output(), p.index(), p.key())) return true;
         }
         return false;
     }
@@ -1167,9 +1186,7 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
             final CardModel m = hit == null ? null : card.modelOf(hit[0]);
             final List<CardModel.PortView> ports = m == null ? null : output ? m.outputs : m.inputs;
             if (ports != null && hit[1] < ports.size()
-                && key.equals(
-                    ports.get(hit[1])
-                        .key())
+                && takes(card.sectionId(hit[0]), output, hit[1], ports.get(hit[1]), key)
                 && !d.isLinked(card.sectionId(hit[0]), hit[1]))
                 return new BoardSession.PortRef(card.sectionId(hit[0]), output, hit[1]);
         }
@@ -1181,8 +1198,19 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
                 ports.get(i)
                     .key())
                 && !d.isLinked(section, i)) return new BoardSession.PortRef(section, output, i);
+            // Else an input that takes it as one of its other items (it is set to it when linked).
+            for (int i = 0; i < ports.size(); i++)
+                if (takes(section, output, i, ports.get(i), key) && !d.isLinked(section, i))
+                    return new BoardSession.PortRef(section, output, i);
         }
         return null;
+    }
+
+    /** Whether a port takes {@code key}: it holds it, or it is an input that can be set to it. */
+    private boolean takes(final UUID node, final boolean output, final int index, final CardModel.PortView port,
+        final String key) {
+        return key.equals(port.key()) || !output && session.choiceKeys(node, false, index)
+            .contains(key);
     }
 
     /** The card under a board point, or null. */
@@ -1301,7 +1329,11 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
         if (portDrag != null && portDrag.socket()) return drawer.getKind()
             .linksInputs() != portDrag.output();
         final String dragging = dragResource();
-        return dragging != null && dragging.equals(drawer.getResourceKey())
+        // An input also goes to a source of one of the other items its slot takes (it is set to it).
+        return dragging != null
+            && (dragging.equals(drawer.getResourceKey())
+                || !portDrag.output() && session.choiceKeys(portDrag.nodeId(), false, portDrag.port())
+                    .contains(drawer.getResourceKey()))
             && drawer.getKind()
                 .linksInputs() != portDrag.output();
     }
@@ -1788,7 +1820,7 @@ public final class BoardCanvas extends ParentWidget<BoardCanvas>
                 final CardModel sm = portModel(section);
                 if (sm == null) continue;
                 for (final CardModel.PortView p : portDrag.output() ? sm.inputs : sm.outputs)
-                    if (acceptsDrag(section, !portDrag.output(), p.key())) return card.nodeId;
+                    if (acceptsDrag(section, !portDrag.output(), p.index(), p.key())) return card.nodeId;
             }
             return null;
         }

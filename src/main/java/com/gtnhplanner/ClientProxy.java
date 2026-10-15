@@ -6,7 +6,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.input.Keyboard;
 
-import com.gtnhplanner.client.ChatHandler;
+import com.gtnhplanner.client.ChatShare;
 import com.gtnhplanner.client.ImportCommand;
 import com.gtnhplanner.client.WorldHandler;
 import com.gtnhplanner.dev.DevHarness;
@@ -61,7 +61,8 @@ public class ClientProxy extends CommonProxy {
             .bus()
             .register(handler);
 
-        MinecraftForge.EVENT_BUS.register(new ChatHandler());
+        // Plans shared in chat: their lines open them.
+        MinecraftForge.EVENT_BUS.register(ChatShare.INSTANCE);
         // The planner's screens coming and going (its other sounds play where they happen: ui/sound/Sfx).
         MinecraftForge.EVENT_BUS.register(com.gtnhplanner.ui.sound.ScreenSounds.INSTANCE);
         ClientCommandHandler.instance.registerCommand(new ImportCommand());

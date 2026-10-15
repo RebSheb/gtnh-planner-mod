@@ -18,12 +18,16 @@ solver answers three questions:
    several (`Spares`, the leftover popup).
 
 So there is one answer when the plan balances exactly (the fast path, one LP), and many when it does not; then
-the solver picks by fixed rules, in order:
+the solver picks by fixed rules, in order (the owner's, 2026-10-13; phase 7 below):
 
-1. fewest gates open (fewest leftovers),
-2. a surplus before an import,
-3. the least amount crossing the gates,
-4. the least flow inside the plan, then a canonical tie-break so equal answers always come out the same.
+1. buy as far upstream as it can: never buy a good with more machine steps in it while one with fewer would do, so
+   the plan buys raw goods and runs its own machines; and never buy more in order to sell more;
+2. sell as far downstream as it can: spare goes on to every machine that can take it and is sold only where nothing
+   further on can (a pinned machine is a brick wall);
+3. the least flow inside the plan, then a canonical tie-break so equal answers always come out the same.
+
+A machine nothing pinned feeds or needs is left at zero, and the answer says so (`SolutionView.unneeded`): the board
+asks for a count there, as it does for a part of the plan nothing sets.
 
 ### The contract, in priority order
 
@@ -45,17 +49,14 @@ Speed work may never break 1 to 4. Today 2, 3 and 4 are broken and 5 is far off;
 | Step | Code | Models |
 | --- | --- | --- |
 | Fast path: does the plan balance with every gate closed? | `FastPathStage` | 1 LP |
-| Fewest gates: an LP opens what it needs, then each open gate is closed in turn while the plan still solves (a deletion filter) | `GateCountStage.deletionFilter` | 1 + one per open gate |
-| Prove the count minimal (small plans) | `Solver.gateMILP` | 1+ MILP, 512 nodes |
-| Least quantity across the gates, ties enumerated | `ExternalMinStage` | LPs and MILPs |
-| Least flow, canonical tie-break | `FlowMinStage`, `Solver.canonicalize` | 2+ LPs |
-| Every machine runs, or replay with floors | `EveryMachineRuns`, pass 2 | rerun |
+| Trades, level by level: buying at each machine-step count (most first), then selling at each | `TradeStage`, `Solver.levels` | one LP a level |
+| Least flow, canonical tie-break | `FlowMinStage`, `Solver.canonicalHolding` | 2 LPs |
 | Drawers that cannot be kept are loosened and the chain runs again | `DrawerRelaxation` | rerun |
 | Alternatives: every open gate swapped for every closed one, each tried | `Enumerator.enumerate` | up to 1024 LPs, then 2 per kept option |
 | Leftover splits mixed from the alternatives' points | `Spares.apply` | none |
 
-Every model is built from scratch from `ModelData` and solved by ojAlgo's `ExpressionsBasedModel`. Wall-clock limits:
-20 s for the solve, up to 15 s a model, 750 ms for the alternatives (`Numerics`, `Budget`).
+Every model is built from scratch from `ModelData` and solved by ojAlgo's `ExpressionsBasedModel`. The table is as of
+phase 7; sections 3 to 5 describe the solver as it was before phase 1.
 
 ## 3. What we measured
 
@@ -369,3 +370,34 @@ and the island test, which is what phase 2 bought; one island of 490 machines (`
 under one shared machine, in `SolverBench`) went from 13.4 s to 1.4 s, nanocircuits from 63 to 33 ms, platline from
 25 to 15 ms. Warm re-solves (`IntermediateSolver.update`) do not pay here: ojAlgo rebuilds after every infeasible
 answer, and most of the gate search's questions are a needed gate refusing to close.
+
+**Phase 7** (2026-10-13): what AUTO answers, decided with the owner. Every rule tried first failed on real plans:
+fewest gates found exactly gives absurd sizes (gtnh-flow's palladium_line: 10 gates, 168,000/s traded, 2,717
+machines, where the old heuristic found 9 gates, 12.6/s and 421); least material and every "upstream" ranking read
+from the end turned off branches and bought their parts; forcing every machine on through few gates blew up
+(8,305 machines). The rule now (section 1) is the owner's, from the bread chain (farm, mill, oven): short of wheat,
+buy wheat and run the mill, never buy flour; spare wheat is milled and the flour sold where the oven takes no more.
+
+- How far along a trade is, is counted in machine steps (`ModelData.portSteps`): at an input, the fewest machines it
+  takes the plan to make the good; at an output, the most it could still go through. A loop counts as one step
+  (`Loops`, Tarjan's components), so a plan that is one big loop, as GregTech lines tied by recycled hydrogen,
+  chlorine and ammonia are, trades by least amount inside it.
+- `TradeStage` settles one level at a time (`Solver.levels`): buying, the most steps first, then selling, the most
+  steps ahead first, each held exactly where it was reached; a level that reached only rounding is closed. The old
+  gate search (`GateSearch`, `GateCountStage`), least quantity (`ExternalMinStage`) and the every-machine-runs
+  floors and replay are gone, and with them the last hard-coded small numbers that decided answers.
+- A machine nothing pinned feeds or needs stays at zero rather than at a floor nobody chose, and is reported
+  (`SolutionView.unneeded`) so the board asks for a count. palladium_line pins only palladium, so its platinum,
+  rhodium, iridium and osmium branches ask for one.
+- What the solver leaves at its dust (a hundred-billionth of the plan's largest rate) is committed as exactly zero
+  (`SolveContext.commit`), so an idle machine reads idle and not "x<0.001". The board asks for a count on every
+  machine in `unneeded` as on a part nothing sets (`BoardSession.unsetParts`).
+- The choices panel explains an option by the same rules (`Preference`: buys more or further down the line, sells
+  more or earlier in the line, moves more), and `Enumerator.evaluateSupport` settles a support exactly as AUTO does.
+- The owner considered a setting for the direction (buy downstream, sell upstream) and dropped it: the opposite
+  choices make plans that look broken, and a trade can still be moved by hand.
+
+Tests: `TradeRuleTest` (the bread chain: short, spare, farm-only, a cake maker on the flour line taking the spare, a
+cake maker nothing needs); `GroundTruthTest` rewritten to the rule (excess_choice now mills all the nitrogen and sells
+charcoal; symmetric_choice runs both benders and sells plate); goldens re-recorded. Times: platline 21 ms, x10 97 ms,
+the 490-machine joined island 1.0 s, nanocircuits 25 ms, palladium_line 0.23 s.

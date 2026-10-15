@@ -23,7 +23,7 @@
       "7e2b158f-955a-4f57-932c-c1bb99a7828d": 0.05,
       "84059cd2-9174-4033-b8f9-5104a8087d8d": 25.0,
       "86754cdf-373b-4c9a-acfc-5df8995761a2": 0.025,
-      "94028047-dfa7-4f4f-8d67-0f208957ced6": 62.50000000000001,
+      "94028047-dfa7-4f4f-8d67-0f208957ced6": 62.49999999999998,
       "c74ce44e-8bb4-4381-a594-77ba3c67d77d": 0.01875
     },
     "gatedSources": [
@@ -146,10 +146,10 @@
         "ratePerSecond": 6.25
       }
     ],
+    "unneeded": [],
     "openGates": 8.0,
     "externalQuantity": 163.35763888888889,
-    "totalInternalFlow": 87.93125,
-    "floorsUsed": false,
+    "totalInternalFlow": 87.93124999999998,
     "notes": [],
     "key": {
       "gateAnchors": [

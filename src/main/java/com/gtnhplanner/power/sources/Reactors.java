@@ -4,6 +4,7 @@ import static com.gtnhplanner.power.sources.Helpers.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -14,6 +15,7 @@ import com.gtnhplanner.power.PowerData;
 import com.gtnhplanner.power.PowerGroup;
 import com.gtnhplanner.power.PowerModel;
 import com.gtnhplanner.power.PowerModel.Flow;
+import com.gtnhplanner.power.PowerResources;
 import com.gtnhplanner.power.PowerSetting;
 import com.gtnhplanner.power.PowerSetting.Option;
 import com.gtnhplanner.power.PowerSource;
@@ -144,12 +146,32 @@ public final class Reactors {
         return (burned ? "Burned Out TRISO Fuel" : "TRISO Fuel") + " (" + replaceFirst(pebble, "-", " ") + ")";
     }
 
+    /** The HTGR's source id. */
+    public static final String HTGR = "htgr";
+    /** Its pebble setting. */
+    public static final String HTGR_PEBBLE = "pebble";
+
+    /**
+     * The TRISO pebble (an htgrPebbles name) whose finished fuel is among these items (the website's ids,
+     * {@code mod:name@meta}), or null. The HTGR's NEI page shows each fuel's whole making as one recipe (the dust it
+     * starts from, the mixture, the BISO and TRISO steps, the fuel, the burned fuel and what that breaks down to); the
+     * reactor itself takes the finished fuel and gives back the burned fuel, as the HTGR card has it.
+     */
+    @Nullable
+    public static String htgrPebble(final Collection<String> itemIds) {
+        for (final PowerData.HtgrPebble pebble : PowerData.get().htgrPebbles) {
+            final PowerResources.Ref fuel = PowerResources.resolve(htgrFuelName(pebble.name, false));
+            if (fuel != null && itemIds.contains(fuel.id)) return pebble.name;
+        }
+        return null;
+    }
+
     private static PowerSource htgr() {
         final List<PowerData.HtgrPebble> pebbles = PowerData.get().htgrPebbles;
         final List<Option> options = new ArrayList<>();
         for (final PowerData.HtgrPebble entry : pebbles) options.add(new Option(entry.name, entry.name));
         return new PowerSource(
-            "htgr",
+            HTGR,
             "High Temperature Gas-cooled Reactor",
             PowerGroup.REACTORS,
             // The controller is crafted with four circuitUltimate (ZPM) circuits.
@@ -157,14 +179,14 @@ public final class Reactors {
             "TRISO pebbles to coolant and steam.",
             List.of(
                 new PowerSetting.Select(
-                    "pebble",
+                    HTGR_PEBBLE,
                     "TRISO pebble",
                     options,
                     pebbles.isEmpty() ? "" : pebbles.get(0).name),
                 // MTEHighTempGasCooledReactor will not start below 1% of its 10,000 balls.
                 new PowerSetting.Number("fill", "Pebble fill", 100, 10_000, 100, 10_000)),
             read -> {
-                final String pebbleName = read.select("pebble");
+                final String pebbleName = read.select(HTGR_PEBBLE);
                 final PowerData.HtgrPebble found = find(pebbles, entry -> entry.name.equals(pebbleName));
                 final PowerData.HtgrPebble pebble = found != null ? found : pebbles.get(0);
                 final double fill = read.number("fill");

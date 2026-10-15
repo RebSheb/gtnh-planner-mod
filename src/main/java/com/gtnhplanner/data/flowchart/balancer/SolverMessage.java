@@ -54,7 +54,6 @@ public enum SolverMessage {
     SOLVER_NEGATIVE_FLOW(Severity.ERROR, "gtnhplanner.solver.negative_flow"),
     SOLVER_INEXACT_RESIDUAL(Severity.ERROR, "gtnhplanner.solver.inexact_residual"),
     SOLVER_UNDER_SUPPLY(Severity.ERROR, "gtnhplanner.solver.under_supply"),
-    GATE_COUNT_NOT_CERTIFIED(Severity.INFO, "gtnhplanner.solver.gate_count_not_certified"),
     /** A worker-thread solve threw; the argument is the exception's own message. */
     SOLVE_CRASHED(Severity.ERROR, "gtnhplanner.solver.solve_crashed"),
 
@@ -88,22 +87,18 @@ public enum SolverMessage {
     PIN_EXTENT(Severity.INFO, "gtnhplanner.solver.pin_extent"),
     PIN_TARGET(Severity.INFO, "gtnhplanner.solver.pin_target"),
     PIN_COUNT(Severity.INFO, "gtnhplanner.solver.pin_count"),
-    PREF_FEWEST_GATES(Severity.INFO, "gtnhplanner.solver.pref_fewest_gates"),
-    PREF_FEWEST_IMPORTS(Severity.INFO, "gtnhplanner.solver.pref_fewest_imports"),
-    PREF_LEAST_EXCESS(Severity.INFO, "gtnhplanner.solver.pref_least_excess"),
+    PREF_LEAST_BUYING(Severity.INFO, "gtnhplanner.solver.pref_least_buying"),
+    PREF_LEAST_SELLING(Severity.INFO, "gtnhplanner.solver.pref_least_selling"),
     PREF_LEAST_FLOW(Severity.INFO, "gtnhplanner.solver.pref_least_flow"),
 
     // -----------------------------------------------------------------------------------------
     // Rank reasons - why an answer is not the default
     // -----------------------------------------------------------------------------------------
     REASON_EQUALLY_VALID(Severity.INFO, "gtnhplanner.solver.reason_equally_valid"),
-    REASON_IMPORTS_INSTEAD(Severity.INFO, "gtnhplanner.solver.reason_imports_instead"),
+    REASON_BUYS_MORE(Severity.INFO, "gtnhplanner.solver.reason_buys_more"),
+    REASON_SELLS_MORE(Severity.INFO, "gtnhplanner.solver.reason_sells_more"),
     REASON_MOVES_MORE(Severity.INFO, "gtnhplanner.solver.reason_moves_more"),
     REASON_MOVES_LESS(Severity.INFO, "gtnhplanner.solver.reason_moves_less"),
-    REASON_VOIDS_MORE(Severity.INFO, "gtnhplanner.solver.reason_voids_more"),
-    REASON_CROSSES_MORE(Severity.INFO, "gtnhplanner.solver.reason_crosses_more"),
-    REASON_IMPORTS_MORE(Severity.INFO, "gtnhplanner.solver.reason_imports_more"),
-    REASON_LEAVES_EXCESS(Severity.INFO, "gtnhplanner.solver.reason_leaves_excess"),
 
     // -----------------------------------------------------------------------------------------
     // Boundary labels - what crosses the chart's edge

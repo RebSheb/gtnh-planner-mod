@@ -5,12 +5,10 @@ import java.util.Set;
 
 import net.minecraft.util.StatCollector;
 
-import com.gtnhplanner.data.flowchart.balancer.stages.EveryMachineRuns;
 import com.gtnhplanner.data.flowchart.balancer.stages.ExtentMinStage;
-import com.gtnhplanner.data.flowchart.balancer.stages.ExternalMinStage;
 import com.gtnhplanner.data.flowchart.balancer.stages.FastPathStage;
 import com.gtnhplanner.data.flowchart.balancer.stages.FlowMinStage;
-import com.gtnhplanner.data.flowchart.balancer.stages.GateCountStage;
+import com.gtnhplanner.data.flowchart.balancer.stages.TradeStage;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -38,15 +36,13 @@ public enum BalanceMode {
     INPUT(Chain.enter(new ExtentMinStage(true)), Heuristics.counts(), Set.of(Pin.FIXED_COUNT), false),
 
     /**
-     * Lexicographic auto-balance: fractional machine counts, automatic source/sink placement on
-     * connected ports, loops handled natively - the gate-count entry, the external-quantity and
-     * internal-flow stages, the zero-gate fast path, and the "every machine runs" replay.
+     * Auto-balance: fractional machine counts; trades with the market bought as far upstream and sold as far
+     * downstream as they can be ({@link com.gtnhplanner.data.flowchart.balancer.stages.TradeStage}), then the least
+     * internal flow; the zero-trade fast path first.
      */
-    AUTO(Chain.enter(new GateCountStage())
-        .then(new ExternalMinStage())
+    AUTO(Chain.enter(new TradeStage())
         .then(new FlowMinStage())
         .prelude(new FastPathStage())
-        .audit(new EveryMachineRuns())
         .withPinDiagnosis(), Heuristics.auto(), Set.of(Pin.FIXED_COUNT, Pin.TARGET_RATE, Pin.EXTENT), true);
 
     @Getter

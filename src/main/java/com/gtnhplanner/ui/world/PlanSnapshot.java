@@ -32,16 +32,21 @@ public record PlanSnapshot(Graph graph, String planName, long graphVersion, List
     /**
      * A card (a shared machine is one, its recipes' flows together), at its place on the board.
      *
-     * @param art     its structure picture, or null for its item
-     * @param links   its placements in the world, each {dimension, x, y, z}, then a facing and a size when set
-     * @param needs   what its recipes ask of its structure, for its ghost
-     * @param nodeIds every recipe on it, the card's own first
+     * @param art       its structure picture, or null for its item
+     * @param machines  its count, as the card shows it: for a crop card the crops planted
+     * @param links     its placements in the world, each {dimension, x, y, z}, then a facing and a size when set
+     * @param needs     what its recipes ask of its structure, for its ghost
+     * @param nodeIds   every recipe on it, the card's own first
+     * @param builds    the machines it builds: its count, or a crop card's harvesters (CropCards.builds); what the pin
+     *                  list, the minimap and the world count
+     * @param crop      a crop card, whose count is crops planted
+     * @param countless a card with no count to show: the fluid tank, which keeps up with whatever the plan needs
      */
     public record Card(UUID id, List<UUID> nodeIds, float x, float y, float w, float h, String name,
         @Nullable ItemStack machine, @Nullable StructureArt.Art art, int tint, double machines, boolean pinned,
         List<Flow> inputs, List<Flow> outputs, double euPerTick, double madeEuPerTick, List<int[]> links, String tier,
         int amps, @Nullable ItemStack circuit, List<Setting> settings,
-        com.gtnhplanner.ui.gt.StructureGhosts.Needs needs) {}
+        com.gtnhplanner.ui.gt.StructureGhosts.Needs needs, double builds, boolean crop, boolean countless) {}
 
     /**
      * A setting pinned to the card, as a chip ({@code ui/card/SettingControls}, {@code SettingPins}): the coil, a

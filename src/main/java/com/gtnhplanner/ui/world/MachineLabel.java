@@ -47,7 +47,7 @@ public final class MachineLabel {
 
     private static Layout layout(final PlanSnapshot.Card c, final int nth) {
         if (MEASURED.size() > 2048) MEASURED.clear();
-        final int of = (int) Math.ceil(c.machines() - 1e-9);
+        final int of = (int) Math.ceil(c.builds() - 1e-9);
         final int slot = of > 1 && nth > 0 ? Math.min(nth, 64) : 0;
         final Layout[] known = MEASURED.computeIfAbsent(c, k -> new Layout[65]);
         if (known[slot] == null) known[slot] = measure(c, slot);
@@ -55,9 +55,10 @@ public final class MachineLabel {
     }
 
     private static Layout measure(final PlanSnapshot.Card c, final int nth) {
-        // One of several: which, "2/4"; a card of one machine, how many, "×1".
-        final int of = (int) Math.ceil(c.machines() - 1e-9);
-        final String count = nth > 0 ? nth + "/" + of : "×" + Fmt.machines(c.machines());
+        // One of several: which, "2/4"; a card of one machine, how many, "×1". Machines built: a crop card's
+        // harvesters, not its crops.
+        final int of = (int) Math.ceil(c.builds() - 1e-9);
+        final String count = nth > 0 ? nth + "/" + of : "×" + Fmt.machines(c.builds());
         final boolean makes = c.madeEuPerTick() > 0;
         final double eu = makes ? c.madeEuPerTick() : c.euPerTick();
         final String power = eu > 0 ? (makes ? "+" : "") + Fmt.power(eu) + " EU/t" : "";

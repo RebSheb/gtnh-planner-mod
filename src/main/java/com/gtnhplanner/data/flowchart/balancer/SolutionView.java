@@ -36,10 +36,14 @@ public final class SolutionView {
     public final List<External> gatedSinks = new ArrayList<>();
     public final List<External> terminalInputs = new ArrayList<>();
     public final List<External> terminalOutputs = new ArrayList<>();
+    /**
+     * The machines no pin sets that the answer leaves at zero: nothing pinned feeds them or needs what they make, so
+     * they ask for a count, as a part of the plan nothing sets does.
+     */
+    public final java.util.Set<UUID> unneeded = new java.util.LinkedHashSet<>();
     public final int openGates;
     public final double externalQuantity;
     public final double totalInternalFlow;
-    public final boolean floorsUsed;
     public final long wallMillis;
     public final List<Note> notes;
     public final ChoiceKey key;
@@ -64,6 +68,7 @@ public final class SolutionView {
             final ModelData.Machine md = model.machines.get(m);
             extentsPerSecond.put(md.spec.id(), ctx.extents()[m]);
             machineCounts.put(md.spec.id(), ctx.extents()[m] * md.durTicks / (double) Numerics.TICKS_PER_SECOND);
+            if (Double.isNaN(ctx.pinnedExtent[m]) && ctx.extents()[m] <= tol) unneeded.add(md.spec.id());
         }
         for (int e = 0; e < model.edges.size(); e++) {
             edgeFlowsPerSecond.put(
@@ -89,7 +94,6 @@ public final class SolutionView {
             .size();
         this.externalQuantity = quantity;
         this.totalInternalFlow = flow;
-        this.floorsUsed = ctx.floorsUsed;
         this.wallMillis = wallMillis;
         this.key = ctx.keyOf(ctx.support());
         this.drawers = DrawerReadout.of(ctx, ctx.extents(), ctx.externals());

@@ -239,10 +239,14 @@ public final class CardModel {
         final RecipeHandlerRef ref = com.gtnhplanner.nei.RecipeRefs.of(node.recipeId);
         // A crop has no machine in NEI: its harvester (a Crop Manager at a tier, or the Industrial Farm) is a setting.
         final com.gtnhplanner.machines.CropsNh.Setup crop = com.gtnhplanner.machines.game.CropCards.setup(node);
+        // A bee's housing is a setting too, and the card is named for its species (BeeCards).
+        final com.gtnhplanner.machines.Bees.Setup bee = crop == null ? com.gtnhplanner.machines.game.BeeCards.setup(node)
+            : null;
         final List<ItemStack> catalysts = crop != null ? com.gtnhplanner.machines.game.CropCards.harvesterChoices(node)
-            : catalysts(ref);
-        ItemStack chosen = crop != null ? com.gtnhplanner.machines.game.CropCards.harvesterStack(crop) : null;
-        for (final ItemStack s : crop != null ? List.<ItemStack>of() : catalysts) {
+            : bee != null ? com.gtnhplanner.machines.game.BeeCards.housingChoices() : catalysts(ref);
+        ItemStack chosen = crop != null ? com.gtnhplanner.machines.game.CropCards.harvesterStack(crop)
+            : bee != null ? com.gtnhplanner.machines.game.BeeCards.housingStack(bee.housing()) : null;
+        for (final ItemStack s : crop != null || bee != null ? List.<ItemStack>of() : catalysts) {
             if (CardDefaults.matches(s, node.machineName)) {
                 chosen = s;
                 break;
@@ -250,7 +254,8 @@ public final class CardModel {
         }
         final ItemStack machineStack = chosen != null ? chosen : catalysts.isEmpty() ? null : catalysts.get(0);
         final String machineName = crop != null ? com.gtnhplanner.machines.game.CropCards.harvesterName(crop)
-            : machineStack != null ? machineStack.getDisplayName() : node.machineName;
+            : bee != null ? com.gtnhplanner.machines.game.BeeCards.cardName(node)
+                : machineStack != null ? machineStack.getDisplayName() : node.machineName;
         // A steam machine burns steam at no voltage: no tier, as the website has none on its card.
         final boolean steam = gregtech && steam(machineStack);
 

@@ -32,11 +32,12 @@ class AlternativesTest {
     }
 
     @Test
-    void symmetricChoice_offersBothMirrorsAsEquallyValid() {
+    void symmetricChoice_sellingIngotEarlierIsListedWithItsReason() {
         final Alternatives a = alternatives("symmetric_choice");
 
-        // The two mirrors, plus voiding plate instead - which ties on gates and on excess and only
-        // gives up internal flow, so it is a real answer somebody might want (both furnaces full).
+        // Both benders run full and the spare leaves as plate, at the brick wall: the furnaces' ingot goes on to every
+        // machine that takes it. Selling ingot at either furnace instead is a real answer somebody might want (one
+        // bender runs half), listed with why it is not the default.
         assertEquals(
             3,
             a.options()
@@ -46,18 +47,12 @@ class AlternativesTest {
             a.options()
                 .get(0)
                 .rank());
-        assertEquals(
-            Rank.EQUALLY_VALID,
+        for (int i = 1; i < 3; i++) assertEquals(
+            Rank.SELLS_MORE,
             a.options()
-                .get(1)
+                .get(i)
                 .rank(),
-            "the mirror: no objective separates them");
-        assertEquals(
-            Rank.MOVES_MORE,
-            a.options()
-                .get(2)
-                .rank(),
-            "voiding plate moves 40/s instead of 30/s");
+            "selling ingot sells earlier in the line than selling plate");
         assertTrue(a.complete(), "small chart, the search finishes");
         for (final Alternative option : a.options()) {
             assertEquals(
@@ -93,8 +88,9 @@ class AlternativesTest {
 
     @Test
     void excessChoice_theRejectedOptionIsListedWithItsReason() {
-        // Voiding charcoal is not wrong, it just moves more material - a real answer somebody
-        // might want, so it must be listed rather than deleted.
+        // The default sends all the nitrogen on to the oven and sells charcoal where the second oven
+        // takes no more. Selling nitrogen at the centrifuge is not wrong, it just sells earlier in the
+        // line - a real answer somebody might want, so it must be listed rather than deleted.
         final Alternatives a = alternatives("excess_choice");
 
         assertEquals(
@@ -106,39 +102,37 @@ class AlternativesTest {
             a.options()
                 .get(0)
                 .rank());
-        // 10.6/s of charcoal is 0.53 of an oven craft; 530/s of nitrogen is 0.17 of a centrifuge
-        // craft. Both are fractions of a craft rather than items against litres, but they are
-        // fractions of DIFFERENT machines' crafts - a real comparison, and a debatable one, so the
-        // loser is listed instead of deleted.
+        // Both sell; the default sells further down the line, so the other sells earlier in it - a real
+        // answer somebody might want, so the loser is listed instead of deleted.
         assertEquals(
-            Rank.VOIDS_MORE,
+            Rank.SELLS_MORE,
             a.options()
                 .get(1)
                 .rank());
         assertEquals(
-            530.0,
+            10.6,
             a.options()
                 .get(0)
                 .externals()
                 .get(0)
                 .ratePerSecond(),
             1e-4,
-            "default: nitrogen");
+            "default: charcoal");
         assertEquals(
-            10.6,
+            530.0,
             a.options()
                 .get(1)
                 .externals()
                 .get(0)
                 .ratePerSecond(),
             1e-4,
-            "alternative: charcoal");
+            "alternative: nitrogen");
     }
 
     @Test
     void mk1_theSourceSinkTiltIsShownRatherThanHidden() {
-        // The 1025/1024 tilt is a taste decision in a constant. It stays the default, but the
-        // import it silently discards has to appear in the list.
+        // The planner buys only what the pins need, so leaving a surplus beats importing; the import
+        // it passes over still has to appear in the list.
         final Alternatives a = alternatives("mk1");
 
         assertEquals(
@@ -151,7 +145,7 @@ class AlternativesTest {
                 .get(0)
                 .rank());
         assertEquals(
-            Rank.IMPORTS_INSTEAD,
+            Rank.BUYS_MORE,
             a.options()
                 .get(1)
                 .rank());
@@ -238,7 +232,7 @@ class AlternativesTest {
                 .rank() == Rank.MOVES_MORE
                 || a.options()
                     .get(1)
-                    .rank() == Rank.VOIDS_MORE,
+                    .rank() == Rank.BUYS_MORE,
             () -> "and it lost on a comparison, not a coin flip: " + a.options()
                 .get(1)
                 .rank());

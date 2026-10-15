@@ -132,9 +132,10 @@ final class OverviewRail extends ParentWidget<OverviewRail>
     private final BoardSession session;
     private final BoardCanvas canvas;
     private final TextFieldWidget filterField;
-    private final Set<String> folded = new HashSet<>(Set.of("INTERNAL"));
+    /** The sections folded to their bars, and whether the overview is open: as the player last left them. */
+    private final Set<String> folded = new HashSet<>(PlannerSettings.overviewFolded());
     private final List<Hit> hits = new ArrayList<>();
-    private boolean open = true;
+    private boolean open = PlannerSettings.overviewOpen();
     private String filter = "";
     private int scroll;
     private int contentH;
@@ -143,12 +144,13 @@ final class OverviewRail extends ParentWidget<OverviewRail>
     OverviewRail(final BoardSession session, final BoardCanvas canvas) {
         this.session = session;
         this.canvas = canvas;
-        width(W);
+        width(currentWidth());
         filterField = new TextFieldWidget()
             .value(new StringValue.Dynamic(() -> filter, s -> filter = s == null ? "" : s))
             .hintText("Filter resources...")
             .pos(4, FILTER_Y)
             .size(W - 8, FILTER_H);
+        filterField.setEnabled(open);
         child(filterField);
     }
 
@@ -162,6 +164,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
 
     void toggle() {
         open = !open;
+        PlannerSettings.setOverviewOpen(open);
         scroll = 0;
         filterField.setEnabled(open);
         width(currentWidth());
@@ -964,7 +967,9 @@ final class OverviewRail extends ParentWidget<OverviewRail>
             1);
         final String peak = session.peakPower() ? "Peak" : "Avg";
         Hyb.textCentered(peak, px + TOGGLE_W / 2f, y - SECTION_H + 2, Hyb.INK);
-        hits.add(new Hit(Kind.PEAK, px, y - SECTION_H + 1, px + TOGGLE_W, y - 1, null));
+        // Ahead of the heading's own hit, which spans the bar: the first hit under the mouse takes the click, and the
+        // key's is on top (behind the heading, a click on the key folded the section).
+        hits.add(hits.size() - 1, new Hit(Kind.PEAK, px, y - SECTION_H + 1, px + TOGGLE_W, y - 1, null));
         // What the machines draw, in the bar beside the key.
         Hyb.textRight(Fmt.power(t.euPerTick()) + " EU/t", px - 5, y - SECTION_H + 2, Hyb.MUTED);
         if (folded.contains("MACHINES")) return y + GAP;
@@ -1078,7 +1083,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                     Hyb.rect(fieldX + 1, y + 2, COUNT_W - 2, 9, countHot ? 0xFF15171C : 0xFF0F1114);
                     Hyb.rect(fieldX + 1, y + 2, COUNT_W - 2, 1, 0xB3000000);
                     if (set) Hyb.textCentered(
-                        wheeled > 0 ? Long.toString(wheeled) : Fmt.machines(m.machines()),
+                        wheeled > 0 ? Long.toString(wheeled) : Fmt.machines(count(m)),
                         fieldX + COUNT_W / 2f,
                         y + 3,
                         Hyb.GOLD);
@@ -1215,7 +1220,8 @@ final class OverviewRail extends ParentWidget<OverviewRail>
             if (card != null) card.clearPins();
             return Result.SUCCESS;
         }
-        if (mouseButton != 0 && hit.kind() != Kind.RULE) return Result.SUCCESS;
+        // A right-click steps a rule back, and flips Avg and Peak as a left one does (the top bar's key does the same).
+        if (mouseButton != 0 && hit.kind() != Kind.RULE && hit.kind() != Kind.PEAK) return Result.SUCCESS;
         final int sx = getArea().x + hit.x0(), sy = getArea().y + hit.y1() + 2;
         if (hit.kind() != Kind.RESOURCE) Hyb.click();
         switch (hit.kind()) {
@@ -1227,6 +1233,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
             case SECTION -> {
                 final String title = (String) hit.data();
                 if (!folded.remove(title)) folded.add(title);
+                PlannerSettings.setOverviewFolded(folded);
             }
             case RULE -> {
                 final DrawerModel d = (DrawerModel) hit.data();
@@ -1256,19 +1263,34 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                 final BoardSession.MachineLine m = (BoardSession.MachineLine) hit.data();
                 final com.gtnhplanner.ui.card.RecipeCard card = cardOf(m.nodeId());
                 if (card != null && card.model() != null)
-                    session.pin(card.model().node, m.pinned() ? 0 : Math.max(1, Math.ceil(m.machines() - 1e-9)));
+                    session.pin(card.model().node, m.pinned() ? 0 : Math.max(1, Math.ceil(count(m) - 1e-9)));
             }
             case COUNT -> {
                 final BoardSession.MachineLine m = (BoardSession.MachineLine) hit.data();
                 final com.gtnhplanner.ui.card.RecipeCard card = cardOf(m.nodeId());
                 if (card != null && card.model() != null) {
                     final com.gtnhplanner.data.flowchart.Node node = card.model().node;
-                    edit.start("count:" + m.nodeId(), m.pinned() ? m.machines() : 0, v -> session.pin(node, v));
+                    edit.start("count:" + m.nodeId(), m.pinned() ? count(m) : 0, v -> session.pin(node, v));
                     getContext().focus(this);
                 }
             }
         }
         return Result.SUCCESS;
+    }
+
+    /**
+     * What a machine line's count field shows and sets: the card's own count. A crop card's is the crops planted,
+     * while the line's ×count is the harvesters they fill (issue 8).
+     */
+    private double count(final BoardSession.MachineLine m) {
+        final com.gtnhplanner.ui.card.CardModel card = session.model(m.nodeId());
+        return card != null ? card.machines : m.machines();
+    }
+
+    /** Whether a machine line is a crop card's, whose count field is crops planted. */
+    private boolean crop(final BoardSession.MachineLine m) {
+        final com.gtnhplanner.ui.card.CardModel card = session.model(m.nodeId());
+        return card != null && com.gtnhplanner.machines.game.CropCards.isCrop(card.node);
     }
 
     /** The card a recipe is on: its own, or the shared machine it is a recipe of. */
@@ -1385,7 +1407,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                 final BoardSession.MachineLine m = (BoardSession.MachineLine) hit.data();
                 final com.gtnhplanner.ui.card.RecipeCard card = cardOf(m.nodeId());
                 if (card != null && card.model() != null)
-                    session.pin(card.model().node, m.pinned() ? 0 : Math.max(1, Math.ceil(m.machines() - 1e-9)));
+                    session.pin(card.model().node, m.pinned() ? 0 : Math.max(1, Math.ceil(count(m) - 1e-9)));
                 return true;
             }
         }
@@ -1526,7 +1548,7 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                     : List.of("Pin", hint + "Click: place it in the world, or list it on screen while playing");
             }
             case COUNT -> List.of(
-                "Machine count",
+                crop((BoardSession.MachineLine) hit.data()) ? "Crops planted" : "Machine count",
                 hint + "Click: type a pinned count",
                 hint + "Wheel: one more or fewer (below one unpins)");
             case MACHINE_RULE -> {
@@ -1534,12 +1556,14 @@ final class OverviewRail extends ParentWidget<OverviewRail>
                 yield m.pinned()
                     ? List.of(
                         "Exactly",
-                        hint + "Pinned at " + Fmt.machines(m.machines()),
+                        hint + "Pinned at " + Fmt.machines(count(m)) + (crop(m) ? " crops" : ""),
                         hint + "Click: let the plan decide")
                     : List.of(
                         "Any",
                         hint + "The plan decides how many",
-                        hint + "Click: pin it at " + (long) Math.max(1, Math.ceil(m.machines() - 1e-9)));
+                        hint + "Click: pin it at "
+                            + (long) Math.max(1, Math.ceil(count(m) - 1e-9))
+                            + (crop(m) ? " crops" : ""));
             }
             case SPARE -> {
                 final SpareBar.Hit at = spareHitAt(hit);

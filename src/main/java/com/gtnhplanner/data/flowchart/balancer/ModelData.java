@@ -145,8 +145,12 @@ public final class ModelData {
     public final List<DrawerRow> drawers = new ArrayList<>();
     public int[] portGate;
     public int[] portComponent;
-    /** Packed lexicographic per-gate weights from the type's heuristics. */
-    final double[] gateWeights;
+    /**
+     * Per connected port, how far along the plan a trade there is, in machine steps ({@link #steps}): at an input, the
+     * steps already in the good bought; at an output, the steps still ahead of the good sold. AUTO buys at the fewest
+     * and sells at the fewest it can ({@link Solver#levels}).
+     */
+    public final int[] portSteps;
 
     ModelData(final SolveInput input, final Heuristics heuristics) {
         for (final SolveInput.Machine spec : input.machines()) {
@@ -183,12 +187,81 @@ public final class ModelData {
         buildPools(input);
         buildDrawers(input);
         buildGates();
-        final boolean[] gateInput = new boolean[gates.size()];
-        for (int g = 0; g < gates.size(); g++) {
-            gateInput[g] = gates.get(g)
-                .input();
+        portSteps = steps();
+    }
+
+    /**
+     * Each connected port's machine steps ({@link #portSteps}). The plan is read as a graph of machines and
+     * wire networks: a machine points at the networks it makes into, a network at the machines it feeds. A loop in it
+     * counts as one step: its machines and networks share one place ({@link Loops}), so the graph of places is acyclic.
+     * A machine's stage is the most machines before it (0 for one fed by nothing), its depth the most machines after it
+     * (0 for one feeding nothing).
+     *
+     * <p>
+     * At an input, the steps already in the good: the fewest machines of the plan it takes to make it, counting the one
+     * that makes it (wheat 1, flour 2), so a plan short of bread buys wheat and runs its own mill. At an output, the
+     * steps still ahead of the good: the most machines it could still go through, counting the one that would take it
+     * (wheat 2, flour 1), so spare wheat is milled and sold as flour where nothing further on can take it.
+     */
+    private int[] steps() {
+        final int n = machines.size();
+        final Map<Integer, Integer> networkNode = new HashMap<>();
+        for (int p = 0; p < connectedPorts.size(); p++)
+            networkNode.putIfAbsent(portComponent[p], n + networkNode.size());
+        final int nodes = n + networkNode.size();
+        final List<List<Integer>> next = new ArrayList<>(nodes), makers = new ArrayList<>(nodes),
+            takers = new ArrayList<>(nodes);
+        for (int v = 0; v < nodes; v++) {
+            next.add(new ArrayList<>());
+            makers.add(new ArrayList<>());
+            takers.add(new ArrayList<>());
         }
-        gateWeights = heuristics.gateWeights(gates.size(), gateInput);
+        for (int p = 0; p < connectedPorts.size(); p++) {
+            final ConnectedPort port = connectedPorts.get(p);
+            final int network = networkNode.get(portComponent[p]);
+            final List<Integer> side = port.input() ? takers.get(network) : makers.get(network);
+            if (side.contains(port.machine())) continue;
+            side.add(port.machine());
+            if (port.input()) next.get(network)
+                .add(port.machine());
+            else next.get(port.machine())
+                .add(network);
+        }
+        final int[] loop = Loops.of(next);
+        int loops = 0;
+        for (final int l : loop) loops = Math.max(loops, l + 1);
+        final boolean[] hasMachine = new boolean[loops];
+        for (int m = 0; m < n; m++) hasMachine[loop[m]] = true;
+        final List<List<Integer>> after = new ArrayList<>(loops);
+        for (int l = 0; l < loops; l++) after.add(new ArrayList<>());
+        for (int v = 0; v < nodes; v++) {
+            for (final int w : next.get(v)) if (loop[v] != loop[w]) after.get(loop[v])
+                .add(loop[w]);
+        }
+        // Loops numbers the places so that every edge between two runs from a higher number to a lower one: counting
+        // down visits each after everything before it, counting up each after everything after it.
+        final int[] stage = new int[loops], depth = new int[loops];
+        for (int l = loops - 1; l >= 0; l--) {
+            for (final int k : after.get(l)) stage[k] = Math.max(stage[k], stage[l] + (hasMachine[k] ? 1 : 0));
+        }
+        for (int l = 0; l < loops; l++) {
+            for (final int k : after.get(l)) depth[l] = Math.max(depth[l], depth[k] + (hasMachine[k] ? 1 : 0));
+        }
+        final int[] out = new int[connectedPorts.size()];
+        for (int p = 0; p < out.length; p++) {
+            final ConnectedPort port = connectedPorts.get(p);
+            final int network = networkNode.get(portComponent[p]);
+            if (port.input()) {
+                int fewest = Integer.MAX_VALUE;
+                for (final int m : makers.get(network)) fewest = Math.min(fewest, stage[loop[m]]);
+                out[p] = fewest + 1;
+            } else {
+                int most = 0;
+                for (final int m : takers.get(network)) most = Math.max(most, depth[loop[m]]);
+                out[p] = most + 1;
+            }
+        }
+        return out;
     }
 
     /**

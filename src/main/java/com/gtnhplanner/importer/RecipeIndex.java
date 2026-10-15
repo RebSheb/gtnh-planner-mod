@@ -18,17 +18,24 @@ public interface RecipeIndex {
     /**
      * Candidates for one FF recipe.
      *
-     * @param note why there are none, when there are none and the index knows (GregTech not loaded, a kind of FF
-     *             card the game has no recipe for)
+     * @param note  why there are none, when there are none and the index knows (GregTech not loaded, a kind of FF
+     *              card the game has no recipe for)
+     * @param exact the index found the very recipe (by NEI's own id for it), so there is nothing to match: the one
+     *              candidate is it
      */
-    record Lookup(List<GameRecipe> candidates, @Nullable String note) {
+    record Lookup(List<GameRecipe> candidates, @Nullable String note, boolean exact) {
 
         public static Lookup of(final List<GameRecipe> candidates) {
-            return new Lookup(candidates, null);
+            return new Lookup(candidates, null, false);
         }
 
         public static Lookup none(final String note) {
-            return new Lookup(List.of(), note);
+            return new Lookup(List.of(), note, false);
+        }
+
+        /** The recipe itself, found by its id. */
+        public static Lookup exact(final GameRecipe recipe) {
+            return new Lookup(List.of(recipe), null, true);
         }
     }
 

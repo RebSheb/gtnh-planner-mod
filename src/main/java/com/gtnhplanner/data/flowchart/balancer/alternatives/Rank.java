@@ -17,18 +17,15 @@ public enum Rank {
     DEFAULT(null),
     /** Indistinguishable on every objective; only node ordering separated the two. */
     EQUALLY_VALID(SolverMessage.REASON_EQUALLY_VALID),
-    /** Lost on the direction tilt: it imports where the default takes a surplus out. */
-    IMPORTS_INSTEAD(SolverMessage.REASON_IMPORTS_INSTEAD),
-    /**
-     * Lost on stage 2: it leans on the outside more. Compared as fractions of a craft wasted,
-     * which is a real comparison and still a debatable one - shown, not hidden, for that reason.
-     */
-    VOIDS_MORE(SolverMessage.REASON_VOIDS_MORE),
-    /** Lost on stage 3: same gates and same excess, but more material moved internally. */
+    /** Lost on buying: it buys more, or buys a part further down the line where the default buys what makes it. */
+    BUYS_MORE(SolverMessage.REASON_BUYS_MORE),
+    /** Lost on selling: it sells more, or sells spare earlier in the line where the default works it further. */
+    SELLS_MORE(SolverMessage.REASON_SELLS_MORE),
+    /** Lost on flow: it trades as the default does, but more material moves inside the plan. */
     MOVES_MORE(SolverMessage.REASON_MOVES_MORE),
     /**
-     * Same gates and same excess, and it moves LESS material than the default. Reachable because
-     * the default's tie enumeration is capped and a one-gate swap can step outside what it reached.
+     * Trades as the default does and moves LESS material than it. Reachable because the default's tie enumeration is
+     * capped and a one-gate swap can step outside what it reached.
      */
     MOVES_LESS(SolverMessage.REASON_MOVES_LESS);
 

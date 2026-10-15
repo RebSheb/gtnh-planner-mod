@@ -67,7 +67,8 @@ public class NEIPlanConfig implements IConfigureNEI {
     public void loadConfig() {
         // First in line, so an item dropped from NEI's list reaches the board before ModularUI's own handler.
         codechicken.nei.api.GuiInfo.guiHandlers.addFirst(new FlowchartGuiHandler());
-        API.addLayoutStyle(0, new FlowchartLayoutStyle());
+        // NEI's layout beside the board is FlowchartLayoutStyle, for the board alone (LayoutManagerMixin): it no
+        // longer takes the place of NEI's own layout on every screen.
         MinecraftForge.EVENT_BUS.register(this);
         // The plan button's menus: first for clicks and keys while one is open, drawn over everything NEI draws.
         GuiContainerManager.inputHandlers.addFirst(PlannerItemClicks.INSTANCE);

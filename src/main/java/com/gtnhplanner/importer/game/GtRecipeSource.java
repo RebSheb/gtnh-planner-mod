@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -15,6 +17,8 @@ import com.gtnhplanner.importer.FfPlan.FfRecipe;
 import com.gtnhplanner.importer.RecipeIndex.GameRecipe;
 import com.gtnhplanner.importer.RecipeIndex.GameStack;
 import com.gtnhplanner.importer.RecipeIndex.Lookup;
+import com.gtnhplanner.machines.game.WebCards;
+import com.gtnhplanner.machines.web.HandlerData;
 
 import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.ICraftingHandler;
@@ -53,22 +57,36 @@ final class GtRecipeSource {
     }
 
     /**
-     * The in-game maps an FF recipe names: by unlocalized name or FF's slug of it; failing both (an old plan), by
-     * the NEI page's name, which is FF's machine type.
+     * The in-game maps an FF recipe names: by unlocalized name (the website's, whose GT++ maps are gtpp.recipe.*, as
+     * well as the game's) or FF's slug of it; failing both (an old plan), by the NEI page's name, which is FF's machine
+     * type. A recipe the game posted before it named its map (0.2.0-alpha.5 and earlier) names the machine block
+     * instead: the maps that block works, by NEI's catalysts.
      */
     private static List<String> mapsFor(final FfRecipe recipe) {
         final String id = recipe.gameMapId(), slug = recipe.gameMapSlug();
         final Set<String> exact = new LinkedHashSet<>(), named = new LinkedHashSet<>();
+        final boolean byMachine = id == null && slug == null && recipe.fromGame();
         for (final ICraftingHandler h : handlers()) {
             if (!(h instanceof final GTNEIDefaultHandler g) || g.getRecipeMap() == null) continue;
             final String map = g.getRecipeMap().unlocalizedName;
-            if (map.equals(id) || slug != null && FfIds.slug(map)
-                .equals(slug)) exact.add(map);
+            if (sameMap(map, id, slug)) exact.add(map);
             else if (h.getRecipeName()
                 .trim()
-                .equalsIgnoreCase(recipe.machineType())) named.add(map);
+                .equalsIgnoreCase(recipe.machineType())
+                || byMachine && NeiRecipeIndex.runsOn(h, recipe.machineType())) named.add(map);
         }
         return new ArrayList<>(exact.isEmpty() ? named : exact);
+    }
+
+    /** Whether the game's map is the one a plan names, by its id or the website's id for it, or by FF's slug. */
+    private static boolean sameMap(final String map, @Nullable final String id, @Nullable final String slug) {
+        if (id == null && slug == null) return false;
+        if (map.equals(id) || slug != null && FfIds.slug(map)
+            .equals(slug)) return true;
+        final HandlerData.MapEntry site = WebCards.entry(map);
+        return site != null && !site.id.equals(map)
+            && (site.id.equals(id) || slug != null && FfIds.slug(site.id)
+                .equals(slug));
     }
 
     private static List<ICraftingHandler> handlers() {

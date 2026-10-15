@@ -227,6 +227,13 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         return total;
     }
 
+    /** The machines it builds: its count, or for a crop card (whose count is crops planted) the harvesters. */
+    private double buildsTotal() {
+        double total = 0;
+        for (final CardModel m : models) total += com.gtnhplanner.machines.game.CropCards.builds(m.node, m.machines);
+        return total;
+    }
+
     /** What the card draws, as the board's power switches say: all its recipes' together. */
     private double powerTotal() {
         double total = 0;
@@ -290,6 +297,11 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         return model != null && com.gtnhplanner.machines.game.CropCards.isCrop(model.node);
     }
 
+    /** Whether the card keeps bees (its machine is their housing, picked by a setting; BeeCards). */
+    private boolean bee() {
+        return model != null && com.gtnhplanner.machines.game.BeeCards.isBee(model.node);
+    }
+
     private int barRight() {
         // A recipe outside GregTech has no voltage: no tier chip, and the name runs to the edge.
         if (model != null && !hasTier()) return RIGHT;
@@ -350,7 +362,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             case POWER -> layout.powerRowY >= 0
                 ? new int[] { CardLayout.IN_RAIL_X, layout.powerRowY, CardLayout.RAIL_W, CardLayout.ROW }
                 : null;
-            case MACHINES -> CardPaint.countRect(countText(), layout.picture());
+            case MACHINES -> countless() ? null : CardPaint.countRect(countText(), layout.picture());
             case CIRCUIT -> model.circuit == null || shared() || model.isPower() ? null
                 : layout.circuitRowY >= 0
                     ? new int[] { CardLayout.IN_RAIL_X, layout.circuitRowY, CardLayout.RAIL_W, CardLayout.ROW }
@@ -358,6 +370,14 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             case SECTION, CHIP -> null;
             case BODY -> new int[] { 0, 0, CardLayout.W, layout.height };
         };
+    }
+
+    /**
+     * A card with no count to show or set: the fluid tank, free and instant, which keeps up with whatever the plan
+     * needs (the owner, 2026-10-13: its cells a second was a number nobody plans by).
+     */
+    private boolean countless() {
+        return model != null && com.gtnhplanner.power.FluidTank.is(model.node);
     }
 
     /** The machine count as the card shows it: a wheeled count at once, before the solve catches up. */
@@ -550,14 +570,20 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             com.gtnhplanner.ui.power.PowerPicker.gauge(0, 0, CUSTOM_RATE_INK);
             org.lwjgl.opengl.GL11.glPopMatrix();
         } else drawMachineArt(m, (w - side) / 2f, (h - side) / 2f, side, side, side, z, true);
-        // How many, in white in the corner, at whole screen pixels per font pixel so it stays sharp.
-        final String count = "×" + Fmt.machines(machinesTotal());
+        if (countless()) {
+            if (canvas() != null) canvas().labelCard(m.machineName, m.node.x, m.node.y, w, h);
+            return;
+        }
+        // How many, in white in the corner, at whole screen pixels per font pixel so it stays sharp. Machines: a crop
+        // card's harvesters, beside their picture.
+        final double builds = buildsTotal();
+        final String count = "×" + Fmt.machines(builds);
         // Two screen pixels per font pixel, or one far out: whole pixels at every wheel step, so it stays sharp.
         float cs = 1 / zoom;
         if (cs > 4) cs /= 2;
         while (cs > 1 && Hyb.width(count) * cs > w * 0.8f) cs /= 2;
         final float tw = Hyb.width(count) * cs, th = 8 * cs;
-        Hyb.text(count, w - rim - 6 - tw, h - rim - 6 - th, cs, machinesTotal() <= 0 ? Hyb.MUTED : Hyb.INK);
+        Hyb.text(count, w - rim - 6 - tw, h - rim - 6 - th, cs, builds <= 0 ? Hyb.MUTED : Hyb.INK);
         if (canvas() != null) canvas().labelCard(m.machineName, m.node.x, m.node.y, w, h);
     }
 
@@ -873,6 +899,9 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                     set,
                     controls);
             }
+            if (!output && p.index() < models.get(section).node.inputs.size()
+                && models.get(section).node.inputs.get(p.index())
+                    .hasChoices()) CardPaint.choiceMark(y);
             if (controls) {
                 final boolean here = hoveredSlot != null && hoveredSlot.section == section
                     && hoveredSlot.output == output
@@ -1043,16 +1072,14 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         } else drawMachineArt(m, box[0], box[1], box[2], box[2], CardLayout.ITEM, z, true);
         if (m.circuit != null && !shared() && !m.isPower() && layout.circuitRowY < 0)
             CardPaint.circuitBadge(m.circuit, box, z);
+        if (countless()) return;
         // Under the count: pinned, or (while the plan has nothing set to solve for) the prompt to set it.
         final boolean pinnedNow = pendingCount > 0 || pinned() && !pendingUnpin;
         final String under = crop()
             ? pinnedNow ? "crops, pinned"
                 : session.unset(nodeId) ? CardPaint.SET_COUNT
                     : Math.round(machinesTotal()) == 1 ? "crop planted" : "crops planted"
-            : pinnedNow ? CardPaint.PINNED
-                : session.unset(nodeId) ? CardPaint.SET_COUNT
-                    // A fluid tank's count is the cells it handles a second.
-                    : com.gtnhplanner.power.FluidTank.is(m.node) && !m.inputs.isEmpty() ? "cells a second" : null;
+            : pinnedNow ? CardPaint.PINNED : session.unset(nodeId) ? CardPaint.SET_COUNT : null;
         CardPaint.count(
             countText(),
             machinesTotal() <= 0 && pendingCount <= 0,
@@ -1210,7 +1237,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         switch (c.type()) {
             case TOGGLE -> changeSetting(node, c.key(), !CardDefaults.boolSetting(cfg, c.key()));
             case NUMBER -> Popup.open(
-                getPanel(),
+                session.panel(),
                 NumberPopup.create(
                     def.label,
                     def.minInt + " to " + def.maxInt,
@@ -1232,7 +1259,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                         option.equals(now),
                         () -> changeSetting(node, c.key(), option)));
                 Popup.open(
-                    getPanel(),
+                    session.panel(),
                     PickList.popup("gtnhplanner_setting_choice", null, rows, rows.size() > 10, 150),
                     sx,
                     sy);
@@ -1303,7 +1330,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         if (s == null) return;
         if (s.number()) {
             Popup.open(
-                getPanel(),
+                session.panel(),
                 NumberPopup.create(
                     s.label(),
                     plainNumber(s.min()) + (s.max() < Double.MAX_VALUE ? " to " + plainNumber(s.max()) : " or more"),
@@ -1332,8 +1359,11 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 o.key()
                     .equals(now),
                 () -> changeMachine(key, o.key())));
-        Popup
-            .open(getPanel(), PickList.popup("gtnhplanner_machine_setting", null, rows, rows.size() > 10, 190), sx, sy);
+        Popup.open(
+            session.panel(),
+            PickList.popup("gtnhplanner_machine_setting", null, rows, rows.size() > 10, 190),
+            sx,
+            sy);
     }
 
     /** One step along a modelled machine's setting: the next choice, or one more or less. */
@@ -1388,6 +1418,12 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 SettingMemory.remember(node, w.getKey(), w.getValue());
             return;
         }
+        if (com.gtnhplanner.machines.game.BeeCards.isBee(node)) {
+            // The upgrades, frames and climate carry to the next bee card; the housing comes from the plan menu.
+            session.setSetting(node, key, value);
+            if (com.gtnhplanner.machines.game.BeeCards.remembered(key)) SettingMemory.remember(node, key, value);
+            return;
+        }
         if (key.startsWith("tgs") || com.gtnhplanner.machines.game.WebSettings.isKey(key))
             changeSetting(node, key, value);
         else session.setSetting(node, key, value);
@@ -1425,7 +1461,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 } else openPowerOptions(sx, sy, select);
             }
             case com.gtnhplanner.power.PowerSetting.Number number -> Popup.open(
-                getPanel(),
+                session.panel(),
                 NumberPopup.create(
                     PowerTiles.caption(number),
                     PowerTiles.plain(number.min()) + " to " + PowerTiles.plain(number.max()),
@@ -1462,7 +1498,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                     .equals(now),
                 () -> changePower(select.id(), option.key())));
         Popup.open(
-            getPanel(),
+            session.panel(),
             PickList.popup(
                 "gtnhplanner_power_setting",
                 select.label()
@@ -1562,7 +1598,9 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             case MACHINE -> {
                 if (crop()) yield cropTip(m);
                 final Tip tip = Tip.of(m.machineName)
-                    .sub(m.multiblock ? "Multiblock" : "Machine")
+                    .sub(
+                        bee() && m.machineStack != null ? m.machineStack.getDisplayName()
+                            : m.multiblock ? "Multiblock" : "Machine")
                     .row(pinned() ? "Pinned machines" : "Required machines", "×" + Fmt.machines(machinesTotal()));
                 if (shared()) tip.row("Recipes", Integer.toString(models.size()));
                 if (m.gregtech && !m.steam()) tip.row("Configured tier", m.tier);
@@ -1614,6 +1652,18 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             case MACHINES -> {
                 final double machines = machinesTotal();
                 final boolean pin = pinned();
+                if (crop()) {
+                    // A crop card counts crops; the harvesters they fill are the machines.
+                    final Tip tip = Tip.of(pin ? "Pinned crops" : "Crops planted")
+                        .row(pin ? "Pinned" : "Calculated", Fmt.machines(machines))
+                        .row(
+                            com.gtnhplanner.machines.game.CropCards.isFarm(m.machineStack) ? "Industrial Farms"
+                                : "Crop Managers",
+                            "×" + Fmt.machines(buildsTotal()));
+                    if (machines <= 0) tip.muted("No rate or pinned count in the plan needs this crop yet.");
+                    yield tip.action(Tip.Input.LEFT, pin ? "Change or unpin" : "Pin count")
+                        .action(Tip.Input.WHEEL, "+1 / -1");
+                }
                 final Tip tip = Tip.of(pin ? "Pinned machines" : "Required machines")
                     .row(pin ? "Pinned" : "Calculated", "×" + Fmt.machines(machines));
                 final double whole = Math.ceil(machines - 1e-9);
@@ -1663,13 +1713,12 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         final String cell = p.cell()
             .getDisplayName();
         return (com.gtnhplanner.power.FluidTank.emptying(n) ? tip.sub("Empties " + cell) : tip.sub("Fills " + cell))
-            .muted("Free and instant: no machine to build.")
+            .muted("Free and instant: as much as the plan needs.")
             .row(
                 "Holds",
                 Fmt.compact(p.fluid().amount) + " L of "
                     + p.fluid()
-                        .getLocalizedName())
-            .row("Cells a second", Fmt.machines(machinesTotal()));
+                        .getLocalizedName());
     }
 
     private Tip powerTip(final Part part) {
@@ -1863,9 +1912,8 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
     }
 
     /**
-     * A count or amps being wheeled: shown on the card at once, committed (one edit, one solve) once the wheel has been
-     * still for {@value #WHEEL_COMMIT_MS} ms, so a fast spin is one change and not a solve and a save per notch. 0 for
-     * none.
+     * A count or amps being wheeled: shown on the card at once and solved at once, notch by notch; the spin becomes one
+     * undo step once the wheel has been still for {@value #WHEEL_COMMIT_MS} ms ({@link BoardSession#live}). 0 for none.
      */
     private long pendingCount;
     /** The wheel took a pinned count below one: it unpins when the wheel goes still. */
@@ -1880,7 +1928,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
      */
     private CardModel committedOver;
 
-    /** Commits a wheeled count or amps once the wheel has gone still; lets go of it once the solve has caught up. */
+    /** Lets go of a wheeled count or amps once the wheel has gone still and the solve has caught up with it. */
     private void commitWheel() {
         if (committedOver != null) {
             if (model != committedOver && !session.solving()) {
@@ -1893,9 +1941,6 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         }
         if (pendingCount <= 0 && pendingAmps <= 0 && !pendingUnpin
             || System.currentTimeMillis() - wheelAt < WHEEL_COMMIT_MS) return;
-        if (pendingCount > 0) session.pin(model.node, pendingCount);
-        else if (pendingUnpin) session.pin(model.node, 0);
-        if (pendingAmps > 0) session.setSetting(model.node, "amp", pendingAmps);
         committedOver = model;
     }
 
@@ -1921,6 +1966,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 pendingAmps = stepAmps(pendingAmps > 0 ? pendingAmps : model.amps, step);
                 wheelAt = System.currentTimeMillis();
                 committedOver = null;
+                session.wheelSetting(node, "amp", pendingAmps);
             }
             case MACHINE -> stepMachine(step);
             case MACHINES -> wheelCount(step);
@@ -1936,7 +1982,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
      * pinned once the wheel goes still; down from one unpins, as a drawer's rate wheeled to nothing clears it.
      */
     public void wheelCount(final int step) {
-        if (model == null) return;
+        if (model == null || countless()) return;
         com.gtnhplanner.ui.sound.Sfx.TICK.play(step > 0 ? 1.12f : 0.9f);
         final long from = pendingUnpin ? 0 : pendingCount > 0 ? pendingCount : Math.round(machinesTotal());
         if (from + step <= 0) {
@@ -1948,6 +1994,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         }
         wheelAt = System.currentTimeMillis();
         committedOver = null;
+        session.wheelPin(model.node, pendingUnpin ? 0 : pendingCount);
     }
 
     /** A count being wheeled and not set yet, to show at once: the count, 0 when it will unpin; -1 for none. */
@@ -2090,13 +2137,16 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         chooseMachine(machines.get(i));
     }
 
-    /** Runs the recipe on a machine; a crop's harvester is a setting of the card, not its machine. */
+    /** Runs the recipe on a machine; a crop's harvester and a bee's housing are settings of the card. */
     private void chooseMachine(final ItemStack machine) {
         if (crop()) changeMachine(
             com.gtnhplanner.machines.CropsNh.HARVESTER,
             com.gtnhplanner.machines.game.CropCards.isFarm(machine) ? com.gtnhplanner.machines.CropsNh.FARM
                 : com.gtnhplanner.machines.CropsNh.MANAGER);
-        else session.chooseMachine(model.node, machine, model.gregtech);
+        else if (bee()) {
+            final com.gtnhplanner.machines.Bees.Housing h = com.gtnhplanner.machines.game.BeeCards.housingOf(machine);
+            if (h != null) changeMachine(com.gtnhplanner.machines.Bees.HOUSING, h.key());
+        } else session.chooseMachine(model.node, machine, model.gregtech);
     }
 
     /**
@@ -2127,7 +2177,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 Hyb.INK,
                 false,
                 () -> session.togglePinList(nodeId)));
-        Popup.open(getPanel(), PickList.popup("gtnhplanner_place", null, rows, false, 150), screenX, screenY);
+        Popup.open(session.panel(), PickList.popup("gtnhplanner_place", null, rows, false, 150), screenX, screenY);
     }
 
     /**
@@ -2142,7 +2192,8 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             placeName(),
             model.machineStack,
             CardModel.structureNeeds(models),
-            (int) Math.min(64, Math.ceil(machinesTotal() - 1e-9)));
+            // A spot for each machine it builds: a crop card's harvesters, never one per crop.
+            (int) Math.min(64, Math.ceil(buildsTotal() - 1e-9)));
     }
 
     /** The pin key's right-click: off the block in the world and off the pin list, as one undo step. */
@@ -2223,7 +2274,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         }
         rows.add(new PickList.Entry(null, "Delete node", "", Hyb.RED_INK, false, () -> session.delete(node)));
         Popup.open(
-            getPanel(),
+            session.panel(),
             PickList.popup("gtnhplanner_actions", null, rows, false, 150),
             screenX(KEY_X),
             screenY(CHIP_Y + CHIP_H + 2));
@@ -2241,8 +2292,11 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             final boolean farm = com.gtnhplanner.machines.game.CropCards.isFarm(machine);
             if (crop()) detail = farm ? "Multiblock, seed bed by the chip" : "Single block, tier by the chip";
             final boolean current = crop() ? farm == com.gtnhplanner.machines.game.CropCards.isFarm(model.machineStack)
-                : ItemStack.areItemStacksEqual(machine, model.machineStack)
-                    || isSingle(machine) && isSingle(model.machineStack);
+                : bee()
+                    ? com.gtnhplanner.machines.game.BeeCards.housingOf(machine)
+                        == com.gtnhplanner.machines.game.BeeCards.housingOf(model.machineStack)
+                    : ItemStack.areItemStacksEqual(machine, model.machineStack)
+                        || isSingle(machine) && isSingle(model.machineStack);
             final String name = crop() && !farm ? "Crop Manager" : machine.getDisplayName();
             rows.add(new PickList.Entry(machine, name, detail, Hyb.INK, current, () -> {
                 if (!current) {
@@ -2252,11 +2306,12 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             }));
         }
         Popup.open(
-            getPanel(),
+            session.panel(),
             PickList.popup(
                 "gtnhplanner_machines",
                 crop() ? "MACHINES THAT HARVEST THIS CROP"
-                    : shared() ? "MACHINES THAT RUN EVERY RECIPE ON THIS CARD" : "MACHINES THAT RUN THIS RECIPE",
+                    : bee() ? "MACHINES THAT KEEP THIS BEE"
+                        : shared() ? "MACHINES THAT RUN EVERY RECIPE ON THIS CARD" : "MACHINES THAT RUN THIS RECIPE",
                 rows,
                 rows.size() > 8,
                 240),
@@ -2279,12 +2334,12 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                     () -> setCoil(coil)));
         }
         if (rows.isEmpty()) return;
-        Popup.open(getPanel(), PickList.popup("gtnhplanner_coils", null, rows, true, 200), sx, sy);
+        Popup.open(session.panel(), PickList.popup("gtnhplanner_coils", null, rows, true, 200), sx, sy);
     }
 
     private void openAmps() {
         Popup.open(
-            getPanel(),
+            session.panel(),
             NumberPopup.create(
                 "Energy hatch amps",
                 "amps, 1 or more",
@@ -2305,9 +2360,9 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
 
     /** The box to type a pinned count in, at a screen point (the overview's count line opens it too). */
     public void openPin(final int screenX, final int screenY) {
-        if (model == null) return;
+        if (model == null || countless()) return;
         Popup.open(
-            getPanel(),
+            session.panel(),
             NumberPopup.create(
                 "Pin the machine count (empty unpins)",
                 "machines",
@@ -2322,7 +2377,7 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
     /** Every setting the machine's profile offers, as rows: toggles flip, lists step, numbers ask. */
     /** The card's settings, under its gear key. */
     private void openSheet() {
-        SettingsSheet.open(this, screenX(GEAR_X), screenY(CHIP_Y + CHIP_H + 2));
+        SettingsSheet.open(this, canvas(), screenX(GEAR_X), screenY(CHIP_Y + CHIP_H + 2));
     }
 
     // endregion

@@ -100,17 +100,6 @@ gtnhplanner.properties.cofh.rf_per_t=RF/t
 gtnhplanner.properties.enderio.experience=Experience
 
 ## Share messages
-gtnhplanner.share.import_link=> GTNH Planner Import
-gtnhplanner.share.item_name=§bGTNH Planner share
-gtnhplanner.share.item_lore=§7%s
-gtnhplanner.share.lore_shared=§7Shared flowchart
-gtnhplanner.share.click_to_import=§eClick to import
-gtnhplanner.share.import_error.missing=§cMissing NBT data
-gtnhplanner.share.import_error.invalid=§cInvalid GTNH Planner data
-gtnhplanner.share.import_error.decode=§cFailed to decode: %s
-gtnhplanner.share.slot_imported=Imported
-gtnhplanner.share.copy_to_clipboard=Plan exported to clipboard
-gtnhplanner.share.copy_from_clipboard=Plan imported from clipboard
 
 ## GUI
 ## GUI - Groups
@@ -154,7 +143,6 @@ gtnhplanner.solver.negative_extent=Returned a negative extent %s
 gtnhplanner.solver.negative_flow=Returned a negative edge flow %s
 gtnhplanner.solver.inexact_residual=Returned an inexact port residual %s
 gtnhplanner.solver.under_supply=Returned a port that under-supplies: residual %s
-gtnhplanner.solver.gate_count_not_certified=Gate count %d is minimal but not certified optimal (exact search over budget)
 gtnhplanner.solver.solve_crashed=The solver stopped with an error: %s
 
 gtnhplanner.solver.drawer_unmet=%1$s can't be held at %2$s %3$s/s: the plan reaches %4$s/s
@@ -173,19 +161,15 @@ gtnhplanner.solver.rule_at_most=at most
 gtnhplanner.solver.pin_extent=extent pin
 gtnhplanner.solver.pin_target=target rate
 gtnhplanner.solver.pin_count=fixed machine count
-gtnhplanner.solver.pref_fewest_gates=fewest gates
-gtnhplanner.solver.pref_fewest_imports=fewest imports
-gtnhplanner.solver.pref_least_excess=least excess
+gtnhplanner.solver.pref_least_buying=buy as far upstream as it can
+gtnhplanner.solver.pref_least_selling=sell as far downstream as it can
 gtnhplanner.solver.pref_least_flow=least internal flow
 ## Rank reasons
 gtnhplanner.solver.reason_equally_valid=equally valid
-gtnhplanner.solver.reason_imports_instead=imports instead of leaving a surplus
+gtnhplanner.solver.reason_buys_more=buys more or further down the line
+gtnhplanner.solver.reason_sells_more=sells more or earlier in the line
 gtnhplanner.solver.reason_moves_more=moves more material
 gtnhplanner.solver.reason_moves_less=moves less material
-gtnhplanner.solver.reason_voids_more=leans on the outside more
-gtnhplanner.solver.reason_crosses_more=crosses the boundary more
-gtnhplanner.solver.reason_imports_more=imports more
-gtnhplanner.solver.reason_leaves_excess=leaves more excess
 ## Boundary labels
 gtnhplanner.solver.boundary_excess=excess %s
 gtnhplanner.solver.boundary_add=add %s

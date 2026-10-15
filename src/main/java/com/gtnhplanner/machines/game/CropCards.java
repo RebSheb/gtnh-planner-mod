@@ -144,23 +144,27 @@ public final class CropCards {
         }
     }
 
-    /** After every refresh: each drop's multiplier, the card's gain and harvester over the baseline. */
+    /**
+     * After every refresh: each output's multiplier, the card's gain and harvester over the baseline. Found by the
+     * output's item, not its place: an item the table lists twice is one output.
+     */
     public static void afterRefresh(final Node node) {
         final CropsNh.Stats stats = stats(node);
         final MachineConfig cfg = node.machineConfig;
         if (stats == null || cfg == null) return;
         cfg.inputConsumption.clear();
         cfg.outputProductivity.clear();
-        for (int i = 0; i < node.outputs.size() && i < stats.drops()
-            .size(); i++)
-            cfg.outputProductivity.put(
-                i,
-                (float) CropsNh.outputMultiplier(
-                    stats,
-                    cfg.settings,
-                    stats.drops()
-                        .get(i)
-                        .id()));
+        for (int i = 0; i < node.outputs.size(); i++) {
+            final String id = node.outputs.get(i)
+                .getValue() instanceof final net.minecraft.item.ItemStack s ? MachineModels.websiteId(s)
+                    : i < stats.drops()
+                        .size()
+                            ? stats.drops()
+                                .get(i)
+                                .id()
+                            : "";
+            cfg.outputProductivity.put(i, (float) CropsNh.outputMultiplier(stats, cfg.settings, id));
+        }
     }
 
     // endregion
@@ -253,23 +257,33 @@ public final class CropCards {
         return setup == null ? 0 : CropsNh.cropsPerMachine(setup);
     }
 
-    /** The harvesters this many crops fill. */
+    /** The harvesters this many crops fill (a solved count planted whole: {@link CropsNh#seeds}). */
     public static int harvesters(final Node node, final double crops) {
         final Setup setup = setup(node);
-        return setup == null ? 0 : CropsNh.machineCount(setup, Math.round(crops));
+        return setup == null ? 0 : CropsNh.machineCount(setup, CropsNh.seeds(crops));
+    }
+
+    /**
+     * The machines a card builds at this count, wherever machines are counted (the overview, the pin list, the world,
+     * the screenshot): its count, or for a crop card, whose count is crops planted, the harvesters they fill. A fluid
+     * tank is one tank: it has no rate, it keeps up with whatever the plan needs.
+     */
+    public static double builds(final Node node, final double count) {
+        if (com.gtnhplanner.power.FluidTank.is(node)) return 1;
+        return isCrop(node) ? harvesters(node, count) : count;
     }
 
     /** The harvesters' draw for this many crops, EU/t. */
     public static double drawEut(final Node node, final double crops) {
         final CropsNh.Stats stats = stats(node);
         return stats == null || node.machineConfig == null ? 0
-            : CropsNh.drawEut(stats, node.machineConfig.settings, Math.round(crops));
+            : CropsNh.drawEut(stats, node.machineConfig.settings, CropsNh.seeds(crops));
     }
 
     public static List<FormulaLine> formulas(final Node node, final double crops) {
         final CropsNh.Stats stats = stats(node);
         if (stats == null || node.machineConfig == null) return Collections.emptyList();
-        return CropsNh.formulas(stats, node.machineConfig.settings, Math.round(Math.max(1, crops)));
+        return CropsNh.formulas(stats, node.machineConfig.settings, Math.max(1, CropsNh.seeds(crops)));
     }
 
     // region Settings

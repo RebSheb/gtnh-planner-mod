@@ -86,6 +86,7 @@ public final class BoardSession {
     void close() {
         closed = true;
         solver.close();
+        settleLive(true);
         PlanAPI.save();
         if (current == this) current = null;
     }
@@ -172,12 +173,56 @@ public final class BoardSession {
      */
     @SuppressWarnings("deprecation")
     public void edit(final Runnable change) {
+        settleLive(true);
         PlanAPI.recordEdit(graph, () -> {
             change.run();
             releaseHolders();
             dropWiredTargets();
         });
         graph.touch();
+        PlanAPI.save();
+    }
+
+    /** What the wheel is changing: the plan as it was before the spin, or null when none is under way. */
+    private String liveBefore;
+    private Graph liveGraph;
+    private long liveAt;
+    private Sfx liveSound;
+
+    /** How long the wheel is still before a spin becomes one undo step and is saved. */
+    private static final long LIVE_SETTLE_MS = 500;
+
+    /**
+     * A change the wheel makes, one notch at a time: applied and solved at once, so the plan follows the wheel, and
+     * recorded as one undo step and saved once the wheel has been still a moment ({@link #settleLive}), with
+     * {@code settled} played then (null for none).
+     */
+    public void live(final Runnable change, @Nullable final Sfx settled) {
+        if (liveBefore != null && liveGraph != graph) settleLive(true);
+        if (liveBefore == null) {
+            liveBefore = PlanAPI.undoHistory(graph)
+                .beginEdit(graph);
+            liveGraph = graph;
+        }
+        change.run();
+        releaseHolders();
+        dropWiredTargets();
+        graph.touch();
+        liveAt = System.currentTimeMillis();
+        liveSound = settled;
+    }
+
+    /** Ends a spin: one undo step for all of it, and a save. Only once the wheel has been still, unless {@code now}. */
+    private void settleLive(final boolean now) {
+        if (liveBefore == null || !now && System.currentTimeMillis() - liveAt < LIVE_SETTLE_MS) return;
+        if (PlanAPI.undoHistory(liveGraph)
+            .commitEdit(liveBefore, liveGraph)) liveGraph.touchLayout();
+        liveBefore = null;
+        liveGraph = null;
+        if (liveSound != null && !now) liveSound.play();
+        liveSound = null;
+        if (wheeledRates != null) wheeledRates.clear();
+        if (wheeledPorts != null) wheeledPorts.clear();
         PlanAPI.save();
     }
 
@@ -208,6 +253,7 @@ public final class BoardSession {
     /** An undoable change that only moves things: saved, but no re-solve. */
     @SuppressWarnings("deprecation")
     public void editLayout(final Runnable change) {
+        settleLive(true);
         PlanAPI.recordEdit(graph, change);
         graph.touchLayout();
         PlanAPI.save();
@@ -347,20 +393,145 @@ public final class BoardSession {
     private boolean dropPortOnRecipe(final UUID fromNode, final boolean output, final int port, final UUID toNode) {
         final Node src = graph.nodes.get(fromNode), dst = graph.nodes.get(toNode);
         if (src == null || dst == null || src == dst) return false;
+        // A wire that lands on an input as one of the other items its slot takes sets it to that item, as the website's
+        // wires do: wired with an ore dictionary match (coal dust fed carbon dust), or as an item it only lists.
         if (output) {
             final int in = graph.findCompatibleInput(src, port, dst);
-            if (in < 0) return false;
-            connect(src.id, port, dst.id, in);
+            if (in >= 0) {
+                final String key = pickFor(dst, in, src.outputs.get(port));
+                if (key != null && !wired(src.id, port, dst.id, in))
+                    connectPicking(src, port, dst, new Pick(in, key, port));
+                else connect(src.id, port, dst.id, in);
+                return true;
+            }
+            final Pick pick = pickTaking(src.outputs.get(port), dst);
+            if (pick == null) return false;
+            connectPicking(src, port, dst, pick);
             return true;
         }
         final Port<?> want = src.inputs.get(port);
         for (int out = 0; out < dst.outputs.size(); out++) {
             if (!dst.outputs.get(out)
                 .canConnect(want)) continue;
-            connect(dst.id, out, src.id, port);
+            final String key = pickFor(src, port, dst.outputs.get(out));
+            if (key != null && !wired(dst.id, out, src.id, port))
+                connectPicking(dst, out, src, new Pick(port, key, out));
+            else connect(dst.id, out, src.id, port);
             return true;
         }
+        final Pick pick = pickTaken(src, port, dst);
+        if (pick == null) return false;
+        connectPicking(dst, pick.other(), src, pick);
+        return true;
+    }
+
+    /**
+     * The key to set input {@code in} of {@code node} to for a wire from {@code from}: what it carries when the input's
+     * slot lists it among its items and the input holds something else; null otherwise.
+     */
+    @Nullable
+    private static String pickFor(final Node node, final int in, final Port<?> from) {
+        if (in < 0 || in >= node.inputs.size()) return null;
+        final Port<?> p = node.inputs.get(in);
+        final String key = from.key();
+        if (!p.hasChoices() || key.equals(p.key())) return null;
+        return p.alternative(key) != null ? key : null;
+    }
+
+    /** Whether a wire already joins that output to that input. */
+    private boolean wired(final UUID from, final int output, final UUID to, final int input) {
+        for (final Edge e : graph.getEdges()) if (e.sourceNodeId.equals(from) && e.sourceOutputIndex == output
+            && e.targetNodeId.equals(to)
+            && e.targetInputIndex == input) return true;
         return false;
+    }
+
+    /**
+     * An input set to one of its other items for a wire: {@code input} on its card, the item's key, and the port at the
+     * other end of the wire ({@code other}, -1 when that is not known yet).
+     */
+    private record Pick(int input, String key, int other) {}
+
+    /** The first input of {@code dst} that would take what {@code out} carries once set to another of its items. */
+    @Nullable
+    private static Pick pickTaking(final Port<?> out, final Node dst) {
+        for (int i = 0; i < dst.inputs.size(); i++) {
+            final Port<?> in = dst.inputs.get(i);
+            if (!in.hasChoices()) continue;
+            for (final Object alt : in.getAlternatives())
+                if (out.canConnect(in.withAlternative(alt))) return new Pick(i, in.keyOf(alt), -1);
+        }
+        return null;
+    }
+
+    /** The first output of {@code dst} that input {@code input} of {@code src} would take once set to another item. */
+    @Nullable
+    private static Pick pickTaken(final Node src, final int input, final Node dst) {
+        if (input < 0 || input >= src.inputs.size()) return null;
+        final Port<?> in = src.inputs.get(input);
+        if (!in.hasChoices()) return null;
+        for (final Object alt : in.getAlternatives()) {
+            final Port<?> as = in.withAlternative(alt);
+            for (int out = 0; out < dst.outputs.size(); out++) if (dst.outputs.get(out)
+                .canConnect(as)) return new Pick(input, in.keyOf(alt), out);
+        }
+        return null;
+    }
+
+    /** Sets {@code to}'s input to the picked item and wires {@code from}'s output into it, as one undo step. */
+    private void connectPicking(final Node from, final int output, final Node to, final Pick pick) {
+        edit(() -> {
+            applyInputPick(to, pick.input(), pick.key());
+            graph.addEdge(new Edge(UUID.randomUUID(), from.id, to.id, output, pick.input()));
+        });
+        Sfx.connect(pick.key());
+    }
+
+    /**
+     * Sets an input to another of the items its recipe slot takes (an ore dictionary slot's members, GregTech's
+     * alternatives), the wheel over it: wires that no longer fit it go, and a drawer feeding it alone follows it to
+     * the new item (one feeding other inputs too lets go of it). A spin of the wheel is one undo step.
+     */
+    public void pickInput(final Node node, final int index, final String key) {
+        live(() -> applyInputPick(node, index, key), null);
+    }
+
+    private void applyInputPick(final Node node, final int index, final String key) {
+        if (!node.pickInput(index, key)) return;
+        final Port<?> port = node.inputs.get(index);
+        for (final Edge e : new ArrayList<>(graph.getEdges())) {
+            if (!e.targetNodeId.equals(node.id) || e.targetInputIndex != index) continue;
+            final Node src = graph.nodes.get(e.sourceNodeId);
+            if (src == null || e.sourceOutputIndex < 0
+                || e.sourceOutputIndex >= src.outputs.size()
+                || !src.outputs.get(e.sourceOutputIndex)
+                    .canConnect(port))
+                graph.removeEdge(e.id);
+        }
+        final String now = Resources.key(port);
+        for (final Drawer d : new ArrayList<>(graph.getDrawers())) {
+            if (!d.getKind()
+                .linksInputs() || !d.isLinked(node.id, index) || now.equals(d.getResourceKey())) continue;
+            if (d.getLinks()
+                .size() == 1) {
+                d.setResourceKey(now);
+                d.setLabel(port.getDisplayName());
+            } else graph.unlinkDrawer(d.getId(), new Drawer.Link(node.id, index));
+        }
+    }
+
+    /**
+     * The keys of the other items an input could be set to (its slot's alternatives); empty for an output, or an input
+     * that takes one thing only.
+     */
+    public java.util.Set<String> choiceKeys(final UUID nodeId, final boolean output, final int index) {
+        final Node n = graph.nodes.get(nodeId);
+        if (output || n == null || index < 0 || index >= n.inputs.size()) return java.util.Set.of();
+        final Port<?> p = n.inputs.get(index);
+        if (!p.hasChoices()) return java.util.Set.of();
+        final java.util.Set<String> keys = new HashSet<>();
+        for (final Object alt : p.getAlternatives()) keys.add(p.keyOf(alt));
+        return keys;
     }
 
     /**
@@ -483,10 +654,20 @@ public final class BoardSession {
         if (node == null || drawer.getKind()
             .linksInputs() == output) return false;
         final String key = Resources.key((output ? node.outputs : node.inputs).get(port));
-        if (!key.equals(drawer.getResourceKey())) return false;
+        // An input that takes the drawer's item as one of its others is set to it.
+        final boolean pick = !key.equals(drawer.getResourceKey())
+            && choiceKeys(node.id, output, port).contains(drawer.getResourceKey());
+        if (!key.equals(drawer.getResourceKey()) && !pick) return false;
         final boolean linked = drawer.isLinked(node.id, port);
         final Double rate = portTarget(node, output, port);
         edit(() -> {
+            if (pick) {
+                // The drawer it had goes, rather than following it to the new item: this one takes its place.
+                for (final Drawer other : graph.getDrawers()) if (other != drawer && other.getKind()
+                    .linksInputs() && other.isLinked(node.id, port))
+                    graph.unlinkDrawer(other.getId(), new Drawer.Link(node.id, port));
+                applyInputPick(node, port, drawer.getResourceKey());
+            }
             if (linked) graph.unlinkDrawer(drawer.getId(), new Drawer.Link(node.id, port));
             else {
                 graph.linkDrawer(drawer.getId(), new Drawer.Link(node.id, port));
@@ -523,12 +704,17 @@ public final class BoardSession {
             if (output) {
                 final int in = graph.findCompatibleInput(src, port, dst);
                 if (in >= 0) return new PortRef(section, false, in);
+                if (port < 0 || port >= src.outputs.size()) return null;
+                final Pick pick = pickTaking(src.outputs.get(port), dst);
+                if (pick != null) return new PortRef(section, false, pick.input());
                 continue;
             }
             if (port < 0 || port >= src.inputs.size()) return null;
             final Port<?> want = src.inputs.get(port);
             for (int out = 0; out < dst.outputs.size(); out++) if (dst.outputs.get(out)
                 .canConnect(want)) return new PortRef(section, true, out);
+            final Pick pick = pickTaken(src, port, dst);
+            if (pick != null) return new PortRef(section, true, pick.other());
         }
         return null;
     }
@@ -755,32 +941,21 @@ public final class BoardSession {
 
     /** Rates being wheeled, per drawer (per second), shown at once and set once the wheel is still; null for none. */
     private Map<UUID, Double> wheeledRates;
-    private long rateWheelAt;
 
     /**
-     * A drawer rate from the wheel: shown at once, set (one edit, one solve) once the wheel has been still a moment.
+     * A drawer rate from the wheel: shown and solved at once, one undo step once the wheel goes still ({@link #live}).
      */
     public void wheelDrawerRate(final Drawer drawer, final double perSecond) {
         if (wheeledRates == null) wheeledRates = new HashMap<>();
         final Double was = wheeledRates.get(drawer.getId());
         Sfx.TICK.play(perSecond >= (was == null ? drawer.getRate() : was) ? 1.12f : 0.9f);
         wheeledRates.put(drawer.getId(), perSecond);
-        rateWheelAt = System.currentTimeMillis();
+        live(() -> applyDrawerRate(drawer, perSecond), perSecond > 0 ? Sfx.PIN : Sfx.UNPIN);
     }
 
     /** The rate a drawer is being wheeled to, per second; null when it is not. */
     public Double wheeledRate(final UUID drawerId) {
         return wheeledRates == null ? null : wheeledRates.get(drawerId);
-    }
-
-    private void commitWheeledRates() {
-        if (wheeledRates == null || wheeledRates.isEmpty() || System.currentTimeMillis() - rateWheelAt < 500) return;
-        final Map<UUID, Double> rates = new HashMap<>(wheeledRates);
-        wheeledRates.clear();
-        rates.forEach((id, rate) -> {
-            final Drawer d = graph.getDrawer(id);
-            if (d != null) setDrawerRate(d, rate);
-        });
     }
 
     public void setDrawerRule(final Drawer drawer, final Drawer.Rule rule) {
@@ -793,18 +968,20 @@ public final class BoardSession {
      * exactly for a source, at least for a product. Zero clears the rule.
      */
     public void setDrawerRate(final Drawer drawer, final double perSecond) {
-        edit(() -> {
-            if (!(perSecond > 0)) {
-                drawer.setTarget(Drawer.Rule.ANY, 0);
-                return;
-            }
-            Drawer.Rule rule = drawer.getRule();
-            if (rule == Drawer.Rule.ANY)
-                rule = drawer.getKind() == Drawer.Kind.SOURCE ? Drawer.Rule.EXACTLY : Drawer.Rule.AT_LEAST;
-            drawer.setTarget(rule, perSecond);
-        });
+        edit(() -> applyDrawerRate(drawer, perSecond));
         // A rate is a target the plan solves for: pinned, or let go.
         (perSecond > 0 ? Sfx.PIN : Sfx.UNPIN).play();
+    }
+
+    private static void applyDrawerRate(final Drawer drawer, final double perSecond) {
+        if (!(perSecond > 0)) {
+            drawer.setTarget(Drawer.Rule.ANY, 0);
+            return;
+        }
+        Drawer.Rule rule = drawer.getRule();
+        if (rule == Drawer.Rule.ANY)
+            rule = drawer.getKind() == Drawer.Kind.SOURCE ? Drawer.Rule.EXACTLY : Drawer.Rule.AT_LEAST;
+        drawer.setTarget(rule, perSecond);
     }
 
     // endregion
@@ -815,25 +992,41 @@ public final class BoardSession {
         if (idx < 0 || idx >= originPorts.size()) return false;
         if (lookup.output()) {
             final int in = graph.findCompatibleInput(origin, idx, added);
-            if (in < 0) return false;
-            graph.addEdge(new Edge(UUID.randomUUID(), origin.id, added.id, idx, in));
+            if (in >= 0) {
+                final String key = pickFor(added, in, originPorts.get(idx));
+                if (key != null) applyInputPick(added, in, key);
+                graph.addEdge(new Edge(UUID.randomUUID(), origin.id, added.id, idx, in));
+                return true;
+            }
+            // Looked up from what it uses: the new card's input is set to it when the slot takes it among others.
+            final Pick pick = pickTaking(originPorts.get(idx), added);
+            if (pick == null) return false;
+            applyInputPick(added, pick.input(), pick.key());
+            graph.addEdge(new Edge(UUID.randomUUID(), origin.id, added.id, idx, pick.input()));
             return true;
         }
         final Port<?> want = originPorts.get(idx);
         for (int out = 0; out < added.outputs.size(); out++) {
             if (!added.outputs.get(out)
                 .canConnect(want)) continue;
+            final String key = pickFor(origin, idx, added.outputs.get(out));
+            if (key != null) applyInputPick(origin, idx, key);
             graph.addEdge(new Edge(UUID.randomUUID(), added.id, origin.id, out, idx));
             return true;
         }
-        return false;
+        final Pick pick = pickTaken(origin, idx, added);
+        if (pick == null) return false;
+        applyInputPick(origin, idx, pick.key());
+        graph.addEdge(new Edge(UUID.randomUUID(), added.id, origin.id, pick.other(), idx));
+        return true;
     }
 
     // region Copy and paste
 
     /** A copied card: its recipe and settings, and where it sat from the copy's top-left. */
     private record ClipNode(codechicken.nei.recipe.Recipe.RecipeId recipe, Map<String, Object> settings,
-        String machineName, boolean fixed, int dx, int dy, String powerSource, Map<String, String> powerSettings) {}
+        String machineName, boolean fixed, int dx, int dy, String powerSource, Map<String, String> powerSettings,
+        Map<Integer, String> picks) {}
 
     /** A copied drawer, and the copied cards' ports it was linked to, as {card index in the copy, port}. */
     private record ClipDrawer(Drawer.Kind kind, String key, String label, Drawer.Rule rule, double rate, int dx, int dy,
@@ -893,7 +1086,8 @@ public final class BoardSession {
                     n.x - x0,
                     n.y - y0,
                     n.powerSource,
-                    new LinkedHashMap<>(n.powerSettings)));
+                    new LinkedHashMap<>(n.powerSettings),
+                    new HashMap<>(n.inputPicks)));
         }
         final List<ClipEdge> edges = new ArrayList<>();
         for (final Edge e : graph.getEdges()) {
@@ -966,6 +1160,8 @@ public final class BoardSession {
             n.machineConfig.settings.putAll(c.settings());
             n.machineName = c.machineName();
             n.setMachineCountFixed(c.fixed());
+            n.inputPicks.putAll(c.picks());
+            n.applyPicks();
             made.add(n);
         }
         final List<Drawer> madeDrawers = new ArrayList<>();
@@ -1118,6 +1314,7 @@ public final class BoardSession {
     }
 
     public void undo() {
+        settleLive(true);
         if (!canUndo()) {
             Sfx.DENY.play();
             return;
@@ -1129,6 +1326,7 @@ public final class BoardSession {
     }
 
     public void redo() {
+        settleLive(true);
         if (!canRedo()) {
             Sfx.DENY.play();
             return;
@@ -1153,6 +1351,23 @@ public final class BoardSession {
         graph = restored;
         seenVersion = Long.MIN_VALUE;
         PlanAPI.save();
+    }
+
+    /**
+     * The board's own panel, set by the screen: every popup a card, drawer or note opens goes over it, as it is open
+     * for as long as the board is. Never the widget's own panel: the board builds its cards afresh whenever one changes
+     * shape, and a sheet or menu still open on one it let go of would ask a widget that is on no panel, which
+     * ModularUI throws for (issue 492: a boiler's fuel picked from its open gear sheet).
+     */
+    private com.cleanroommc.modularui.screen.ModularPanel panel;
+
+    public void setPanel(final com.cleanroommc.modularui.screen.ModularPanel panel) {
+        this.panel = panel;
+    }
+
+    /** The board's own panel, for popups to open over; null until the screen has set it. */
+    public com.cleanroommc.modularui.screen.ModularPanel panel() {
+        return panel;
     }
 
     /** Opens the library in place of the board: set by the screen, used by the plan tabs' + menu. */
@@ -1563,10 +1778,12 @@ public final class BoardSession {
     /** Pins a shared machine's count (zero unpins): its recipes' machines then add up to exactly that. */
     public void pinShared(final com.gtnhplanner.data.flowchart.MachineGroup g, final double count) {
         (count > 0 ? Sfx.PIN : Sfx.UNPIN).play();
-        edit(() -> {
-            g.setPinned(count > 0);
-            g.setMachineCapacity(count > 0 ? Math.max(1, (int) Math.round(count)) : 0);
-        });
+        edit(() -> applyPinShared(g, count));
+    }
+
+    private static void applyPinShared(final com.gtnhplanner.data.flowchart.MachineGroup g, final double count) {
+        g.setPinned(count > 0);
+        g.setMachineCapacity(count > 0 ? Math.max(1, (int) Math.round(count)) : 0);
     }
 
     // endregion
@@ -1695,17 +1912,34 @@ public final class BoardSession {
             return;
         }
         (count > 0 ? Sfx.PIN : Sfx.UNPIN).play();
-        edit(() -> {
-            if (count <= 0) {
-                node.setMachineCountFixed(false);
-                return;
-            }
-            node.machineConfig.setMachineCount(Math.max(1, (int) Math.round(count)));
-            node.setMachineCountFixed(true);
-            // A pinned count is the machine's run: a port rate set before gives way to it.
-            node.targetOutputRates.clear();
-            node.targetInputRates.clear();
-        });
+        edit(() -> applyPin(node, count));
+    }
+
+    /** A machine count from the wheel: solved at once, one undo step once the wheel goes still ({@link #live}). */
+    public void wheelPin(final Node node, final double count) {
+        final com.gtnhplanner.data.flowchart.MachineGroup g = sharedOf(node.id);
+        if (g != null) live(() -> applyPinShared(g, count), count > 0 ? Sfx.PIN : Sfx.UNPIN);
+        else live(() -> applyPin(node, count), count > 0 ? Sfx.PIN : Sfx.UNPIN);
+    }
+
+    /** A setting from the wheel (a card's amps): solved at once, one undo step once the wheel goes still. */
+    public void wheelSetting(final Node node, final String key, final int value) {
+        live(() -> {
+            node.machineConfig.setInt(key, value);
+            syncShared(node);
+        }, null);
+    }
+
+    private static void applyPin(final Node node, final double count) {
+        if (count <= 0) {
+            node.setMachineCountFixed(false);
+            return;
+        }
+        node.machineConfig.setMachineCount(Math.max(1, (int) Math.round(count)));
+        node.setMachineCountFixed(true);
+        // A pinned count is the machine's run: a port rate set before gives way to it.
+        node.targetOutputRates.clear();
+        node.targetInputRates.clear();
     }
 
     /**
@@ -1715,21 +1949,23 @@ public final class BoardSession {
      */
     public void setPortTarget(final Node node, final boolean output, final int index, final double perSecond) {
         (perSecond > 0 ? Sfx.PIN : Sfx.UNPIN).play();
-        edit(() -> {
-            node.targetOutputRates.clear();
-            node.targetInputRates.clear();
-            if (perSecond <= 0) return;
-            (output ? node.targetOutputRates : node.targetInputRates).put(index, perSecond);
-            node.setMachineCountFixed(false);
-        });
+        edit(() -> applyPortTarget(node, output, index, perSecond));
+    }
+
+    private static void applyPortTarget(final Node node, final boolean output, final int index,
+        final double perSecond) {
+        node.targetOutputRates.clear();
+        node.targetInputRates.clear();
+        if (perSecond <= 0) return;
+        (output ? node.targetOutputRates : node.targetInputRates).put(index, perSecond);
+        node.setMachineCountFixed(false);
     }
 
     /** Port rates being wheeled (per second), by the port, with the node they are on; null for none. */
     private Map<String, Object[]> wheeledPorts;
-    private long portWheelAt;
 
     /**
-     * A port's rate from the wheel: shown at once, set (one edit, one solve) once the wheel has been still a moment.
+     * A port's rate from the wheel: shown and solved at once, one undo step once the wheel goes still ({@link #live}).
      */
     public void wheelPortRate(final Node node, final boolean output, final int index, final double perSecond) {
         if (wheeledPorts == null) wheeledPorts = new HashMap<>();
@@ -1737,7 +1973,7 @@ public final class BoardSession {
         final Double set = was != null ? was : portTarget(node, output, index);
         Sfx.TICK.play(perSecond >= (set == null ? 0 : set) ? 1.12f : 0.9f);
         wheeledPorts.put(portKey(node.id, output, index), new Object[] { node, output, index, perSecond });
-        portWheelAt = System.currentTimeMillis();
+        live(() -> applyPortTarget(node, output, index, perSecond), perSecond > 0 ? Sfx.PIN : Sfx.UNPIN);
     }
 
     /** The rate a port is being wheeled to, a second; null when it is not. */
@@ -1745,13 +1981,6 @@ public final class BoardSession {
     public Double wheeledPortRate(final Node node, final boolean output, final int index) {
         final Object[] w = wheeledPorts == null ? null : wheeledPorts.get(portKey(node.id, output, index));
         return w == null ? null : (Double) w[3];
-    }
-
-    private void commitWheeledPorts() {
-        if (wheeledPorts == null || wheeledPorts.isEmpty() || System.currentTimeMillis() - portWheelAt < 500) return;
-        final List<Object[]> rates = new ArrayList<>(wheeledPorts.values());
-        wheeledPorts.clear();
-        for (final Object[] w : rates) setPortTarget((Node) w[0], (Boolean) w[1], (Integer) w[2], (Double) w[3]);
     }
 
     /** The rate a machine's port is set to, a second; null when the plan decides it. */
@@ -1787,6 +2016,8 @@ public final class BoardSession {
             final Node copy = new Node(ref.handler, ref.recipeIndex, at[0], at[1]);
             copy.machineConfig.copySettingsFrom(from.machineConfig);
             copy.machineName = from.machineName;
+            copy.inputPicks.putAll(from.inputPicks);
+            copy.applyPicks();
             copies.add(copy);
         }
         final com.gtnhplanner.data.flowchart.MachineGroup shared = sharedOf(node.id);
@@ -1870,8 +2101,7 @@ public final class BoardSession {
     }
 
     private void tickBoard() {
-        commitWheeledRates();
-        commitWheeledPorts();
+        settleLive(false);
         if (disarmOnTick) {
             disarmOnTick = false;
             pendingLookup = null;
@@ -2050,9 +2280,7 @@ public final class BoardSession {
                     card.machineName,
                     card.machineStack,
                     // A crop card counts crops; the plan builds its harvesters.
-                    com.gtnhplanner.machines.game.CropCards.isCrop(card.node)
-                        ? com.gtnhplanner.machines.game.CropCards.harvesters(card.node, card.machines)
-                        : card.machines,
+                    com.gtnhplanner.machines.game.CropCards.builds(card.node, card.machines),
                     card.pinned,
                     card.tier,
                     card.amps,
@@ -2571,17 +2799,42 @@ public final class BoardSession {
                 .getName() + "' to the clipboard");
     }
 
+    /** Shares a slot's plan in the game's chat, as a line everyone on the server can open. */
+    public void shareInChat(final int index) {
+        if (index < 0 || index >= slots().size()) return;
+        final Graph graph = slots().get(index);
+        final String problem = com.gtnhplanner.client.ChatShare.send(graph);
+        if (problem != null) {
+            flash(Severity.WARN, problem);
+            Sfx.DENY.play();
+            return;
+        }
+        flash(Severity.INFO, "Shared '" + graph.getName() + "' in chat");
+    }
+
     /** True when the solver had nothing to scale the plan by: no product rate and no pinned count. */
     public boolean nothingToSolveFor() {
         return nothingToSolveFor;
     }
 
     /**
-     * Whether nothing sets the part of the plan this recipe or drawer is in (no pinned count or rate anywhere along its
-     * wires), so its count and rates ask for a number, however much of the rest of the plan is set.
+     * Whether this recipe or drawer asks for a number: nothing sets the part of the plan it is in (no pinned count or
+     * rate anywhere along its wires), or the answer leaves it at zero because nothing pinned feeds it or needs it. Its
+     * count and rates then ask for a number, however much of the rest of the plan is set.
      */
     public boolean unset(final UUID id) {
         return nothingToSolveFor || unset.contains(id);
+    }
+
+    /**
+     * What asks for a number: every part of the plan nothing sets, and every machine the answer leaves at zero because
+     * nothing pinned feeds it or needs what it makes ({@code SolutionView.unneeded}).
+     */
+    private java.util.Set<UUID> unsetParts() {
+        final java.util.Set<UUID> out = new java.util.HashSet<>(com.gtnhplanner.data.flowchart.balancer.Unanchored.of(graph));
+        if (result instanceof final com.gtnhplanner.data.flowchart.balancer.BalanceResult.Solved solved) out.addAll(
+            solved.auto().unneeded);
+        return out;
     }
 
     /**
@@ -2592,7 +2845,7 @@ public final class BoardSession {
     private List<Notice> buildNotices(final Map<UUID, CardModel> cards) {
         final List<Notice> out = new ArrayList<>();
         nothingToSolveFor = false;
-        unset = result == null ? java.util.Set.of() : com.gtnhplanner.data.flowchart.balancer.Unanchored.of(graph);
+        unset = result == null ? java.util.Set.of() : unsetParts();
         if (result != null) {
             for (final Note note : result.notes()) {
                 if (note.message() == SolverMessage.NO_PIN) {

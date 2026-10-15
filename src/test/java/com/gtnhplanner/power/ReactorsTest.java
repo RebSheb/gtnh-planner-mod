@@ -141,6 +141,44 @@ class ReactorsTest {
             0);
     }
 
+    /**
+     * Issue 9: a card from the HTGR's NEI page is the HTGR card burning that page's fuel. The page's recipe puts out
+     * every step of the fuel's making (power/game/RecipePower); the finished TRISO fuel among them names the pebble.
+     */
+    @ParameterizedTest(name = "the HTGR page with {0} burns {1}")
+    @CsvSource({
+        // The game's ids for TRISO fuel, meta by kubatech's HTGRMaterials order.
+        "kubatech:htgr_item_triso_fuel, Silver", "kubatech:htgr_item_triso_fuel@1, Uranium-235",
+        "kubatech:htgr_item_triso_fuel@2, Plutonium-239", "kubatech:htgr_item_triso_fuel@3, Thorium",
+        "kubatech:htgr_item_triso_fuel@8, Glowstone" })
+    void htgrPageBurnsItsFuel(final String fuel, final String pebble) {
+        // The Silver page's outputs, as NEI has them, with its own fuel swapped in.
+        final List<String> outputs = List.of(
+            "kubatech:htgr_item_triso_mixture",
+            "kubatech:htgr_item_incomplete_biso_fuel",
+            "kubatech:htgr_item_incomplete_triso_fuel",
+            fuel,
+            "kubatech:htgr_item_burned_triso_fuel@5",
+            "gregtech:gt.metaitem.01@2054");
+        assertEquals(pebble, Reactors.htgrPebble(outputs));
+        // The card burns it: that fuel in, its burned self out.
+        final PowerModel model = compute(Reactors.HTGR, Map.of(Reactors.HTGR_PEBBLE, pebble));
+        final String name = pebble.replaceFirst("-", " ");
+        assertNotNull(flow(model.inputs(), "TRISO Fuel (" + name + ")"));
+        assertNotNull(flow(model.outputs(), "Burned Out TRISO Fuel (" + name + ")"));
+    }
+
+    @Test
+    @DisplayName("HTGR: a page without finished TRISO fuel names no pebble")
+    void htgrPageWithoutFuel() {
+        assertNull(
+            Reactors.htgrPebble(
+                List.of(
+                    "kubatech:htgr_item_triso_mixture",
+                    "kubatech:htgr_item_burned_triso_fuel",
+                    "gregtech:gt.metaitem.01@2054")));
+    }
+
     // ---- unlock chips
 
     @ParameterizedTest(name = "puts {0} at {1}, the tier of its controller recipe")

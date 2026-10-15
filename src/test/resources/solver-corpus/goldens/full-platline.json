@@ -102,10 +102,10 @@
       "191a164c-f248-4948-b64c-629660e7d439": 0.2,
       "19319f76-03fc-4715-a49b-19c68531feb2": 13.33333333333333,
       "1c0442c2-c318-4235-ac53-6990199a742d": 6.66666666666667,
-      "233c47ef-3b14-4335-ab9f-b63b9c8f6faa": 102.8571428571428,
-      "25a4f6e5-8b90-4480-bac4-65dffcaff833": 771.4285714285716,
+      "233c47ef-3b14-4335-ab9f-b63b9c8f6faa": 102.8571428571473,
+      "25a4f6e5-8b90-4480-bac4-65dffcaff833": 771.4285714285725,
       "3d0324f0-eac1-4e3d-9747-d6c863100322": 72.0,
-      "41ab9b44-08a3-4374-8b9e-0c88153f8967": 200.0,
+      "41ab9b44-08a3-4374-8b9e-0c88153f8967": 200.0000000000044,
       "4a8c50b9-0b20-485e-a5b7-aae561858735": 120.0,
       "54fa4a15-4190-43d6-8e0b-324e313be808": 0.01777777777778,
       "5d7a7a4c-2630-4ff5-8cc4-758c17201adf": 0.13333333333333,
@@ -115,7 +115,7 @@
       "63149405-043c-4318-9d38-a27d580656ec": 0.53333333333333,
       "67ce2870-8a31-4632-bf26-bfcab52dd69c": 0.4,
       "68def0da-db36-4965-ae64-13ff9a696239": 0.12666667699814,
-      "690a8358-22c4-4a3b-80a7-18515c771595": 102.8571428571428,
+      "690a8358-22c4-4a3b-80a7-18515c771595": 102.8571428571429,
       "695539c5-a98f-40b5-92a3-a89fdf272ee3": 0.06666666666667,
       "69d36156-ab18-4412-87af-7733d4cf7924": 72.0,
       "6ba7217c-91d5-4d65-881a-0c88ef7a4e99": 1028.571428571428,
@@ -123,19 +123,19 @@
       "79f5037e-ae86-436b-a48f-18e001767a81": 66.66666666666667,
       "7b8074fc-2ac3-492e-a852-b347f4bf2673": 0.2,
       "7f2f71b9-9526-4e87-bb8a-1882c84815b8": 0.16666666666667,
-      "8a1f1df1-8a40-4cf8-ac6e-5d64c6db11e4": 257.1428571428571,
+      "8a1f1df1-8a40-4cf8-ac6e-5d64c6db11e4": 257.1428571428572,
       "8bf46025-5a0c-465c-afe7-b4a1a8c43783": 0.4,
       "8eb12d1d-e56f-4614-9113-b5c3e696784d": 266.6666666666667,
       "97b0c007-b1db-4eff-a5b8-7a73d0b5d769": 133.3333333333333,
       "9ee7a963-2f22-4fb4-bd8f-5e506c1b1860": 0.11428571428571,
-      "a0d3dd36-8b58-4512-8634-8b262494318a": 10285.71428571429,
+      "a0d3dd36-8b58-4512-8634-8b262494318a": 10285.71428571428,
       "a7393e8a-3c46-4d09-af9c-7fe4c33c888a": 6666.666666666666,
       "b9e87529-f07d-49f9-af74-062219ec2e0a": 0.08,
       "bc760b49-6556-45c2-a614-64c6759fc9e2": 6.66666666666667,
       "c0d5243b-5e07-4ed4-a37b-6ba69a83a33e": 0.06666666666667,
       "c157e667-95de-4e73-9854-f7c4061cc80d": 66.66666666666667,
       "c276c0bd-39fe-4e08-8282-95df1032c818": 0.13333333333333,
-      "c8029e5e-74e4-4d32-984e-ce23c62c4175": 200.0,
+      "c8029e5e-74e4-4d32-984e-ce23c62c4175": 200.0000000000002,
       "c85e8193-f72e-41f7-8ebf-9ae85c06dcda": 0.2,
       "cacebdd3-f165-48d4-99e3-0e4e2d9b1652": 1.11111111111111,
       "ccd1592a-6359-40df-a273-e940569ccb01": 6.66666666666667,
@@ -143,12 +143,12 @@
       "d345e26d-48b7-4455-8ef7-7aa7e469308c": 666.6666666666666,
       "d6cfb025-adff-401e-a109-4567ac4b01d0": 5.55555555555556,
       "d7fdc12b-7e13-4f92-ab6d-93d757c1a9b0": 96.0,
-      "d9300b4d-be47-48ab-883a-3d1dd88b3509": 320.0,
+      "d9300b4d-be47-48ab-883a-3d1dd88b3509": 319.9999999999998,
       "dae36c00-8476-4bc1-8574-11b4108fa599": 1.11111111111111,
       "dc2abde3-8e42-48d4-9064-374787035d2a": 0.4,
       "ecb0ee4a-f37e-489c-a00f-97b52da367b7": 0.06666666666667,
-      "f150511b-d873-471a-8e83-9fa1479eff55": 1111.111111111111,
-      "f426548d-1ae9-4a75-83be-f37298aa3f1e": 571.4285714285714,
+      "f150511b-d873-471a-8e83-9fa1479eff55": 1111.111111111112,
+      "f426548d-1ae9-4a75-83be-f37298aa3f1e": 571.4285714285716,
       "f8a78d0d-3a9e-4d2a-acad-82f2cc946cb9": 1.11111111111111
     },
     "gatedSources": [
@@ -158,7 +158,7 @@
           "portIndex": 0.0,
           "input": true
         },
-        "ratePerSecond": 7742.857142857142
+        "ratePerSecond": 7742.857142857143
       },
       {
         "port": {
@@ -174,7 +174,7 @@
           "portIndex": 0.0,
           "input": true
         },
-        "ratePerSecond": 79.88571428571427
+        "ratePerSecond": 79.8857142857143
       },
       {
         "port": {
@@ -198,7 +198,7 @@
           "portIndex": 0.0,
           "input": true
         },
-        "ratePerSecond": 25.21212121212122
+        "ratePerSecond": 25.2121212121212
       },
       {
         "port": {
@@ -222,7 +222,7 @@
           "portIndex": 1.0,
           "input": true
         },
-        "ratePerSecond": 539.6825396825399
+        "ratePerSecond": 539.6825396825398
       },
       {
         "port": {
@@ -336,7 +336,7 @@
           "portIndex": 0.0,
           "input": false
         },
-        "ratePerSecond": 1333.333333333333
+        "ratePerSecond": 1333.333333333334
       },
       {
         "port": {
@@ -408,7 +408,7 @@
           "portIndex": 2.0,
           "input": false
         },
-        "ratePerSecond": 9448.888888888889
+        "ratePerSecond": 9448.888888888887
       },
       {
         "port": {
@@ -456,7 +456,7 @@
           "portIndex": 0.0,
           "input": false
         },
-        "ratePerSecond": 13.33333333333335
+        "ratePerSecond": 13.33333333333334
       },
       {
         "port": {
@@ -512,7 +512,7 @@
           "portIndex": 1.0,
           "input": false
         },
-        "ratePerSecond": 56.66666666666669
+        "ratePerSecond": 56.66666666666666
       },
       {
         "port": {
@@ -1031,10 +1031,10 @@
         "ratePerSecond": 200.0
       }
     ],
+    "unneeded": [],
     "openGates": 44.0,
     "externalQuantity": 168143.1364289873,
-    "totalInternalFlow": 24565.395873026213,
-    "floorsUsed": false,
+    "totalInternalFlow": 24565.395873026217,
     "notes": [
       {
         "message": "WIRING_UNLINKED",
@@ -1448,10 +1448,10 @@
                   "portIndex": 0.0,
                   "input": false
                 },
-                "ratePerSecond": 1333.333333333333
+                "ratePerSecond": 1333.333333333334
               }
             ],
-            "max": 1333.333333333333,
+            "max": 1333.333333333334,
             "share": 1.0,
             "solverPick": true
           }
@@ -1475,10 +1475,10 @@
                   "portIndex": 0.0,
                   "input": true
                 },
-                "ratePerSecond": 7742.857142857142
+                "ratePerSecond": 7742.857142857143
               }
             ],
-            "max": 7742.857142857142,
+            "max": 7742.857142857143,
             "share": 1.0,
             "solverPick": true
           }
@@ -1826,10 +1826,10 @@
                   "portIndex": 1.0,
                   "input": true
                 },
-                "ratePerSecond": 539.6825396825399
+                "ratePerSecond": 539.6825396825398
               }
             ],
-            "max": 539.6825396825399,
+            "max": 539.6825396825398,
             "share": 1.0,
             "solverPick": true
           }
@@ -2096,10 +2096,10 @@
                   "portIndex": 0.0,
                   "input": false
                 },
-                "ratePerSecond": 13.33333333333335
+                "ratePerSecond": 13.33333333333334
               }
             ],
-            "max": 13.33333333333335,
+            "max": 13.33333333333334,
             "share": 1.0,
             "solverPick": true
           }
@@ -2339,10 +2339,10 @@
                   "portIndex": 1.0,
                   "input": false
                 },
-                "ratePerSecond": 56.66666666666669
+                "ratePerSecond": 56.66666666666666
               }
             ],
-            "max": 56.66666666666669,
+            "max": 56.66666666666666,
             "share": 1.0,
             "solverPick": true
           }
@@ -2366,10 +2366,10 @@
                   "portIndex": 0.0,
                   "input": true
                 },
-                "ratePerSecond": 79.88571428571427
+                "ratePerSecond": 79.8857142857143
               }
             ],
-            "max": 79.88571428571427,
+            "max": 79.8857142857143,
             "share": 1.0,
             "solverPick": true
           }
@@ -2420,10 +2420,10 @@
                   "portIndex": 2.0,
                   "input": false
                 },
-                "ratePerSecond": 9448.888888888889
+                "ratePerSecond": 9448.888888888887
               }
             ],
-            "max": 9448.888888888889,
+            "max": 9448.888888888887,
             "share": 1.0,
             "solverPick": true
           }
@@ -2501,10 +2501,10 @@
                   "portIndex": 0.0,
                   "input": true
                 },
-                "ratePerSecond": 25.21212121212122
+                "ratePerSecond": 25.2121212121212
               }
             ],
-            "max": 25.21212121212122,
+            "max": 25.2121212121212,
             "share": 1.0,
             "solverPick": true
           }
@@ -3749,7 +3749,7 @@
               "portIndex": 0.0,
               "input": false
             },
-            "ratePerSecond": 1333.333333333333
+            "ratePerSecond": 1333.333333333334
           }
         ],
         "rank": "DEFAULT"
@@ -3996,7 +3996,7 @@
               "portIndex": 0.0,
               "input": true
             },
-            "ratePerSecond": 7742.857142857142
+            "ratePerSecond": 7742.857142857143
           }
         ],
         "rank": "DEFAULT"
@@ -7207,7 +7207,7 @@
               "portIndex": 1.0,
               "input": true
             },
-            "ratePerSecond": 539.6825396825399
+            "ratePerSecond": 539.6825396825398
           }
         ],
         "rank": "DEFAULT"
@@ -9677,7 +9677,7 @@
               "portIndex": 0.0,
               "input": false
             },
-            "ratePerSecond": 13.33333333333335
+            "ratePerSecond": 13.33333333333334
           }
         ],
         "rank": "DEFAULT"
@@ -11900,7 +11900,7 @@
               "portIndex": 1.0,
               "input": false
             },
-            "ratePerSecond": 56.66666666666669
+            "ratePerSecond": 56.66666666666666
           }
         ],
         "rank": "DEFAULT"
@@ -12147,7 +12147,7 @@
               "portIndex": 0.0,
               "input": true
             },
-            "ratePerSecond": 79.88571428571427
+            "ratePerSecond": 79.8857142857143
           }
         ],
         "rank": "DEFAULT"
@@ -12641,7 +12641,7 @@
               "portIndex": 2.0,
               "input": false
             },
-            "ratePerSecond": 9448.888888888889
+            "ratePerSecond": 9448.888888888887
           }
         ],
         "rank": "DEFAULT"
@@ -13382,7 +13382,7 @@
               "portIndex": 0.0,
               "input": true
             },
-            "ratePerSecond": 25.21212121212122
+            "ratePerSecond": 25.2121212121212
           }
         ],
         "rank": "DEFAULT"

@@ -403,6 +403,11 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         switch (part) {
             case DELETE -> {
                 Hyb.click();
+                // Let go of the keyboard first, words unsaved: the note is going.
+                if (editing) {
+                    editing = false;
+                    getContext().removeFocus();
+                }
                 session.deleteNote(noteId);
             }
             case SMALLER -> stepFont(-1);
@@ -438,19 +443,30 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
 
     private void openMenu() {
         final Note n = note();
-        if (n == null) return;
+        final BoardCanvas board = canvas();
+        if (n == null || board == null) return;
         final List<PickList.Entry> rows = new ArrayList<>();
-        rows.add(PickList.Entry.of("Write on it", this::startEditing));
-        rows.add(PickList.Entry.of("Colour...", this::openColours));
+        rows.add(PickList.Entry.of("Write on it", () -> onLive(board, NoteCard::startEditing)));
+        rows.add(PickList.Entry.of("Colour...", () -> onLive(board, NoteCard::openColours)));
         rows.add(
             new PickList.Entry(null, "Bigger text", n.fontSizeOrDefault() + " px", Hyb.INK, false, () -> stepFont(1)));
         rows.add(PickList.Entry.of("Smaller text", () -> stepFont(-1)));
         rows.add(new PickList.Entry(null, "Delete note", "", Hyb.RED_INK, false, () -> session.deleteNote(noteId)));
         Popup.open(
-            getPanel(),
+            session.panel(),
             PickList.popup("gtnhplanner_note", null, rows, false, 140),
             getContext().getAbsMouseX(),
             getContext().getAbsMouseY());
+    }
+
+    /**
+     * Runs on the note's widget as the board has it when a row of its menu is picked: the board may have built its
+     * widgets afresh while the menu was open, and this one is then on no panel (ModularUI throws when asked for it).
+     */
+    private void onLive(final BoardCanvas board, final java.util.function.Consumer<NoteCard> action) {
+        final NoteCard live = board.notes()
+            .get(noteId);
+        if (live != null && live.isValid()) action.accept(live);
     }
 
     private void openColours() {
@@ -463,7 +479,7 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
                 session.editLayout(() -> n.setColor(c[0]));
             }));
         Popup.open(
-            getPanel(),
+            session.panel(),
             PickList.popup("gtnhplanner_note_colour", "Colour", rows, false, 120, NoteColors.MENU.size()),
             getContext().getAbsMouseX(),
             getContext().getAbsMouseY());

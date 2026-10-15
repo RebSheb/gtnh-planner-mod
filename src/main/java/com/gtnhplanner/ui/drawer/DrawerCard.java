@@ -538,12 +538,12 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
 
     private void openRules() {
         final int[] r = partRect(Part.RULE);
-        openRules(getPanel(), session, model, screenX(r[0]), screenY(r[1] + r[3] + 2));
+        openRules(session.panel(), session, model, screenX(r[0]), screenY(r[1] + r[3] + 2));
     }
 
     private void openRate() {
         final int[] r = partRect(Part.RATE);
-        openRate(getPanel(), session, model, screenX(r[0]), screenY(r[1] + r[3] + 2));
+        openRate(session.panel(), session, model, screenX(r[0]), screenY(r[1] + r[3] + 2));
     }
 
     /**

@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
+
+import net.minecraft.item.ItemStack;
 
 import com.gtnhplanner.api.RecipePropertyAPI;
 import com.gtnhplanner.data.MachineConfig;
@@ -18,6 +21,7 @@ import com.gtnhplanner.data.provider.DefaultProvider;
 import com.gtnhplanner.power.PowerModel;
 import com.gtnhplanner.power.game.PowerPorts;
 
+import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.IRecipeHandler;
 import codechicken.nei.recipe.Recipe;
 import codechicken.nei.recipe.RecipeHandlerRef;
@@ -58,6 +62,13 @@ public class Node {
      * extent is held so the input takes the rate exactly), the largest implied extent winning among all its targets.
      */
     public final Map<Integer, Double> targetInputRates = new LinkedHashMap<>();
+
+    /**
+     * Which item an input whose recipe slot takes several (an ore dictionary slot, GregTech's alternatives) is set to,
+     * by input port index: the chosen alternative's resource key ({@link Port#key()}). The website's
+     * {@code recipeInputOverrides}. A pick the port no longer lists does nothing and is kept.
+     */
+    public final Map<Integer, String> inputPicks = new TreeMap<>();
 
     /**
      * A non-recipe machine (a generator): its power source id ({@link com.gtnhplanner.power.PowerRegistry}), null on a
@@ -152,9 +163,92 @@ public class Node {
             this.properties.putAll(props);
         }
 
-        deduplicate(inputs);
-        deduplicate(outputs);
+        readAlternatives(handler, recipeIndex);
+        deduplicate(inputs, false);
+        deduplicate(outputs, true);
+        applyPicks();
         afterRefresh.accept(this);
+    }
+
+    /**
+     * Each item input's alternatives: every item NEI shows in the slot the input's item is in (an ore dictionary
+     * slot's members, GregTech's alternatives), the port's own first, never a wildcard.
+     */
+    private void readAlternatives(final IRecipeHandler handler, final int recipeIndex) {
+        final List<PositionedStack> slots;
+        try {
+            slots = handler.getIngredientStacks(recipeIndex);
+        } catch (final RuntimeException e) {
+            return;
+        }
+        if (slots == null) return;
+        for (final Port<?> port : inputs) {
+            if (!(port.getValue() instanceof final ItemStack own) || own.getItem() == null) continue;
+            for (final PositionedStack slot : slots) {
+                if (slot == null || slot.items == null || slot.items.length < 2 || !holds(slot, own)) continue;
+                final List<ItemStack> items = new ArrayList<>();
+                items.add(own.copy());
+                for (final ItemStack s : slot.items) {
+                    if (s == null || s.getItem() == null
+                        || s.getItemDamage() == net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE) continue;
+                    boolean seen = false;
+                    for (final ItemStack had : items) seen |= had.getItem() == s.getItem()
+                        && had.getItemDamage() == s.getItemDamage();
+                    if (!seen) items.add(s.copy());
+                }
+                if (items.size() > 1) setAlternatives(port, items);
+                break;
+            }
+        }
+    }
+
+    /** Whether a slot shows the item among its permutations (a wildcard permutation holds every meta). */
+    private static boolean holds(final PositionedStack slot, final ItemStack item) {
+        for (final ItemStack s : slot.items) {
+            if (s == null || s.getItem() != item.getItem()) continue;
+            if (s.getItemDamage() == item.getItemDamage()
+                || s.getItemDamage() == net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE) return true;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void setAlternatives(final Port<?> port, final List<ItemStack> items) {
+        ((Port<ItemStack>) port).setAlternatives(items);
+    }
+
+    /**
+     * Sets each input to the item picked for it ({@link #inputPicks}), and an input with no pick back to the recipe's
+     * own. Ports keep their place, so wires and drawers on them keep theirs.
+     */
+    public void applyPicks() {
+        for (int i = 0; i < inputs.size(); i++) {
+            final Port<?> port = inputs.get(i);
+            if (!port.hasChoices()) continue;
+            final String want = inputPicks.get(i);
+            final Object to = want == null ? port.own() : port.alternative(want);
+            if (to != null && !port.keyOf(to)
+                .equals(port.key())) inputs.set(i, port.withAlternative(to));
+        }
+    }
+
+    /**
+     * Sets input {@code index} to the alternative with {@code key}: null, or the recipe's own item, clears the pick.
+     * False, changing nothing, when the port has no such alternative or already holds it.
+     */
+    public boolean pickInput(final int index, @Nullable final String key) {
+        if (index < 0 || index >= inputs.size()) return false;
+        final Port<?> port = inputs.get(index);
+        if (!port.hasChoices()) return false;
+        final Object to = key == null ? port.own() : port.alternative(key);
+        if (to == null) return false;
+        if (port.keyOf(to)
+            .equals(port.keyOf(port.own()))) inputPicks.remove(index);
+        else inputPicks.put(index, port.keyOf(to));
+        if (port.keyOf(to)
+            .equals(port.key())) return false;
+        applyPicks();
+        return true;
     }
 
     /**
@@ -163,12 +257,19 @@ public class Node {
      */
     public static java.util.function.Consumer<Node> afterRefresh = node -> {};
 
-    private static void deduplicate(final List<Port<?>> ports) {
+    /**
+     * Folds ports of one resource into one. Inputs fold by what wires to them (an ore name: a recipe that takes any
+     * plank twice takes two planks); outputs only when they are the same resource ({@code same}), since two items that
+     * share an ore name are both made: Lazulia's Lapis Lazuli folded into its Lapis Dust and was lost (issue 487).
+     */
+    static void deduplicate(final List<Port<?>> ports, final boolean same) {
         final List<Port<?>> aggregate = new ArrayList<>(ports);
         for (int i = 0; i < aggregate.size(); i++) {
             for (int j = i + 1; j < aggregate.size(); j++) {
-                if (aggregate.get(i)
-                    .canConnect(aggregate.get(j))) {
+                if (same ? aggregate.get(i)
+                    .same(aggregate.get(j))
+                    : aggregate.get(i)
+                        .canConnect(aggregate.get(j))) {
                     aggregate.get(i)
                         .merge(aggregate.get(j));
                     aggregate.remove(j);

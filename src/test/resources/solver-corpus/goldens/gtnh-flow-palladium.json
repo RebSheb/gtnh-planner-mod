@@ -1,28 +1,28 @@
 {
   "solution": {
     "extentsPerSecond": {
-      "0d0b872a-a379-31d3-81ba-60aecb807198": 32.00155555566152,
+      "0d0b872a-a379-31d3-81ba-60aecb807198": 32.0,
       "2cf4549a-8ea3-3b8c-acfc-ef8765d89b5d": 2.0,
-      "5c6c01a9-c1ca-3dd1-9d78-d15802a585d4": 1.55557726646426,
-      "8a4d03ad-9bec-32c9-b709-78a4c0b268d2": 12.40147739639017,
-      "d3be8598-67ad-37b0-828e-125d549aad4b": 0.00155555566152
+      "5c6c01a9-c1ca-3dd1-9d78-d15802a585d4": 1.55555566151937,
+      "8a4d03ad-9bec-32c9-b709-78a4c0b268d2": 12.39999961853027,
+      "d3be8598-67ad-37b0-828e-125d549aad4b": 0.0
     },
     "machineCounts": {
-      "0d0b872a-a379-31d3-81ba-60aecb807198": 2240.1088888963063,
+      "0d0b872a-a379-31d3-81ba-60aecb807198": 2240.0,
       "2cf4549a-8ea3-3b8c-acfc-ef8765d89b5d": 225.0,
-      "5c6c01a9-c1ca-3dd1-9d78-d15802a585d4": 108.8904086524982,
-      "8a4d03ad-9bec-32c9-b709-78a4c0b268d2": 868.1034177473118,
-      "d3be8598-67ad-37b0-828e-125d549aad4b": 0.1088888963064
+      "5c6c01a9-c1ca-3dd1-9d78-d15802a585d4": 108.8888963063559,
+      "8a4d03ad-9bec-32c9-b709-78a4c0b268d2": 867.9999732971189,
+      "d3be8598-67ad-37b0-828e-125d549aad4b": 0.0
     },
     "edgeFlowsPerSecond": {
-      "2cf47d63-0fd6-32c4-82ca-bbf26ee53047": 5600.078159271355,
+      "2cf47d63-0fd6-32c4-82ca-bbf26ee53047": 5600.000381469735,
       "5da20597-2e0b-3cdc-a7ff-3dc66731df24": 0.0,
-      "6138b633-33f7-3adc-9089-cabced1d41ed": 1.55555566151904,
+      "6138b633-33f7-3adc-9089-cabced1d41ed": 0.0,
       "7d16c7f4-d2b1-330e-b4a0-35096139384e": 18.0,
-      "a74f58ba-2b80-3c32-8938-9e692cf25e38": 12.40147739639016,
+      "a74f58ba-2b80-3c32-8938-9e692cf25e38": 12.39999961853027,
       "b4b6aafc-6cbc-30a8-8221-2f2b65e2a11a": 32.0,
-      "f4dbfff0-dc4a-33e4-bfd3-1b24b255659f": 12399.92184072864,
-      "f5e43285-6efc-3f97-a5af-67522232b571": 0.00155555566152
+      "f4dbfff0-dc4a-33e4-bfd3-1b24b255659f": 12399.99961853026,
+      "f5e43285-6efc-3f97-a5af-67522232b571": 0.0
     },
     "gatedSources": [],
     "gatedSinks": [],
@@ -33,7 +33,7 @@
           "portIndex": 1.0,
           "input": true
         },
-        "ratePerSecond": 12401.47739639017
+        "ratePerSecond": 12399.99961853027
       }
     ],
     "terminalOutputs": [
@@ -46,10 +46,12 @@
         "ratePerSecond": 2.0
       }
     ],
+    "unneeded": [
+      "d3be8598-67ad-37b0-828e-125d549aad4b"
+    ],
     "openGates": 0.0,
     "externalQuantity": 0.0,
-    "totalInternalFlow": 18063.958588613565,
-    "floorsUsed": true,
+    "totalInternalFlow": 18062.399999618527,
     "notes": [],
     "key": {
       "gateAnchors": []

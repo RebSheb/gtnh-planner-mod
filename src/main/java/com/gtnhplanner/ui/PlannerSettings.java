@@ -10,6 +10,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 import net.minecraft.client.Minecraft;
 
@@ -305,6 +307,35 @@ public final class PlannerSettings {
 
     // endregion
 
+    // region The overview, as the player left it
+
+    /** The overview's sections folded before the player folds any: Internal, the long tail. */
+    public static final Set<String> OVERVIEW_FOLDED_AT_FIRST = Set.of("INTERNAL");
+
+    /** Whether the overview is open beside the board, or folded to a strip. */
+    public static boolean overviewOpen() {
+        return bool("overview.open", true);
+    }
+
+    public static void setOverviewOpen(final boolean open) {
+        set("overview.open", open);
+    }
+
+    /** The overview's sections folded to their bars, by title (INPUTS, OUTPUTS, INTERNAL, MACHINES). */
+    public static Set<String> overviewFolded() {
+        final String saved = load().getProperty("overview.folded");
+        if (saved == null) return new TreeSet<>(OVERVIEW_FOLDED_AT_FIRST);
+        final Set<String> out = new TreeSet<>();
+        for (final String title : saved.split(",")) if (!title.isBlank()) out.add(title.trim());
+        return out;
+    }
+
+    public static void setOverviewFolded(final Set<String> folded) {
+        set("overview.folded", String.join(",", new TreeSet<>(folded)));
+    }
+
+    // endregion
+
     // region Size
 
     /**
@@ -405,7 +436,17 @@ public final class PlannerSettings {
         save();
     }
 
+    /** The file a test keeps them in instead of the game's config folder; null in the game. */
+    private static File testFile;
+
+    /** Keeps them in {@code f} from now on and forgets what was read, as a game started afresh would (for tests). */
+    static synchronized void useFile(final File f) {
+        testFile = f;
+        props = null;
+    }
+
     private static File file() {
+        if (testFile != null) return testFile;
         return new File(Minecraft.getMinecraft().mcDataDir, "config/gtnhplanner-settings.properties");
     }
 

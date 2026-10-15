@@ -175,7 +175,8 @@ public final class FfPlanParser {
             handlers,
             meta == null ? null : str(meta, "recipeMapId"),
             source == null ? null : str(source, "rawRecipeId"),
-            obj(r, "power") == null ? null : str(obj(r, "power"), "sourceId", ""));
+            obj(r, "power") == null ? null : str(obj(r, "power"), "sourceId", ""),
+            meta == null || obj(meta, "neiRecipe") == null ? null : obj(meta, "neiRecipe").toString());
     }
 
     @Nullable

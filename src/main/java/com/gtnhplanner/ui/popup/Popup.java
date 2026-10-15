@@ -34,9 +34,10 @@ public class Popup extends ModularPanel {
     /**
      * Opens {@code popup} over {@code parent} with its top-left at the given screen point, nudged onto the screen. It
      * opens on the next tick: opened inside a click handler, the click that opened it would reach it as a click
-     * outside and close it again.
+     * outside and close it again. With no parent (a board not built yet) nothing opens.
      */
     public static void open(final ModularPanel parent, final Popup popup, final int screenX, final int screenY) {
+        if (parent == null) return;
         final int w = popup.popupW, h = popup.popupH;
         final int x = Math.max(2, Math.min(screenX, PlannerScale.width() - w - 2));
         final int y = Math.max(2, Math.min(screenY, PlannerScale.height() - h - 2));

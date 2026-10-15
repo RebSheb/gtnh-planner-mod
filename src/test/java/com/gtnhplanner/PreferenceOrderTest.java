@@ -121,14 +121,14 @@ class PreferenceOrderTest {
     @Test
     void aRejectedAnswerIsExplainedByTheEarliestRuleThatSeparatesIt() {
         // mk1's alternative both imports and moves less material. Reporting the flow would name the
-        // milder difference and hide the one that actually decided, which is settled first.
+        // milder difference and hide the one that actually decided: buying, which is settled first.
         final List<Alternative> options = alternatives(
             GtnhFlowLoader.load("mk1")
                 .graph()).options();
 
         assertEquals(2, options.size());
         assertEquals(
-            Rank.IMPORTS_INSTEAD,
+            Rank.BUYS_MORE,
             options.get(1)
                 .rank());
         assertNotNull(

@@ -1,7 +1,10 @@
 package com.gtnhplanner.data.flowchart.balancer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.Optimisation;
@@ -73,14 +76,9 @@ public final class Solver {
         return last;
     }
 
-    /** The AUTO extent lower bound: the pass-2 floors when a replay forced them, else zero. */
+    /** The AUTO extent lower bound: zero (every machine is free to run at any rate the balance gives it). */
     private static double[] autoLower(final SolveContext ctx) {
-        final int n = ctx.model.machines.size();
-        final double[] lower = new double[n];
-        if (ctx.floors.length > 0) {
-            System.arraycopy(ctx.floors, 0, lower, 0, n);
-        }
-        return lower;
+        return new double[ctx.model.machines.size()];
     }
 
     /**
@@ -104,11 +102,131 @@ public final class Solver {
     }
 
     /**
-     * Every gate open, each port's externals weighted by its gate's {@code gateWeight} (per craft of the machine at the
-     * port): one round of the gate search's reweighted-L1 start. Each port's weight is nudged by its fixed tie weight,
-     * a ten-thousandth at most, so the optimum is one point and not whichever of a tie the simplex reaches first.
+     * One step of AUTO's trading: the ports where the plan would buy (or sell) goods {@code steps} machine steps along
+     * ({@link ModelData#portSteps}), what is traded there measured in crafts of the machines at them.
      */
-    public static SolveResult gateWeighted(final SolveContext ctx, final double[] gateWeight) {
+    public record Level(boolean buying, int steps, int[] ports) {
+
+        /** The same level over only {@code subset} of its ports. */
+        public Level of(final List<Integer> subset) {
+            return new Level(
+                buying,
+                steps,
+                subset.stream()
+                    .mapToInt(Integer::intValue)
+                    .toArray());
+        }
+
+        /** What the plan trades at this level at a point, in crafts. */
+        public double measure(final SolveContext ctx, final double[] externals) {
+            double total = 0;
+            for (final int p : ports) total += externals[p] * ctx.externalWeight(p);
+            return total;
+        }
+    }
+
+    /**
+     * The plan's trading levels in the order AUTO settles them: buying first, the most processed goods first (the most
+     * steps already in them), so the plan buys raw goods and runs its own machines and never buys more in order to sell
+     * more; then selling, the goods with the most steps still ahead of them first, so spare goes on to every machine
+     * that can take it and is sold only where nothing further on can.
+     */
+    public static List<Level> levels(final SolveContext ctx) {
+        // Keyed so that ascending order is the order above: buying (0) before selling (1), then steps descending.
+        final java.util.TreeMap<Long, List<Integer>> byLevel = new java.util.TreeMap<>();
+        for (int p = 0; p < ctx.model.connectedPorts.size(); p++) {
+            final boolean buying = ctx.model.connectedPorts.get(p)
+                .input();
+            byLevel.computeIfAbsent(((buying ? 0L : 1L) << 32) - ctx.model.portSteps[p], k -> new ArrayList<>())
+                .add(p);
+        }
+        final List<Level> out = new ArrayList<>(byLevel.size());
+        for (final List<Integer> ports : byLevel.values()) {
+            final int first = ports.get(0);
+            out.add(
+                new Level(
+                    ctx.model.connectedPorts.get(first)
+                        .input(),
+                    ctx.model.portSteps[first],
+                    ports.stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray()));
+        }
+        return out;
+    }
+
+    /**
+     * What AUTO's trading is held to: per level settled so far, at most what it was solved to (at most zero closes its
+     * ports outright, so no later step can trade a sliver there to save a sliver of its own). {@code open}, when not
+     * null, is the only gates the plan may trade at: a support the choices search tries.
+     */
+    public record Trades(@Nullable Set<Integer> open, List<Level> levels, List<Double> caps) {
+
+        public Trades {
+            levels = List.copyOf(levels);
+            caps = List.copyOf(caps);
+        }
+
+        /** Only {@code open}'s gates (every gate when null), nothing held yet. */
+        public static Trades within(@Nullable final Set<Integer> open) {
+            return new Trades(open, List.of(), List.of());
+        }
+
+        public Trades holding(final Level level, final double cap) {
+            final List<Level> l = new ArrayList<>(levels);
+            final List<Double> c = new ArrayList<>(caps);
+            l.add(level);
+            c.add(cap);
+            return new Trades(open, l, c);
+        }
+    }
+
+    /**
+     * Where a level is held once solved: exactly where it was reached, so no later level can buy or sell a sliver there
+     * to save something of its own. Measured against how fast the plan's machines run ({@code extents}), a billionth
+     * is rounding, not a trade: reaching only that trades nothing, and closes the level outright.
+     */
+    public static double heldAt(final SolveContext ctx, final double reached, final double[] extents) {
+        final double rounding = 1e-9 * Math.max(1, SolveContext.scaleOf(extents));
+        return reached <= rounding ? 0 : reached;
+    }
+
+    /** The least the plan can trade at {@code level}, with {@code held}'s levels held. */
+    public static SolveResult leastAt(final SolveContext ctx, final Trades held, final Level level) {
+        final Handles h = tradeModel(ctx, held);
+        for (final int p : level.ports()) h.extVars()[p].weight(ctx.externalWeight(p));
+        return run(ctx, h, (level.buying() ? "least buying at " : "least selling at ") + level.steps() + " steps");
+    }
+
+    /** The least internal flow with the plan's trading held. */
+    public static SolveResult leastFlowHolding(final SolveContext ctx, final Trades held) {
+        final Handles h = tradeModel(ctx, held);
+        flowObjective(h);
+        return run(ctx, h, "stage 3 flow");
+    }
+
+    /**
+     * The one canonical point among the least-flow optimum with the plan's trading held: what crosses the plan's edge
+     * weighed far above what flows inside, each port and wire by its fixed tie weight.
+     */
+    public static StageOutcome canonicalHolding(final SolveContext ctx, final Trades held, final StageOutcome s3) {
+        final Handles h = tradeModel(ctx, held);
+        for (int p = 0; p < h.extVars().length; p++) {
+            h.extVars()[p].weight(EDGE_FIRST * tieWeight(p) * ctx.externalWeight(p));
+        }
+        final double qtyEps = ctx.heuristics.numerics().qtyEps;
+        final Expression flowCap = h.model()
+            .addExpression("flow_cap");
+        for (int e = 0; e < h.flowVars().length; e++) {
+            flowCap.set(h.flowVars()[e], 1.0);
+            h.flowVars()[e].weight(tieWeight(e));
+        }
+        flowCap.upper(s3.internalFlow * (1 + qtyEps) + qtyEps * Math.max(1.0, s3.internalFlow));
+        final SolveResult canonical = run(ctx, h, "canonicalise");
+        return canonical.isRejected() ? s3 : canonical.point(); // the uncanonical point is still a correct answer
+    }
+
+    private static Handles tradeModel(final SolveContext ctx, final Trades held) {
         final Handles h = ModelBuilder.over(ctx)
             .extents(autoLower(ctx))
             .pools()
@@ -117,11 +235,23 @@ public final class Solver {
             .conservation()
             .drawers()
             .handles();
-        for (int p = 0; p < ctx.model.connectedPorts.size(); p++) {
-            h.extVars()[p]
-                .weight(gateWeight[ctx.model.portGate[p]] * ctx.externalWeight(p) * (1 + 1e-4 * (tieWeight(p) - 1)));
+        if (held.open() != null) closeGatesOutside(ctx, h, held.open());
+        for (int i = 0; i < held.levels()
+            .size(); i++) {
+            final Level level = held.levels()
+                .get(i);
+            final double cap = held.caps()
+                .get(i);
+            if (cap <= 0) {
+                for (final int p : level.ports()) h.extVars()[p].upper(0);
+                continue;
+            }
+            final Expression hold = h.model()
+                .addExpression("hold_level_" + i);
+            for (final int p : level.ports()) hold.set(h.extVars()[p], ctx.externalWeight(p));
+            hold.upper(cap);
         }
-        return run(ctx, h, "gate weighted");
+        return h;
     }
 
     /** LP over the whole gate structure, raw-quantity objective; seeds the deletion filter. */
@@ -164,6 +294,9 @@ public final class Solver {
         return run(ctx, h, "stage 2 fixed quantity");
     }
 
+    /** How much more the canonical tie-break weighs what crosses the plan's edge than what flows inside it. */
+    private static final double EDGE_FIRST = 1e6;
+
     /** The one canonical point among a stage-3 optimum: redistributes within it, deterministically. */
     public static StageOutcome canonicalize(final SolveContext ctx, final Set<Integer> open, final StageOutcome s3) {
         final Handles h = ModelBuilder.over(ctx)
@@ -182,7 +315,9 @@ public final class Solver {
         for (int p = 0; p < ports; p++) {
             if (qty != null && open.contains(ctx.model.portGate[p])) {
                 qty.set(h.extVars()[p], ctx.externalWeight(p));
-                h.extVars()[p].weight(tieWeight(p) * ctx.externalWeight(p));
+                // Far above any flow's weight, so the quantity's rounding room is never spent moving material across
+                // the plan's edge to save flow inside it: that would be a leftover a millionth of a unit wide.
+                h.extVars()[p].weight(EDGE_FIRST * tieWeight(p) * ctx.externalWeight(p));
             } else {
                 h.extVars()[p].upper(0);
             }

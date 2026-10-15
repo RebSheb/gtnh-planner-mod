@@ -18,6 +18,7 @@ import javax.annotation.Nullable;
 
 import com.gtnhplanner.data.flowchart.Node;
 import com.gtnhplanner.data.flowchart.Port;
+import com.gtnhplanner.data.properties.RecipeProperty;
 import com.gtnhplanner.harness.GtnhFlowLoader;
 import com.gtnhplanner.harness.TestIngredients;
 import com.gtnhplanner.importer.FfPlan.FfRecipe;
@@ -73,12 +74,41 @@ final class FakeGame implements RecipeIndex, NodeMaker {
         if (!generators) return null;
         final Node node = new Node(UUID.randomUUID(), 0, 0);
         node.powerSource = sourceId;
+        node.powerSettings.putAll(settings);
         return node;
     }
+
+    /**
+     * Look recipes up only where the game's index would (importer.game.NeiRecipeIndex): by NEI's id for the recipe, a
+     * crop's crop, the crafting and furnace pages by output, GregTech's maps by the map the plan names or the machine
+     * it names; anything else has no recipe in game. Off, every recipe is found.
+     */
+    boolean routed;
+    /** A game of another pack version: NEI's ids from the plan find nothing, so recipes are looked for by map. */
+    boolean otherPack;
+    /** How each recipe was found, by recipe id: "nei", "crop", "page", "map:<id>" or "machine". */
+    final Map<String, String> paths = new LinkedHashMap<>();
+    /** The website's machine each node was asked to run on, by its handler id. */
+    final Map<UUID, String> handlerIds = new HashMap<>();
 
     @Override
     public Lookup find(final FfRecipe recipe) {
         if (missing.contains(recipe.id())) return Lookup.none("not in this game");
+        if (!routed) return Lookup.of(List.of(twin(recipe)));
+        if (recipe.neiRecipe() != null && !otherPack) {
+            paths.put(recipe.id(), "nei");
+            return Lookup.exact(twin(recipe));
+        }
+        final String path;
+        if (recipe.isCrop()) path = "crop";
+        else if ("crafting".equals(recipe.category()) || "furnace".equals(recipe.category())
+            || "Furnace".equals(recipe.machineType())
+            || recipe.machineType()
+                .endsWith(" Crafting"))
+            path = "page";
+        else if (recipe.gregtech()) path = recipe.gameMapId() != null ? "map:" + recipe.gameMapId() : "machine";
+        else return Lookup.none("no recipe like it in game");
+        paths.put(recipe.id(), path);
         return Lookup.of(List.of(twin(recipe)));
     }
 
@@ -98,13 +128,33 @@ final class FakeGame implements RecipeIndex, NodeMaker {
             r.specialValue() == null ? null : (int) Math.round(r.specialValue()));
     }
 
+    /** The keys a GregTech card's numbers go under (GTProvider's), which the export reads. */
+    static final RecipeProperty<Integer> DURATION = RecipeProperty.<Integer>builder("duration_ticks", 0)
+        .build();
+    static final RecipeProperty<Long> EU_PER_TICK = RecipeProperty.<Long>builder("gt.eu_per_tick", 0L)
+        .build();
+
     @Override
     public Node make(final GameRecipe recipe, @Nullable final Machine machine) {
         final String machineLabel = machine == null ? null : machine.label();
         final Node node = new Node(UUID.randomUUID(), 0, 0);
         node.machineName = recipe.handlerName();
-        for (final Map.Entry<String, Double> e : merged(recipe.inputs(), true).entrySet())
-            node.inputs.add(TestIngredients.port(e.getKey(), e.getValue()));
+        if (machine != null && machine.handlerId() != null) handlerIds.put(node.id, machine.handlerId());
+        if (recipe.durationTicks() != null) node.properties.put(DURATION, recipe.durationTicks());
+        if (recipe.euPerTick() != null) node.properties.put(EU_PER_TICK, recipe.euPerTick());
+        for (final Map.Entry<String, Double> e : merged(recipe.inputs(), true).entrySet()) {
+            final Port<TestIngredients.TestIngredient> port = TestIngredients.port(e.getKey(), e.getValue());
+            // A slot that takes several items (FF's alternatives) lists them all, as NEI does.
+            for (final GameStack s : recipe.inputs()) {
+                if (!(s.kind() + "|" + s.id()).equals(e.getKey())) continue;
+                final List<TestIngredients.TestIngredient> items = new ArrayList<>();
+                for (final String id : s.ids()) if (!id.startsWith("oredict:"))
+                    items.add(new TestIngredients.TestIngredient(s.kind() + "|" + id, 1));
+                if (items.size() > 1) port.setAlternatives(items);
+                break;
+            }
+            node.inputs.add(port);
+        }
         for (final Map.Entry<String, Double> e : merged(recipe.outputs(), false).entrySet())
             node.outputs.add(TestIngredients.port(e.getKey(), e.getValue()));
         if (machineLabel != null) machines.put(node.id, machineLabel);

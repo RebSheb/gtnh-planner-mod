@@ -341,6 +341,16 @@ public final class CardPaint {
         GL11.glDisable(GL11.GL_DEPTH_TEST);
     }
 
+    /**
+     * The small amber square on the bottom left of an input's icon that can be set to another item (the website's
+     * marker on a slot that takes several).
+     */
+    public static void choiceMark(final int y) {
+        final int x = CardLayout.iconX(false) - 1, by = y + CardLayout.ICON_Y + CardLayout.ICON - 4;
+        Hyb.rect(x, by, 5, 5, 0xFF000000);
+        Hyb.rect(x + 1, by + 1, 3, 3, 0xFFFFAA00);
+    }
+
     /** The circuit's row among the inputs: its icon, its number large, "Circuit" small. */
     public static void circuitRow(final ItemStack circuit, final int y, final float z) {
         com.gtnhplanner.ui.gt.CircuitIcons

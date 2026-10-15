@@ -71,14 +71,8 @@ public final class SolveContext {
     /** The pin types this balance mode honors; others are ignored at construction. */
     public final Set<Pin> pins;
 
-    /** Pass-2 "every machine runs" floors (crafts/s); empty when none. Set by the runner. */
-    public double[] floors = new double[0];
     /** True when a prelude or stage has proven the whole chain optimal and halted it. */
     public boolean shortCircuit;
-    /** True when the replay pass (audit floors) actually ran. */
-    public boolean floorsUsed;
-    /** The gates every answer opens ({@link GateSearch}): never the place a leftover could move from. */
-    public Set<Integer> neededGates = Set.of();
     /** The gates the committed answer opens, those carrying too little to show included (set by the flow stage). */
     public Set<Integer> openGates = Set.of();
 
@@ -272,14 +266,11 @@ public final class SolveContext {
         }
     }
 
+    /** What a unit traded at {@code port} weighs: the crafts of its machine it makes up. */
     public double externalWeight(final int port) {
         return heuristics.externalWeight(
             model.connectedPorts.get(port)
                 .qtyPerCraft());
-    }
-
-    public double gateWeight(final int gate) {
-        return model.gateWeights[gate];
     }
 
     public double importTilt(final int gate) {
@@ -295,14 +286,6 @@ public final class SolveContext {
             qty += externals[p] * externalWeight(p);
         }
         return qty;
-    }
-
-    public double weightedCost(final Set<Integer> support) {
-        double total = 0;
-        for (final int g : support) {
-            total += gateWeight(g);
-        }
-        return total;
     }
 
     /** The largest magnitude in a vector, never zero, so it can be divided into safely. */
@@ -405,19 +388,36 @@ public final class SolveContext {
     }
 
     /** Commits a point the way the chain reads it: one authoritative object replaces the last. */
+    /**
+     * Commits the plan's answer, with what the solver left at its dust (a rate a hundred-billionth of the plan's
+     * largest, {@link Numerics#dust}) set to exactly zero: a machine there is idle, not running at 0.000000000000001.
+     */
     public void commit(final StageOutcome committed) {
-        this.point = committed;
-    }
-
-    /** Wipes the threaded pass state; called between pass 1 and pass 2 of the replay. */
-    public void resetForReplay() {
-        this.point = null;
-        this.shortCircuit = false;
-        this.rejection = new Note(SolverMessage.SOLVER_NO_SOLUTION);
-        this.floorsUsed = false;
-        this.neededGates = Set.of();
-        this.openGates = Set.of();
-        this.stageNotes.clear();
+        final double tol = heuristics.numerics().dust
+            * solutionScale(committed.extents, committed.flows, committed.externals);
+        final double[] extents = committed.extents.clone(), flows = committed.flows.clone(),
+            externals = committed.externals.clone();
+        boolean snapped = false;
+        for (int m = 0; m < extents.length; m++) {
+            double most = 0;
+            for (final double q : model.machines.get(m).inQty) most = Math.max(most, q);
+            for (final double q : model.machines.get(m).outQty) most = Math.max(most, q);
+            if (extents[m] != 0 && Math.abs(extents[m]) * Math.max(most, 1) <= tol) {
+                extents[m] = 0;
+                snapped = true;
+            }
+        }
+        for (final double[] values : new double[][] { flows, externals }) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != 0 && Math.abs(values[i]) <= tol) {
+                    values[i] = 0;
+                    snapped = true;
+                }
+            }
+        }
+        this.point = snapped
+            ? StageOutcome.of(this, extents, flows, externals, committed.support, committed.provenOptimal)
+            : committed;
     }
 
     /** Independent conservation check; null when the point conserves, else the offending row. */
@@ -492,68 +492,6 @@ public final class SolveContext {
         }
         if (dropped.isEmpty()) return null;
         return new Note(SolverMessage.PIN_CONFLICT, List.copyOf(dropped));
-    }
-
-    /** "Every machine runs" pass-2 floors; empty when every unpinned machine already runs. */
-    public double[] machineRunFloors(final double[] extents) {
-        final int n = model.machines.size();
-        final int[] root = new int[n];
-        for (int m = 0; m < n; m++) {
-            root[m] = m;
-        }
-        for (final ModelData.EdgeData e : model.edges) {
-            final int a = model.connectedPorts.get(e.srcPort())
-                .machine();
-            final int b = model.connectedPorts.get(e.dstPort())
-                .machine();
-            union(root, a, b);
-        }
-
-        final Set<Integer> pinnedComponents = new HashSet<>();
-        for (int m = 0; m < n; m++) {
-            if (!Double.isNaN(pinnedExtent[m])) pinnedComponents.add(find(root, m));
-        }
-        for (final int m : anchorMachines()) {
-            pinnedComponents.add(find(root, m));
-        }
-        if (pinnedComponents.isEmpty()) return new double[0];
-
-        boolean anyIdle = false;
-        double minRunning = Double.MAX_VALUE;
-        for (int m = 0; m < n; m++) {
-            if (!Double.isNaN(pinnedExtent[m]) || !pinnedComponents.contains(find(root, m))) continue;
-            if (extents[m] <= heuristics.numerics().useEpsDetect) {
-                anyIdle = true;
-            } else {
-                minRunning = Math.min(minRunning, extents[m]);
-            }
-        }
-        if (!anyIdle) return new double[0];
-
-        // A rate the chart already achieves: the slowest unpinned machine that runs, else the slowest pinned one (an
-        // absolute fallback this far below the plan's own rates sits in the simplex's rounding, and its answers with
-        // it).
-        if (minRunning == Double.MAX_VALUE) {
-            for (int m = 0; m < n; m++) {
-                if (!Double.isNaN(pinnedExtent[m]) && pinnedExtent[m] > heuristics.numerics().useEpsDetect)
-                    minRunning = Math.min(minRunning, pinnedExtent[m]);
-            }
-        }
-        final double floor = (minRunning == Double.MAX_VALUE ? heuristics.numerics().useEps : minRunning) * 1e-3;
-        final double[] floors = new double[n];
-        for (int m = 0; m < n; m++) {
-            if (Double.isNaN(pinnedExtent[m]) && pinnedComponents.contains(find(root, m))) floors[m] = floor;
-        }
-        return floors;
-    }
-
-    /** Machines the solution leaves at zero, ignoring the ones the user pinned. */
-    public int idleCount(final double[] extents) {
-        int idle = 0;
-        for (int m = 0; m < extents.length; m++) {
-            if (Double.isNaN(pinnedExtent[m]) && extents[m] <= heuristics.numerics().useEpsDetect) idle++;
-        }
-        return idle;
     }
 
     private static int find(final int[] root, final int i) {

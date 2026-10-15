@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,9 @@ public final class UpdateCheck {
 
     private static final String RELEASES = "https://api.github.com/repos/jackwrichards/gtnh-planner-mod/releases?per_page=20";
     private static final int TIMEOUT_MS = 8000;
-    private static final Pattern VERSION = Pattern.compile("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-alpha\\.(\\d+))?");
+    private static final Pattern VERSION = Pattern.compile("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-(alpha|beta|rc)\\.(\\d+))?");
+    /** The pre-release stages, earliest first; a release with none comes after them all. */
+    private static final List<String> STAGES = List.of("alpha", "beta", "rc");
 
     /** A release: its tag and its page. */
     public record Release(String tag, String url) {}
@@ -109,8 +112,9 @@ public final class UpdateCheck {
     }
 
     /**
-     * Whether version {@code a} is newer than {@code b}: major, minor and patch, then the alpha's number (a release
-     * with none is above every alpha of it). Anything that is not a version is never newer.
+     * Whether version {@code a} is newer than {@code b}: major, minor and patch, then the stage (alpha, beta, rc, then
+     * the release itself, above every pre-release of it) and its number. Anything that is not a version is never
+     * newer. Jars before 0.2.0-beta.1 read only alphas, so to them a beta or rc is its release.
      */
     public static boolean newer(final String a, final String b) {
         final long[] x = parse(a), y = parse(b);
@@ -124,7 +128,8 @@ public final class UpdateCheck {
         final Matcher m = VERSION.matcher(v.trim());
         if (!m.find()) return null;
         return new long[] { Long.parseLong(m.group(1)), Long.parseLong(m.group(2)), Long.parseLong(m.group(3)),
-            m.group(4) == null ? Long.MAX_VALUE : Long.parseLong(m.group(4)) };
+            m.group(4) == null ? STAGES.size() : STAGES.indexOf(m.group(4)),
+            m.group(5) == null ? 0 : Long.parseLong(m.group(5)) };
     }
 
     private static byte[] readAll(final InputStream in) throws java.io.IOException {

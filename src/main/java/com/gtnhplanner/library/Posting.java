@@ -342,12 +342,58 @@ public final class Posting {
 
         @Override
         @Nullable
+        public com.gtnhplanner.machines.web.Web.Recipe gregtech(final Node node) {
+            final com.gtnhplanner.machines.web.Web.Recipe recipe = com.gtnhplanner.machines.game.WebEffect.recipe(node);
+            if (recipe == null) return null;
+            final Integer circuit = circuit(node);
+            if (circuit == null) return recipe;
+            final com.gtnhplanner.machines.web.Web.Recipe copy = recipe.copy();
+            copy.programmedCircuit = String.valueOf(circuit);
+            return copy;
+        }
+
+        /** The programmed circuit the card's recipe needs (never a port: GregTech keeps it), or null. */
+        @Nullable
+        private static Integer circuit(final Node node) {
+            final codechicken.nei.recipe.RecipeHandlerRef ref = com.gtnhplanner.nei.RecipeRefs.of(node.recipeId);
+            if (ref == null) return null;
+            try {
+                for (final codechicken.nei.PositionedStack ps : ref.handler.getIngredientStacks(ref.recipeIndex)) {
+                    if (ps == null || ps.item == null || ps.item.getItem() == null) continue;
+                    final Integer c = com.gtnhplanner.importer.FfIds.circuitOf(FactoryFlowImport.idOf(ps.item));
+                    if (c != null) return c;
+                }
+            } catch (final RuntimeException ignored) {
+                // No ingredients to read: no circuit.
+            }
+            return null;
+        }
+
+        @Override
+        @Nullable
+        public JsonObject neiRecipe(final Node node) {
+            if (node.isPower() || node.recipeId == null) return null;
+            try {
+                return node.recipeId.toJsonObject();
+            } catch (final RuntimeException e) {
+                return null;
+            }
+        }
+
+        @Override
+        @Nullable
         public PlanExport.Crop crop(final Node node) {
             final com.gtnhplanner.machines.CropsNh.Stats stats = com.gtnhplanner.machines.game.CropCards.stats(node);
             return stats != null && node.properties.get(
                 com.gtnhplanner.machines.game.CropCards.CROP_ID) instanceof final String id && !id.isEmpty()
                     ? new PlanExport.Crop(id, stats)
                     : null;
+        }
+
+        @Override
+        @Nullable
+        public com.gtnhplanner.machines.Bees.Species bee(final Node node) {
+            return com.gtnhplanner.machines.game.BeeCards.species(node);
         }
     }
 }

@@ -34,7 +34,10 @@ public final class WebSettings {
         return key.equals(COIL) || key.equals(HATCH_TYPE) || key.startsWith(WebCards.CONTROL_PREFIX);
     }
 
-    /** The card's heating coil: its key, name, heat, block, and the heat the recipe needs (0 when it reads none). */
+    /**
+     * The card's heating coil: its key, name, heat, block, and the heat the recipe needs (0 when it asks none, as on
+     * every machine whose coil is no heat gate).
+     */
     public record Coil(String key, String label, int heat, int recipeHeat, @Nullable ItemStack icon) {}
 
     /** The coil the card runs with, or null when its machine has none that the website models. */
@@ -43,13 +46,11 @@ public final class WebSettings {
         final Web.Recipe effective = result.effectiveRecipe();
         final RecipeRules.TierControl c = RecipeRules.coilTierControl(effective, string(cfg.settings.get(COIL)));
         if (c == null) return null;
-        final Integer special = RecipeRules.specialValue(effective);
-        final boolean heat = Heat.isHeatOverclockMachine(effective.machineType) && special != null && special > 0;
         return new Coil(
             c.current().key,
             c.current().label,
-            c.current().heat == null ? 0 : (int) Math.round(c.current().heat),
-            heat ? special : 0,
+            (int) Math.round(Heat.coilHeat(c.current())),
+            Heat.recipeHeat(effective),
             icon(c.current().resource));
     }
 

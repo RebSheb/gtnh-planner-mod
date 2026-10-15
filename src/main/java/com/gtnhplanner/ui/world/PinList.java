@@ -29,10 +29,10 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 public final class PinList {
 
     /** One line: a pinned machine, and how many of it the pinned cards build at each tier, highest first. */
-    private record Line(String name, @Nullable ItemStack icon, List<Tiered> tiers) {}
+    record Line(String name, @Nullable ItemStack icon, List<Tiered> tiers) {}
 
     /** How many of a machine at a tier ("" for a machine without one). */
-    private record Tiered(String tier, int count) {}
+    record Tiered(String tier, int count) {}
 
     /** Where the list was last drawn, {x, y, w, h}, or null when it is not showing: cards over the world keep out. */
     @Nullable
@@ -62,8 +62,11 @@ public final class PinList {
         draw(event.resolution, snap.planName(), lines);
     }
 
-    /** The pinned cards' machines, in the order they were first pinned, each with its tiers. */
-    private static List<Line> lines(final PlanSnapshot snap) {
+    /**
+     * The pinned cards' machines, in the order they were first pinned, each with its tiers: the machines each builds,
+     * so a crop card counts its harvesters, never the crops planted (issue 8).
+     */
+    static List<Line> lines(final PlanSnapshot snap) {
         final Map<String, Map<String, int[]>> byName = new LinkedHashMap<>();
         final Map<String, ItemStack> icons = new LinkedHashMap<>();
         for (final java.util.UUID id : snap.pinList()) {
@@ -77,7 +80,7 @@ public final class PinList {
                             java.util.Comparator
                                 .comparingInt((String t) -> -com.gtnhplanner.ui.card.CardDefaults.tierIndex(t))
                                 .thenComparing(t -> t)))
-                    .computeIfAbsent(c.tier(), t -> new int[1])[0] += (int) Math.ceil(c.machines() - 1e-9);
+                    .computeIfAbsent(c.tier(), t -> new int[1])[0] += (int) Math.ceil(c.builds() - 1e-9);
                 if (c.machine() != null) icons.putIfAbsent(c.name(), c.machine());
             }
         }

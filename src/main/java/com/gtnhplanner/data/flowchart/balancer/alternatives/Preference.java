@@ -2,77 +2,63 @@ package com.gtnhplanner.data.flowchart.balancer.alternatives;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.function.IntToDoubleFunction;
 
 import javax.annotation.Nullable;
 
 import com.gtnhplanner.data.flowchart.balancer.SolveContext;
+import com.gtnhplanner.data.flowchart.balancer.Solver;
 import com.gtnhplanner.data.flowchart.balancer.SolverMessage;
 import com.gtnhplanner.data.flowchart.balancer.StageOutcome;
 
 /**
- * One rule for choosing between answers that every rule before it found equally good. A chart
- * normally has many balanced solutions and no fact that separates them, so AUTO ranks them by an
- * ordered list of preferences, each optimized subject to the optima of the ones before it. A
- * preference is fully described by which family of model variables carries its cost and what each
- * of those is worth: making it an objective, reading it off a solved point and holding it while a
- * later preference breaks the remaining ties all follow from that pair. The sequence, its measures
- * and the {@link Rank} outcomes are part of the choices panel and the persisted alternatives, so
- * they must not change.
+ * One rule for choosing between answers that every rule before it found equally good, in the order AUTO applies them:
+ * buying as far upstream as it can, selling as far downstream as it can, then the least internal flow. The choices
+ * panel
+ * says why an option is not the default by the first of them that separates the two.
  *
  * <p>
- * {@link #ORDER} is the single authority for the sequence: the choices enumerator names the first
- * entry that separates a rejected answer, and the panel sorts by {@link #displayOrder()} which
- * derives from the same sequence, so a hand-kept list cannot drift from it.
+ * {@link #ORDER} is the single authority for the sequence: the choices enumerator names the first entry that separates
+ * a rejected answer, and the panel sorts by {@link #displayOrder()} which derives from the same sequence, so a
+ * hand-kept
+ * list cannot drift from it.
+ *
+ * @param measure    what the rule costs at a point, compared entry by entry, the first entry that differs deciding.
+ * @param whenWorse  the reason given for an option that loses on this rule.
+ * @param whenBetter the reason given for an option that wins on it (one a capped search could not rule out).
  */
-public record Preference(SolverMessage name, Family family, Weight weight, @Nullable Rank whenWorse,
-    @Nullable Rank whenBetter) {
+public record Preference(SolverMessage name, Measure measure, @Nullable Rank whenWorse, @Nullable Rank whenBetter) {
 
-    /** Which family of model variables carries a preference's cost. */
-    public enum Family {
-        /** One binary per gate; only present in a model built with binaries. */
-        GATES,
-        /** One per connected port: what crosses the chart's boundary there. */
-        EXTERNALS,
-        /** One per drawn edge. */
-        FLOWS
-    }
-
+    /** A rule's cost at a point. */
     @FunctionalInterface
-    public interface Weight {
+    public interface Measure {
 
-        double of(SolveContext ctx, int index);
+        double[] of(SolveContext ctx, double[] externals, double[] flows);
     }
+
+    /** How the alternatives list says why an option is not the default, in this order. */
+    public static final List<Preference> ORDER = List.of(
+        new Preference(SolverMessage.PREF_LEAST_BUYING, levels(true), Rank.BUYS_MORE, null),
+        new Preference(SolverMessage.PREF_LEAST_SELLING, levels(false), Rank.SELLS_MORE, null),
+        new Preference(SolverMessage.PREF_LEAST_FLOW, (ctx, externals, flows) -> {
+            double total = 0;
+            for (final double f : flows) total += f;
+            return new double[] { total };
+        }, Rank.MOVES_MORE, Rank.MOVES_LESS));
 
     /**
-     * AUTO's answer, in the order it prefers things. Only the first two are decided
-     * combinatorially - they choose WHICH gates open, which needs binaries - and the rest are plain
-     * LPs over the support that search settles on.
+     * What is bought (or sold) at each of AUTO's levels of it ({@link Solver#levels}), in the order it settles them.
      */
-    public static final List<Preference> ORDER = List.of(
-        new Preference(SolverMessage.PREF_FEWEST_GATES, Family.GATES, (ctx, gate) -> 1.0, null, null),
-        new Preference(
-            SolverMessage.PREF_FEWEST_IMPORTS,
-            Family.GATES,
-            (ctx, gate) -> ctx.model.gates.get(gate)
-                .input() ? 1.0 : 0.0,
-            Rank.IMPORTS_INSTEAD,
-            null),
-        new Preference(
-            SolverMessage.PREF_LEAST_EXCESS,
-            Family.EXTERNALS,
-            (ctx, port) -> ctx.heuristics.externalWeight(
-                ctx.model.connectedPorts.get(port)
-                    .qtyPerCraft()),
-            Rank.VOIDS_MORE,
-            null),
-        new Preference(
-            SolverMessage.PREF_LEAST_FLOW,
-            Family.FLOWS,
-            (ctx, edge) -> 1.0,
-            Rank.MOVES_MORE,
-            Rank.MOVES_LESS));
+    private static Measure levels(final boolean buying) {
+        return (ctx, externals, flows) -> {
+            final List<Solver.Level> levels = Solver.levels(ctx);
+            final List<Double> out = new ArrayList<>();
+            for (final Solver.Level level : levels)
+                if (level.buying() == buying) out.add(level.measure(ctx, externals));
+            final double[] values = new double[out.size()];
+            for (int i = 0; i < values.length; i++) values[i] = out.get(i);
+            return values;
+        };
+    }
 
     /**
      * Display order, derived from {@link #ORDER} rather than written beside it: the default, then
@@ -95,54 +81,35 @@ public record Preference(SolverMessage name, Family family, Weight weight, @Null
         return List.copyOf(order);
     }
 
-    /** What this preference costs at a solved point. */
-    public double measure(final SolveContext ctx, final StageOutcome solve) {
-        return measure(ctx, solve.support, solve.externals, solve.flows);
-    }
-
-    /** As above, for a point held as bare arrays rather than as a solve. */
-    public double measure(final SolveContext ctx, final Set<Integer> support, final double[] externals,
-        final double[] flows) {
-        return switch (family) {
-            case GATES -> costOf(support, gate -> weight.of(ctx, gate));
-            case EXTERNALS -> weighted(externals, port -> weight.of(ctx, port));
-            case FLOWS -> weighted(flows, edge -> weight.of(ctx, edge));
-        };
+    /** What this rule costs at a solved point. */
+    public double[] measure(final SolveContext ctx, final StageOutcome solve) {
+        return measure.of(ctx, solve.externals, solve.flows);
     }
 
     /**
-     * Why {@code alt} is not the default: the earliest preference that separates the two, which is
-     * the one that actually decided it. mk1's alternative both imports and moves less material, and
-     * reporting the flow would hide the thing that really chose - the direction tilt, which is
-     * settled before flow is ever looked at.
+     * Why {@code alt} is not the default: the earliest rule that separates the two, which is the one that actually
+     * decided it. mk1's alternative both imports and moves less material, and reporting the flow would hide the thing
+     * that really chose - buying, which is settled before flow is ever looked at.
+     *
+     * @param incumbent each rule's cost at the default, in {@link #ORDER}.
      */
-    public static Rank rankOf(final SolveContext ctx, final StageOutcome alt, final double[] incumbent,
+    public static Rank rankOf(final SolveContext ctx, final StageOutcome alt, final double[][] incumbent,
         final double tolerance) {
         final int n = Math.min(ORDER.size(), incumbent.length);
         for (int i = 0; i < n; i++) {
             final Preference preference = ORDER.get(i);
-            // Gate costs are whole numbers packed into one objective; everything else is a rate.
-            final double slack = preference.family() == Family.GATES ? 0.5 : tolerance;
-            final double mine = preference.measure(ctx, alt);
-            if (mine > incumbent[i] + slack && preference.whenWorse != null) return preference.whenWorse;
-            if (mine < incumbent[i] - slack && preference.whenBetter != null) return preference.whenBetter;
+            final double[] mine = preference.measure(ctx, alt);
+            for (int k = 0; k < Math.min(mine.length, incumbent[i].length); k++) {
+                if (mine[k] > incumbent[i][k] + tolerance) {
+                    if (preference.whenWorse != null) return preference.whenWorse;
+                    break;
+                }
+                if (mine[k] < incumbent[i][k] - tolerance) {
+                    if (preference.whenBetter != null) return preference.whenBetter;
+                    break;
+                }
+            }
         }
         return Rank.EQUALLY_VALID;
-    }
-
-    private double costOf(final Set<Integer> support, final IntToDoubleFunction weightOf) {
-        double total = 0;
-        for (final int gate : support) {
-            total += weightOf.applyAsDouble(gate);
-        }
-        return total;
-    }
-
-    private double weighted(final double[] values, final IntToDoubleFunction weightOf) {
-        double total = 0;
-        for (int i = 0; i < values.length; i++) {
-            total += values[i] * weightOf.applyAsDouble(i);
-        }
-        return total;
     }
 }

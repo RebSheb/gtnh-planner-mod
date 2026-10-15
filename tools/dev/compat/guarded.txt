@@ -8,9 +8,10 @@ MEMBER codechicken/nei/recipe/GuiRecipeButton$UpdateRecipeButtonsEvent$Post.hand
 MEMBER codechicken/nei/recipe/GuiRecipeButton$UpdateRecipeButtonsEvent$Post.height : I  <- nei/NEIPlanConfig  # NEIPlanConfig.addPlanButton
 MEMBER codechicken/nei/recipe/GuiRecipeButton$UpdateRecipeButtonsEvent$Post.width : I  <- nei/NEIPlanConfig  # NEIPlanConfig.addPlanButton
 
-# NEI before beta-3 links an ItemStack in chat, without BookmarkPayload: PlanAPI.shareGraph falls back by reflection.
-CLASS codechicken/nei/bookmark/BookmarkPayload  <- api/PlanAPI  # PlanAPI.shareGraph
-MEMBER codechicken/nei/NEIClientUtils.sendChatItemLink(Lnet/minecraft/nbt/NBTTagCompound;)V  <- api/PlanAPI  # PlanAPI.shareGraph
+# NEI before beta-3 links an ItemStack in chat, without BookmarkPayload: ChatShare.send asks first (payloads()) and
+# links the item by reflection instead.
+CLASS codechicken/nei/bookmark/BookmarkPayload  <- client/ChatShare  # ChatShare.payloads
+MEMBER codechicken/nei/NEIClientUtils.sendChatItemLink(Lnet/minecraft/nbt/NBTTagCompound;)V  <- client/ChatShare  # ChatShare.payloads
 
 # Thaumic Tinkerer before beta-2 has no NEI necromancy handler: ThaumicTinkererProvider.register throws on its first
 # line, Compat.init drops the provider, and its recipes go unread.

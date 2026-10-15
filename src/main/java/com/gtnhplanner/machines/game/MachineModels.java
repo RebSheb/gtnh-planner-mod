@@ -110,7 +110,7 @@ public final class MachineModels {
     }
 
     public static boolean isModelled(final Node node) {
-        return isTgs(node.properties) || isVat(node.properties) || CropCards.isCrop(node);
+        return isTgs(node.properties) || isVat(node.properties) || CropCards.isCrop(node) || BeeCards.isBee(node);
     }
 
     // region Reading the recipes
@@ -308,6 +308,10 @@ public final class MachineModels {
             CropCards.afterRefresh(node);
             return;
         }
+        if (BeeCards.isBee(node)) {
+            BeeCards.afterRefresh(node);
+            return;
+        }
         if (isTgs(node.properties)) {
             cfg.outputProductivity.clear();
             final TreeGrowthSimulator.Tree tree = tree(node);
@@ -374,6 +378,7 @@ public final class MachineModels {
     public static List<FormulaLine> formulas(final Node node, final double machines) {
         if (node.isPower() || node.machineConfig == null) return Collections.emptyList();
         if (CropCards.isCrop(node)) return CropCards.formulas(node, machines);
+        if (BeeCards.isBee(node)) return BeeCards.formulas(node);
         final MachineConfig cfg = node.machineConfig;
         if (!isTgs(node.properties) && !isVat(node.properties)) {
             final com.gtnhplanner.machines.web.NodeMath.Result r = WebEffect.result(node, cfg);
@@ -438,6 +443,7 @@ public final class MachineModels {
         final List<Setting> out = new ArrayList<>();
         if (node.isPower() || node.machineConfig == null) return out;
         if (CropCards.isCrop(node)) return CropCards.settings(node);
+        if (BeeCards.isBee(node)) return BeeCards.settings(node);
         if (!isTgs(node.properties) && !isVat(node.properties)) return WebSettings.settings(node);
         final MachineConfig cfg = node.machineConfig;
         if (isTgs(node.properties)) {

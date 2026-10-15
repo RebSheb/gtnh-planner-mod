@@ -28,6 +28,8 @@ public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRe
     public static final String TRASH_CAN_MACHINE = "Trash Can";
     /** FF's free, instant canner; a Canner recipe in game. */
     public static final String TANK_MAP = "planner.tank";
+    /** How the recipes of a plan posted from the game begin: {@code gtnhplanner:<card id>}. */
+    public static final String GAME_RECIPE_PREFIX = "gtnhplanner:";
 
     public Map<String, FfRecipe> recipesById() {
         final Map<String, FfRecipe> map = new LinkedHashMap<>();
@@ -72,15 +74,58 @@ public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRe
      * @param category    "gregtech", "crafting", "furnace", "custom-rate", ... ("" when absent)
      * @param recipeMapId GregTech's unlocalized recipe map name ({@code metadata.recipeMapId}), when the plan kept it
      * @param powerSource a power card's source id (FF's {@code recipe.power.sourceId}); null on any other recipe
+     * @param neiRecipe   NEI's own id for the recipe ({@code metadata.neiRecipe}, JSON), which a plan posted from the
+     *                    game carries so the game can find the very recipe again; null on the website's own plans
      */
     public record FfRecipe(String id, String name, String kind, String category, String machineType, String minimumTier,
         int durationTicks, double eut, @Nullable Double specialValue, @Nullable String programmedCircuit,
         List<FfSlot> inputs, List<FfSlot> outputs, List<FfHandler> handlers, @Nullable String recipeMapId,
-        @Nullable String rawRecipeId, @Nullable String powerSource) {
+        @Nullable String rawRecipeId, @Nullable String powerSource, @Nullable String neiRecipe) {
+
+        /** A recipe without NEI's id, as the website writes them. */
+        public FfRecipe(final String id, final String name, final String kind, final String category,
+            final String machineType, final String minimumTier, final int durationTicks, final double eut,
+            @Nullable final Double specialValue, @Nullable final String programmedCircuit, final List<FfSlot> inputs,
+            final List<FfSlot> outputs, final List<FfHandler> handlers, @Nullable final String recipeMapId,
+            @Nullable final String rawRecipeId, @Nullable final String powerSource) {
+            this(
+                id,
+                name,
+                kind,
+                category,
+                machineType,
+                minimumTier,
+                durationTicks,
+                eut,
+                specialValue,
+                programmedCircuit,
+                inputs,
+                outputs,
+                handlers,
+                recipeMapId,
+                rawRecipeId,
+                powerSource,
+                null);
+        }
 
         /** A power card's synthesized recipe: a generator, not a recipe to find in game. */
         public boolean power() {
             return powerSource != null;
+        }
+
+        /**
+         * Whether the game looks for it among GregTech's recipe maps: the website's GregTech recipes say so, or name
+         * their map; a bare machine recipe with neither is one the game posted before its plans named their maps
+         * (0.2.0-alpha.5 and earlier), found by the machine it names ({@link #machineType}, the block's name then).
+         */
+        public boolean gregtech() {
+            if ("gregtech".equals(category) || gameMapSlug() != null) return true;
+            return category.isEmpty() && "gregtech_machine".equals(kind) && !power() && !isCrop();
+        }
+
+        /** A recipe the game wrote out (library/PlanExport): its id is the card's. */
+        public boolean fromGame() {
+            return id.startsWith(GAME_RECIPE_PREFIX);
         }
 
         private static final Pattern ORACLE_ID = Pattern.compile("^oracle:[^:]*:gregtech:([^:]+):");
@@ -116,6 +161,29 @@ public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRe
             final String tail = id.substring(id.lastIndexOf(':') + 1);
             return id.startsWith("oracle:") && !tail.isEmpty() ? tail : null;
         }
+
+        /** A bee species' produce (FF's bee card): its machine is the bee's housing, a setting (machines/Bees). */
+        public boolean isBee() {
+            return "bee_produce".equals(kind) || "forestry-bee".equals(category);
+        }
+
+        /**
+         * A bee's species slugged as FF's ids carry it ({@code gregtech-bee-speciespulsatingiron}): from its bee input
+         * ({@code factoryflow:bee_species:<slug>}), else {@code source.rawRecipeId} (the species' Forestry id). Null on
+         * anything but a bee.
+         */
+        @Nullable
+        public String beeSlug() {
+            if (!isBee()) return null;
+            for (final FfSlot in : inputs) {
+                final String id = FfIds.normalize(in.id());
+                if (id.startsWith(BEE_SPECIES)) return id.substring(BEE_SPECIES.length());
+            }
+            return rawRecipeId == null ? null : FfIds.slug(rawRecipeId);
+        }
+
+        /** FF's dataset names a bee species as an input: {@code factoryflow:bee_species:<slug>}. */
+        public static final String BEE_SPECIES = "factoryflow:bee_species:";
 
         /** FF's Tank: a Canner recipe made free and instant. */
         public boolean isPlannerTank() {

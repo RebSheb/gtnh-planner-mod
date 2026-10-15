@@ -1,6 +1,7 @@
 package com.gtnhplanner.ui.tutorial;
 
 import java.util.Properties;
+import java.util.Set;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -20,11 +21,11 @@ import codechicken.nei.LayoutManager;
 
 /**
  * Keeps the player's things safe while the tour runs: their plans are put aside for plans of the tour's own (never
- * saved), and everything else the tour touches is noted and put back when it ends: the minimap's settings, the
- * machine picked per NEI tab, the settings remembered per machine, NEI's search, the minimap's picture of the plan,
- * and NEI's item groups the tour opened. The game's GUI scale is left alone: the board takes a scale of its own with
- * room for the tour's moves ({@link com.gtnhplanner.ui.PlannerScale}). It ends where the player is: the plan in front
- * of them is theirs from then on, and the screen stays.
+ * saved), and everything else the tour touches is noted and put back when it ends: the minimap's settings, the top
+ * bar's unit keys and the overview's folds, the machine picked per NEI tab, the settings remembered per machine, NEI's
+ * search, the minimap's picture of the plan, and NEI's item groups the tour opened. The game's GUI scale is left
+ * alone: the board takes a scale of its own with room for the tour's moves ({@link com.gtnhplanner.ui.PlannerScale}).
+ * It ends where the player is: the plan in front of them is theirs from then on, and the screen stays.
  */
 final class Sandbox {
 
@@ -41,6 +42,9 @@ final class Sandbox {
     /** The top bar's unit keys: the tour types its rates a second, and shows power as EU/t on average. */
     private Fmt.RateUnit rateUnit;
     private boolean amps, peak;
+    /** The overview: the tour shows it open, every section but Internal unfolded, as it is the first time. */
+    private boolean overviewOpen;
+    private Set<String> overviewFolded;
 
     void enter() {
         if (active) return;
@@ -70,6 +74,10 @@ final class Sandbox {
         PlannerSettings.setRateUnit(Fmt.RateUnit.SECOND);
         PlannerSettings.setPowerAsAmps(false);
         PlannerSettings.setPeakPower(false);
+        overviewOpen = PlannerSettings.overviewOpen();
+        overviewFolded = PlannerSettings.overviewFolded();
+        PlannerSettings.setOverviewOpen(true);
+        PlannerSettings.setOverviewFolded(PlannerSettings.OVERVIEW_FOLDED_AT_FIRST);
         Plan.enterSandbox();
     }
 
@@ -120,6 +128,8 @@ final class Sandbox {
         PlannerSettings.setRateUnit(rateUnit);
         PlannerSettings.setPowerAsAmps(amps);
         PlannerSettings.setPeakPower(peak);
+        PlannerSettings.setOverviewOpen(overviewOpen);
+        PlannerSettings.setOverviewFolded(overviewFolded);
         if (world) {
             final GuiScreen screen = mc.currentScreen;
             if (Planner.isPlanner(screen)) Planner.open();

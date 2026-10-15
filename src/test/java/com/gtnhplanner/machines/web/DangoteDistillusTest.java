@@ -1,9 +1,11 @@
 package com.gtnhplanner.machines.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,7 +14,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * dangote-distillus.test.ts, table side: the two recipe-map modes' speed, EU and parallels, and the stale handler
  * controls it drops. The handler, power report and overclock cases go through the solver and are covered by the
- * golden fixture.
+ * golden fixture. Then the height, which is ours (issue 495): distillery parallels by the game's formula, the
+ * website's 12 layers when unset.
  */
 class DangoteDistillusTest {
 
@@ -45,4 +48,72 @@ class DangoteDistillusTest {
         assertEquals(1.0 / 3, 1 / MachineTable.resolve(b.speed, tower, 1));
         assertEquals(1, MachineTable.resolve(b.power, tower, 1));
     }
+
+    // region The height (ours: the website assumes 12 layers, the default)
+
+    /** A card on a game map at IV (voltage tier 5), at these settings, through the whole port. */
+    private static NodeMath.Result card(final String mapId, final Map<String, String> settings) {
+        return NodeMath
+            .compute(MapRecipes.recipe(mapId, 120, 600, 0), MapRecipes.node("dangote-distillus", "IV", settings));
+    }
+
+    /** MTEAdvDistillationTower.getMaxParallelRecipes: 2 * floor(layers / 3) * the voltage tier, distillery mode. */
+    @ParameterizedTest(name = "a {0}-layer distillery at IV has {1} structural parallels")
+    @CsvSource({ "3, 10", "5, 10", "6, 20", "8, 20", "9, 30", "11, 30", "12, 40" })
+    void distilleryParallelsFollowTheHeight(final int height, final int parallels) {
+        final NodeMath.Result r = card("gt.recipe.distillery", Map.of(DangoteDistillus.HEIGHT, "" + height));
+        final Web.Recipe e = r.effectiveRecipe();
+        assertEquals(
+            parallels,
+            MachineEffects.structuralParallels(
+                e,
+                MapRecipes.node("dangote-distillus", "IV", Map.of(DangoteDistillus.HEIGHT, "" + height))));
+        assertEquals(DangoteDistillus.DISTILLERY, DangoteDistillus.mode(e));
+    }
+
+    @Test
+    void anUnsetHeightIsTheWebsitesTwelveLayers() {
+        final Web.Recipe e = card("gt.recipe.distillery", Map.of()).effectiveRecipe();
+        assertEquals(40, MachineEffects.structuralParallels(e, MapRecipes.node("dangote-distillus", "IV", Map.of())));
+        final RecipeRules.TierControl height = height(e, Map.of());
+        assertEquals("12", height.current().key);
+        assertEquals(3, height.numeric().min);
+        assertEquals(12, height.numeric().max);
+        // Out of the structure's range: clamped, as the game's channel is.
+        assertEquals("3", height(e, Map.of(DangoteDistillus.HEIGHT, "1")).current().key);
+        assertEquals("12", height(e, Map.of(DangoteDistillus.HEIGHT, "20")).current().key);
+    }
+
+    @Test
+    void towerModeHasNoHeightAndTwelveParallels() {
+        final Web.Recipe e = card("gt.recipe.distillationtower", Map.of(DangoteDistillus.HEIGHT, "3"))
+            .effectiveRecipe();
+        assertEquals(DangoteDistillus.TOWER, DangoteDistillus.mode(e));
+        assertEquals(List.of(), RecipeRules.configTierControls(e, Map.of()));
+        assertEquals(
+            12,
+            MachineEffects.structuralParallels(
+                e,
+                MapRecipes.node("dangote-distillus", "IV", Map.of(DangoteDistillus.HEIGHT, "3"))));
+    }
+
+    @Test
+    void onlyTheDangoteHasAMode() {
+        final Web.Recipe e = NodeMath
+            .compute(MapRecipes.recipe("gt.recipe.distillery", 120, 600, 0), MapRecipes.node(null, "IV", Map.of()))
+            .effectiveRecipe();
+        assertNull(DangoteDistillus.mode(e), e.machineType);
+    }
+
+    private static RecipeRules.TierControl height(final Web.Recipe effective, final Map<String, String> settings) {
+        final List<RecipeRules.TierControl> controls = RecipeRules.configTierControls(effective, settings);
+        assertEquals(1, controls.size(), "the distillery offers its height alone");
+        assertEquals(
+            DangoteDistillus.HEIGHT,
+            controls.getFirst()
+                .id());
+        return controls.getFirst();
+    }
+
+    // endregion
 }

@@ -24,6 +24,34 @@ public final class Heat {
     }
 
     /**
+     * A coil option's heat in K: its own, else that of the dataset's coil of the same key. The Multi Smelter's, the
+     * autoclave's and the alloy blast smelters' coil options carry only what the coil buys there (parallels, speed, a
+     * discount), but the block is the same coil, as hot.
+     */
+    public static double coilHeat(final Web.TierOption coil) {
+        if (coil.heat != null && coil.heat > 0) return coil.heat;
+        for (final HandlerData.Coil c : HandlerData.coils()) if (c.key()
+            .equals(coil.key)) return c.heat();
+        return 0;
+    }
+
+    /**
+     * The heat a recipe asks of its machine's coil, in K; 0 when it asks none. Only a heat overclock machine reads the
+     * recipe's special value as heat (the blast furnaces and their kin). Every other coil is no gate: the Multi
+     * Smelter's sets its parallels, the cracker's its discount, the pyrolyse oven's its speed (MTEMultiFurnace,
+     * MTEOilCracker, MTEPyrolyseOven), and the website asks nothing of it either.
+     */
+    public static int recipeHeat(final Web.Recipe effective) {
+        final Integer special = RecipeRules.specialValue(effective);
+        return isHeatOverclockMachine(effective.machineType) && special != null && special > 0 ? special : 0;
+    }
+
+    /** Whether a coil of {@code coilHeat} is too cold for a recipe asking {@code recipeHeat} (0: asks nothing). */
+    public static boolean tooCold(final double coilHeat, final double recipeHeat) {
+        return recipeHeat > 0 && coilHeat < recipeHeat;
+    }
+
+    /**
      * getHeatOverclockStats: of {@code overclockSteps}, how many heat pays for, and the discount. The bonus reads
      * {@code voltageOrdinal}, the summed hatches' tier (the tier's own when null).
      */

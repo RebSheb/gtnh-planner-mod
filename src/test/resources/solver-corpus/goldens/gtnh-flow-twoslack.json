@@ -51,10 +51,10 @@
         "ratePerSecond": 33.333333333333336
       }
     ],
+    "unneeded": [],
     "openGates": 1.0,
     "externalQuantity": 33.33333333333334,
     "totalInternalFlow": 133.33333333333331,
-    "floorsUsed": false,
     "notes": [],
     "key": {
       "gateAnchors": [
@@ -184,7 +184,7 @@
             "ratePerSecond": 33.33333333333334
           }
         ],
-        "rank": "VOIDS_MORE"
+        "rank": "BUYS_MORE"
       }
     ],
     "complete": true,

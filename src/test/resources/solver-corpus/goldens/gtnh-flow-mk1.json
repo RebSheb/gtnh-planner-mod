@@ -67,10 +67,10 @@
         "ratePerSecond": 39.0
       }
     ],
+    "unneeded": [],
     "openGates": 1.0,
     "externalQuantity": 0.25,
     "totalInternalFlow": 9.5,
-    "floorsUsed": false,
     "notes": [],
     "key": {
       "gateAnchors": [
@@ -189,7 +189,7 @@
             "ratePerSecond": 0.5
           }
         ],
-        "rank": "IMPORTS_INSTEAD"
+        "rank": "BUYS_MORE"
       }
     ],
     "complete": true,

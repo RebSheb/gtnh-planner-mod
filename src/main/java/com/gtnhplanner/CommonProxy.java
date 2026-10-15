@@ -1,7 +1,6 @@
 package com.gtnhplanner;
 
 import com.gtnhplanner.annotation.VersionedInjector;
-import com.gtnhplanner.client.ImportCommand;
 import com.gtnhplanner.config.ConfigMain;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -24,10 +23,5 @@ public class CommonProxy {
 
     }
 
-    public void serverStarting(final FMLServerStartingEvent event) {
-        if (!event.getServer()
-            .isDedicatedServer()) {
-            event.registerServerCommand(new ImportCommand());
-        }
-    }
+    public void serverStarting(final FMLServerStartingEvent event) {}
 }

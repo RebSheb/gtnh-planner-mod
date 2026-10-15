@@ -89,6 +89,11 @@ dependencies {
         runtimeOnlyNonPublishable('com.github.GTNewHorizons:NewHorizonsCoreMod:2.9.84:dev')
         // Multiblock pictures need it; it hard-requires StructureLib, which only this GregTech run has.
         runtimeOnlyNonPublishable('com.github.GTNewHorizons:BlockRenderer6343:1.4.24:dev') { transitive = false }
+        // Bees too (`PLANNH_BEES=1 tools/dev/mc.sh start`): Forestry, and NEI Addons for its bee products page.
+        if (project.hasProperty('beesDev')) {
+            runtimeOnlyNonPublishable('com.github.GTNewHorizons:ForestryMC:4.11.39:dev')
+            runtimeOnlyNonPublishable('com.github.GTNewHorizons:neiaddons:1.18.6:dev') { transitive = false }
+        }
     }
 
     // Headless test harness (corpus charts are gtnh-flow style YAML)

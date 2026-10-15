@@ -131,7 +131,7 @@ public final class PortSlot extends Widget<PortSlot>
             .active()) return false;
         final com.gtnhplanner.ui.BoardSession session = canvas.session();
         final boolean key = overKey();
-        if (!key && !overBox()) return false;
+        if (!key && !overBox()) return !canvas.carryingSpare() && stepItem(session, model, direction);
         final Double set = session.portTarget(model.node, output, index);
         if (key) {
             session.setPortTarget(model.node, output, index, set != null ? 0 : view.perSecond());
@@ -148,6 +148,37 @@ public final class PortSlot extends Widget<PortSlot>
         final double next = Math.max(0, Math.round(now) + step);
         session.wheelPortRate(model.node, output, index, next / unit.perSecond);
         return true;
+    }
+
+    /**
+     * The wheel on an input whose recipe slot takes several items (an ore dictionary slot, GregTech's alternatives):
+     * the next or the one before, in NEI's order, as the website's wheel over a slot. False on any other port, whose
+     * wheel stays the board's.
+     */
+    private boolean stepItem(final com.gtnhplanner.ui.BoardSession session, final CardModel model,
+        final UpOrDown direction) {
+        if (output || index >= model.node.inputs.size()) return false;
+        final com.gtnhplanner.data.flowchart.Port<?> port = model.node.inputs.get(index);
+        if (!port.hasChoices()) return false;
+        final java.util.List<?> items = port.getAlternatives();
+        final int at = Math.max(0, port.choiceIndex());
+        final int step = direction == UpOrDown.UP ? 1 : -1;
+        final Object next = items.get(Math.floorMod(at + step, items.size()));
+        com.gtnhplanner.ui.sound.Sfx.TICK.play(step > 0 ? 1.12f : 0.9f);
+        session.pickInput(model.node, index, port.keyOf(next));
+        return true;
+    }
+
+    /** Whether the port can be set to another item: an input whose slot takes several. */
+    public boolean hasChoices() {
+        final java.util.UUID id = node();
+        final com.gtnhplanner.data.flowchart.Node n = id == null ? null
+            : card.session()
+                .graph().nodes.get(id);
+        return !output && n != null
+            && index < n.inputs.size()
+            && n.inputs.get(index)
+                .hasChoices();
     }
 
     /** Whether the mouse is on the port's rule key (Any or =). */

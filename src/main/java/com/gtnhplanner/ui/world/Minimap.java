@@ -466,8 +466,8 @@ public final class Minimap {
                     Hyb.item(c.machine(), x + (w - s) / 2f, y + (h - s) / 2f, s, 0);
                 }
             }
-            pill(
-                "×" + Fmt.machines(c.machines()),
+            if (!c.countless()) pill(
+                "×" + Fmt.machines(c.builds()),
                 x,
                 y,
                 w,

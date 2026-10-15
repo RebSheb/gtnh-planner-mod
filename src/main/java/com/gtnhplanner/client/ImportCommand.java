@@ -3,17 +3,17 @@ package com.gtnhplanner.client;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumChatFormatting;
 
-import com.gtnhplanner.api.PlanAPI;
-import com.gtnhplanner.data.flowchart.Graph;
-
-/**
- * Client-side command that processes an incoming GTNH Planner share.
- */
+/** The client command a plan's chat line runs when clicked ({@link ChatShare}): opens that plan. */
 public class ImportCommand extends CommandBase {
 
     public static final String COMMAND_NAME = "gtnhplanner_import";
+
+    /** The command that opens the plan a chat line keeps under {@code key}. */
+    public static String command(final String key) {
+        return "/" + COMMAND_NAME + " " + key;
+    }
 
     @Override
     public String getCommandName() {
@@ -22,28 +22,13 @@ public class ImportCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(final ICommandSender sender) {
-        return "/" + COMMAND_NAME + " <nbt>";
+        return "/" + COMMAND_NAME + " <key>";
     }
 
     @Override
     public void processCommand(final ICommandSender sender, final String[] args) {
-        if (args.length == 0) {
-            sender.addChatMessage(
-                new ChatComponentText(StatCollector.translateToLocal("gtnhplanner.share.import_error.missing")));
-            return;
-        }
-
-        final String joined = String.join(" ", args);
-        final Graph graph = PlanAPI.importFromNBT(joined);
-        if (graph == null) {
-            sender.addChatMessage(
-                new ChatComponentText(StatCollector.translateToLocal("gtnhplanner.share.import_error.invalid")));
-            return;
-        }
-
-        PlanAPI.importGraph(graph);
-
-        com.gtnhplanner.ui.Planner.open();
+        final String problem = args.length == 1 ? ChatShare.open(args[0]) : "That plan is gone: ask for it again";
+        if (problem != null) sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + problem));
     }
 
     @Override

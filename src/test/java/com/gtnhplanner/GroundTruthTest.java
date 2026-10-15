@@ -127,82 +127,61 @@ class GroundTruthTest {
     }
 
     @Test
-    void excessChoice_slackIsMeasuredInCraftsNotInLitres() {
+    void excessChoice_spareNitrogenGoesOnToTheOvenAndCharcoalIsSold() {
         // Both pins are fixed, so the middle oven's extent is the only free number and something
         // has to absorb the difference. Every quantity below is read off excess_choice.yaml:
         //
         // nitrogen supplied = 3120 x (20/80 crafts/s) = 780/s, fixed by the centrifuge's count
         // charcoal demanded = 25 x (20/100 crafts/s) = 5/s, fixed by the second oven's count
-        // A: oven at 780/1000 = 0.78 crafts/s -> 15.6/s charcoal, 10.6/s of it voided
-        // B: oven at 5/20 = 0.25 crafts/s -> 250/s nitrogen used, 530/s of it voided
+        // A: oven at 780/1000 = 0.78 crafts/s -> 15.6/s charcoal, 10.6/s of it sold
+        // B: oven at 5/20 = 0.25 crafts/s -> 250/s nitrogen used, 530/s of it sold
         //
-        // A stage-2 objective that adds items/s to millibuckets/s reads this as 10.6 < 530 and takes
-        // A - which also burns 3.12/s of oak wood where B burns 1/s. Dividing each external by its
-        // own port's per-craft quantity makes both readings fractions of a craft instead:
-        //
-        // A voids at the oven's charcoal output, 20/craft -> 10.6/20 = 0.53 of an oven craft
-        // B voids at the centrifuge's nitrogen output, 3120 -> 530/3120 = 0.17 of a centrifuge craft
-        //
-        // Note these are crafts of DIFFERENT machines, so this is a real comparison and not the
-        // exact tie it looks like from the oven's side alone (the oven draws 1000 nitrogen/craft,
-        // which is what makes 10.6 and 530 the same slack seen from the oven). B wins on 0.17 <
-        // 0.53. Because that margin rests on a debatable choice of yardstick, A is still offered -
-        // see AlternativesTest.
+        // Spare goes on to every machine that takes it and is sold only where nothing further on
+        // can: the oven takes all the nitrogen, and the second oven, pinned, is the brick wall. So A,
+        // burning 3.12/s of oak wood, which the plan takes in for nothing.
         final LoadedChart chart = GtnhFlowLoader.load("excess_choice");
         final SolutionView s = solve(chart);
 
         assertEquals(1, s.openGates, "exactly one gated external");
         assertEquals(0, s.gatedSources.size(), "nothing is imported");
-        assertEquals(1, s.gatedSinks.size(), "the surplus is voided in one place");
+        assertEquals(1, s.gatedSinks.size(), "the surplus is sold in one place");
 
         final External sink = s.gatedSinks.get(0);
         assertEquals(
-            chart.machine(0).id,
+            chart.machine(1).id,
             sink.port()
                 .nodeId(),
-            "the surplus is voided at the centrifuge's nitrogen output, not at the oven's charcoal");
-        assertEquals(530.0, sink.ratePerSecond(), EPS, "530/s nitrogen voided");
+            "the surplus is sold at the oven's charcoal, not at the centrifuge's nitrogen");
+        assertEquals(10.6, sink.ratePerSecond(), EPS, "10.6/s charcoal sold");
 
-        assertEquals(
-            0.25,
-            s.extentsPerSecond.get(chart.machine(1).id),
-            EPS,
-            "the oven runs to the charcoal demand, not to the nitrogen supply");
-        assertEquals(1.0, terminalRate(chart, s.terminalInputs, "oak wood"), EPS, "and burns 1/s of wood, not 3.12");
-
-        // The margin the answer rests on, spelled out so a fixture drift shows up here rather than
-        // as a mysterious flip: 0.17 of a centrifuge craft against 0.53 of an oven craft.
-        assertTrue(530.0 / 3120.0 < 10.6 / 20.0, "voiding nitrogen wastes the smaller fraction of a craft");
+        assertEquals(0.78, s.extentsPerSecond.get(chart.machine(1).id), EPS, "the oven runs on all the nitrogen");
+        assertEquals(3.12, terminalRate(chart, s.terminalInputs, "oak wood"), EPS, "and burns 3.12/s of wood");
     }
 
     @Test
-    void symmetricChoice_twoOptimaNoObjectiveCanSeparate() {
-        // The fixture for the variant selector. Both furnaces are pinned at 1 craft/s and the final
-        // assembler is pinned, so the two benders satisfy x + y = 1.5 and exactly one branch runs
-        // below full. Voiding 5/s of alpha ingot and voiding 5/s of beta ingot are the same
-        // solution with the branches relabelled: one gate each, 0.5 crafts voided each, 30/s of
-        // internal flow each. Voiding plate instead ties on the first two and loses on the third
-        // (40/s), so it is dominated rather than an alternative.
-        //
-        // Which of the two comes back is decided by node ordering and nothing else - list the beta
-        // branch first and the answer flips. That is what makes this the case to test a chooser
-        // against: there is no number left to prefer one by, so the only honest move is to ask.
+    void symmetricChoice_bothBendersRunAndPlateIsSold() {
+        // Both furnaces are pinned at 1 craft/s and the final assembler is pinned, so plate demand
+        // is 15/s against 20/s the benders could make. Selling 5/s of either ingot at its furnace
+        // leaves one bender at half; running both benders on all the ingot and selling 5/s of plate
+        // sends the spare as far down the line as it goes, to the brick wall the pinned assembler is.
         final LoadedChart chart = GtnhFlowLoader.load("symmetric_choice");
         final SolutionView s = solve(chart);
 
         assertEquals(1, s.openGates, "exactly one gated external");
-        assertEquals(1, s.gatedSinks.size(), "voided in one place");
-        assertEquals(30.0, s.totalInternalFlow, EPS, "30/s of internal flow, whichever branch is chosen");
+        assertEquals(1, s.gatedSinks.size(), "sold in one place");
+        assertEquals(
+            35.0,
+            s.totalInternalFlow,
+            EPS,
+            "every ingot goes on, 10/s each, and 15/s of plate to the assembler");
 
         final External sink = s.gatedSinks.get(0);
-        assertEquals(5.0, sink.ratePerSecond(), EPS, "5/s of an ingot voided");
-        // Deliberately not asserting WHICH: pinning that down would freeze an arbitrary tie-break
-        // into a ground truth, and the whole point of this chart is that both are correct.
-        final UUID voidedAt = sink.port()
+        assertEquals(5.0, sink.ratePerSecond(), EPS, "5/s of plate sold");
+        final UUID soldAt = sink.port()
             .nodeId();
         assertTrue(
-            voidedAt.equals(chart.machine(0).id) || voidedAt.equals(chart.machine(1).id),
-            "voided at one of the two furnaces, not on the plate line");
+            soldAt.equals(chart.machine(2).id) || soldAt.equals(chart.machine(3).id),
+            "sold at a bender, not at a furnace");
         assertAllMachinesRun(chart, s);
     }
 
@@ -368,14 +347,15 @@ class GroundTruthTest {
     }
 
     @Test
-    void palladiumLine_atMostElevenGates_allMachinesRun_withinBudget() {
-        // 56 machines. All must run (stage 0 floors). Gate counts on floored charts are
-        // floor-sensitive, so the bound is 11, not an exact count. Hard requirements: a
-        // validated solution, every machine running, inside the interactive budget.
+    void palladiumLine_runsWhatThePinNeeds_withinBudget() {
+        // 56 machines and one pin, palladium dust. The platinum, rhodium, iridium and osmium branches
+        // are neither fed by nor needed for it, so nothing sets their speed: they stay at zero and
+        // ask for a count. Hard requirements: a validated solution that says so, a few trades,
+        // inside the interactive budget.
         final LoadedChart chart = GtnhFlowLoader.load("palladium_line");
         final SolutionView s = solve(chart);
 
-        assertAllMachinesRun(chart, s);
+        assertIdleOnlyWhereUnneeded(chart, s);
         assertTrue(s.openGates > 0, "palladium line cannot balance gate-free");
         assertTrue(s.openGates <= 11, "at most 11 externals, got " + s.openGates);
         assertTrue(s.wallMillis < 60_000, "total wall " + s.wallMillis + "ms");
@@ -383,13 +363,12 @@ class GroundTruthTest {
 
     @Test
     void platline230_atMostTwoGates() {
-        // The sink/source pair on one machine balances it with two gates, so a third means a gate
-        // certificate the LP never confirmed.
-        // FIXME: one gate (a source alone) is feasible; big-M sized from the filter's scale cuts it off.
+        // The pinned platinum line needs ammonia; it buys the hydrogen to make it and sells the
+        // palladium salt its palladium loop has spare: two gates.
         final LoadedChart chart = GtnhFlowLoader.load("230_platline");
         final SolutionView s = solve(chart);
 
-        assertAllMachinesRun(chart, s);
+        assertIdleOnlyWhereUnneeded(chart, s);
         assertTrue(s.openGates <= 2, "at most 2 externals, got " + s.openGates);
     }
 
@@ -454,14 +433,16 @@ class GroundTruthTest {
     }
 
     @Test
-    void everyMachineWiredToAPinRuns() {
-        // Stage 0 is a constraint, not a preference: a chart whose machines cannot all run is
-        // reported as unbalanceable. A solved chart with a machine parked at zero is the failure
-        // this guards - it reads on screen as a working plan with a dead machine in it.
+    void aMachineRunsUnlessNothingPinnedFeedsOrNeedsIt() {
+        // A machine left at zero must say so - it asks for a count - and a plan whose machines all
+        // lie on a pin's way must run every one: a solved chart with an unexplained dead machine
+        // reads on screen as a working plan with a broken machine in it.
         for (final String name : GtnhFlowLoader.CORPUS) {
             final LoadedChart chart = GtnhFlowLoader.load(name);
-            final Answer result = solveWith(chart.graph());
-            assertAllMachinesRun(chart, solved(result, name));
+            final SolutionView s = solved(solveWith(chart.graph()), name);
+            assertIdleOnlyWhereUnneeded(chart, s);
+            if (!Set.of("palladium_line", "palladium", "230_platline")
+                .contains(name)) assertAllMachinesRun(chart, s);
         }
     }
 
@@ -526,7 +507,7 @@ class GroundTruthTest {
                         Math.max(1e-6, seen * 1e-4),
                         () -> name + " @" + f + " changed external quantity at the same gate count");
                 }
-                assertAllMachinesRun(chart, s);
+                assertIdleOnlyWhereUnneeded(chart, s);
             }
             final int low = minGates;
             final int high = maxGates;
@@ -657,6 +638,17 @@ class GroundTruthTest {
             pins.put(node.id, pin.value() / TestIngredients.quantityOf(node.outputs.get(pin.outputIndex())));
         }
         return pins;
+    }
+
+    /** Every machine the answer leaves at zero is one it reports as needing a count, and none it runs is. */
+    private static void assertIdleOnlyWhereUnneeded(final LoadedChart chart, final SolutionView s) {
+        for (final Node machine : chart.machines()) {
+            final boolean idle = s.extentsPerSecond.get(machine.id) <= 1e-9;
+            assertEquals(
+                idle,
+                s.unneeded.contains(machine.id),
+                machine.machineName + (idle ? " is idle but not reported" : " runs but is reported idle"));
+        }
     }
 
     private static void assertAllMachinesRun(final LoadedChart chart, final SolutionView s) {

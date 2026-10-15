@@ -12,7 +12,8 @@ import javax.annotation.Nullable;
  * transcribed from TileEntityCropSticks, MTECropManager and MTEIndustrialFarm in the GTNH 2.9 pack): how fast it grows
  * on what food, what it drops a harvest, and the two machines that harvest it, the Crop Manager (a single block
  * working real crop sticks) and the Industrial Farm (a multiblock that simulates them). A crop card's machine count
- * is the number of crops planted; the harvesters follow from it. Pure: the game side is machines/game/CropCards.
+ * is the number of crops planted; the harvesters follow from it ({@link #machineCount}), and they are what the plan
+ * builds wherever machines are counted. Pure: the game side is machines/game/CropCards.
  *
  * <p>
  * Settings are kept under the website's own keys (its control ids), so plans go between the two unchanged; the
@@ -236,6 +237,14 @@ public final class CropsNh {
         return (int) Math.ceil((double) crops / cropsPerMachine(setup));
     }
 
+    /**
+     * The whole crops a card's count plants: a solved count rounds up, as the website takes its solved seeds
+     * (ceil(required - 0.000001)), so 2601.2 crops are 2602 and fill a second farm.
+     */
+    public static long seeds(final double crops) {
+        return crops > 0 && Double.isFinite(crops) ? (long) Math.ceil(crops - 0.000001) : 0;
+    }
+
     /** The farm's upgrade slots: clamp(tier - MV + 1, 1, 12). */
     public static int upgradeSlots(final int tier) {
         return clamp(tier - SEED_BED_MIN + 1, 1, 1 + SEED_BED_MAX - SEED_BED_MIN);
@@ -362,6 +371,7 @@ public final class CropsNh {
     /**
      * The solver's multiplier for one output: the crop's expected drop at the card's gain over the reference's, times
      * the harvester's drop rounds; 0 when it never grows, or when only the farm can grow it and a Crop Manager has it.
+     * An item the table lists more than once has its drops taken together.
      */
     public static double outputMultiplier(final Stats stats, final Map<String, ?> settings, final String dropId) {
         final Setup setup = setup(settings, stats);
@@ -369,12 +379,15 @@ public final class CropsNh {
         final Environment env = harvesterEnvironment(setup, environment(settings));
         if (growthRate(stats, env) <= 0) return 0;
         final double rounds = harvestRoundMultiplier(setup);
-        Drop drop = null;
+        double reference = 0, current = 0;
+        boolean found = false;
         for (final Drop d : stats.drops()) if (d.id()
-            .equals(dropId)) drop = d;
-        if (drop == null) return rounds;
-        final double reference = expectedDrop(stats, REFERENCE.gain(), drop);
-        final double current = expectedDrop(stats, env.gain(), drop);
+            .equals(dropId)) {
+                found = true;
+                reference += expectedDrop(stats, REFERENCE.gain(), d);
+                current += expectedDrop(stats, env.gain(), d);
+            }
+        if (!found) return rounds;
         return (reference > 0 ? current / reference : 1) * rounds;
     }
 

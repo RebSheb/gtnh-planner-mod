@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,8 @@ import com.gtnhplanner.data.flowchart.Graph;
  * Reports from the Feedback box: a bug, an idea or a call for help, with how the player feels, their words, the plans
  * they pick (as the library's plan JSON), a picture of the open plan, and if they agree the end of the game log and a
  * crash report. The site opens each as a public issue on the planner's GitHub repo and answers its link, so no one
- * needs a GitHub account. Names, the home folder and addresses are taken out of the log and the crash report first.
+ * needs a GitHub account. Names, the home folder, addresses and the chat are taken out of the log and the crash report
+ * first, and both are cut to fit in the issue beside the player's words ({@link ReportText}).
  */
 public final class Reports {
 
@@ -71,8 +73,19 @@ public final class Reports {
 
     /** The widest picture sent: enough to see the plan, small enough to send. */
     private static final int PICTURE_MAX_W = 1600;
-    /** How much of the log goes: its last lines, at most this many characters. */
-    private static final int LOG_LINES = 200, TEXT_MAX = 50_000;
+    /** How much of the log goes: its last lines (chat left out). */
+    private static final int LOG_LINES = 200;
+    /**
+     * The longest issue the site makes (its BODY_MAX; GitHub refuses one over 65,536 characters). The site cuts what
+     * runs past it off the end, where the crash report and the versions are.
+     */
+    static final int ISSUE_MAX = 60_000;
+    /** What the issue holds besides the words, the log and the crash report: its first line, the picture, the folds. */
+    static final int ISSUE_FRAME = 2_000;
+    /** The crash report's part, at most: room for its error, its details and its log's last warnings. */
+    static final int CRASH_MAX = 24_000;
+    /** The log's, at most (the site takes 60,000). */
+    static final int LOG_MAX = 50_000;
 
     private static final ExecutorService NET = Executors.newSingleThreadExecutor(r -> {
         final Thread t = new Thread(r, "GTNH Planner reports");
@@ -116,10 +129,9 @@ public final class Reports {
             "title",
             r.title()
                 .trim());
-        o.addProperty(
-            "description",
-            r.description()
-                .trim());
+        final String description = r.description()
+            .trim();
+        o.addProperty("description", description);
         o.addProperty("deviceId", Account.deviceId());
         o.add("versions", versions());
         final JsonArray plans = new JsonArray();
@@ -130,12 +142,41 @@ public final class Reports {
             plans.add(p);
         }
         o.add("plans", plans);
+        // The crash report goes first: its error is what the report is for. The log has the room left.
+        int room = room(description);
+        if (r.crash() != null) {
+            final String crash = crash(r.crash(), Math.min(CRASH_MAX, room));
+            o.addProperty("crash", crash);
+            room -= crash.length();
+        }
         if (r.log()) {
-            final String log = logTail();
+            final String log = logTail(Math.min(LOG_MAX, room));
             if (!log.isEmpty()) o.addProperty("log", log);
         }
-        if (r.crash() != null) o.addProperty("crash", cut(redact(r.crash())));
         return o;
+    }
+
+    /**
+     * Room in the issue for the log and the crash report beside the player's words, which the site writes out with a
+     * character more for each @ and # (so they mention no one).
+     */
+    static int room(final String description) {
+        int words = description.length();
+        for (int i = 0; i < description.length(); i++) {
+            final char c = description.charAt(i);
+            if (c == '@' || c == '#') words++;
+        }
+        return Math.max(0, ISSUE_MAX - ISSUE_FRAME - words);
+    }
+
+    /** The crash report as it goes: what matters of it, names and addresses taken out, in {@code max} characters. */
+    static String crash(final String report, final int max) {
+        return crash(report, max, Reports::redact);
+    }
+
+    static String crash(final String report, final int max, final UnaryOperator<String> redact) {
+        // Taking names out can lengthen the text a little ("Bob" becomes "<player>"): leave room for that.
+        return ReportText.keepStart(redact.apply(ReportText.crash(report, max - max / 20)), max);
     }
 
     /** The versions that matter to a fix: the planner's, the pack's, Java's and the system's. */
@@ -148,20 +189,20 @@ public final class Reports {
         return v;
     }
 
-    /** The end of the game's log, names and addresses taken out. */
-    static String logTail() {
+    /** The end of the game's log, without the chat, names and addresses taken out, in {@code max} characters. */
+    static String logTail(final int max) {
         final File logs = new File(Minecraft.getMinecraft().mcDataDir, "logs");
         File f = new File(logs, "latest.log");
         if (!f.isFile()) f = new File(logs, "fml-client-latest.log");
         if (!f.isFile()) return "";
         try {
-            return cut(redact(tail(f, LOG_LINES)));
+            return cut(redact(tail(f, LOG_LINES)), max);
         } catch (final IOException e) {
             return "";
         }
     }
 
-    /** The last {@code lines} lines of a file, read from its end. */
+    /** The last {@code lines} lines of a log, read from its end, the chat left out. */
     static String tail(final File f, final int lines) throws IOException {
         try (RandomAccessFile in = new RandomAccessFile(f, "r")) {
             final long length = in.length();
@@ -175,7 +216,8 @@ public final class Reports {
                     text.replace("\r", "")
                         .split("\n")));
             if (chunk < length && !all.isEmpty()) all.remove(0);
-            return String.join("\n", all.subList(Math.max(0, all.size() - lines), all.size()));
+            final List<String> kept = ReportText.withoutChat(all);
+            return String.join("\n", kept.subList(Math.max(0, kept.size() - lines), kept.size()));
         }
     }
 
@@ -226,9 +268,11 @@ public final class Reports {
         }
     }
 
-    /** Text cut to what the site takes, keeping its end (where the error is). */
-    static String cut(final String text) {
-        return text.length() <= TEXT_MAX ? text : "...\n" + text.substring(text.length() - TEXT_MAX + 4);
+    /** Text cut to {@code max} characters, keeping its end (the latest lines). */
+    static String cut(final String text, final int max) {
+        if (text.length() <= max) return text;
+        if (max <= 4) return "";
+        return "...\n" + text.substring(text.length() - max + 4);
     }
 
     /** The picture as PNG, in base64, no wider than the site needs. */

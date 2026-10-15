@@ -23,8 +23,25 @@ public class ResourceProperty<T> extends SummaryProperty<T> {
 
     @lombok.Builder.Default
     private final BiPredicate<T, T> connectionChecker = (a, b) -> true;
+    /**
+     * Whether two values are the same resource, so two outputs of them are one: stricter than connecting, which lets
+     * an item go to anything sharing an ore name with it. Null: as {@link #canConnect}.
+     */
+    @lombok.Builder.Default
+    @Nullable
+    private final BiPredicate<T, T> sameChecker = null;
     @lombok.Builder.Default
     private final ToIntFunction<T> hashCodeExtractor = Objects::hashCode;
+
+    /**
+     * The value as a resource key (an item's {@code item:<registry name>:<meta>}, a fluid's {@code fluid:<name>}): what
+     * a card's pick among an input's items is saved as.
+     */
+    @lombok.Builder.Default
+    private final Function<T, String> keyExtractor = String::valueOf;
+    /** A copy of a value a port can own (its amount is written into it). */
+    @lombok.Builder.Default
+    private final java.util.function.UnaryOperator<T> copier = v -> v;
 
     @lombok.Builder.Default
     private final Function<T, ItemStack> displayStackProvider = (v) -> null;
@@ -59,8 +76,22 @@ public class ResourceProperty<T> extends SummaryProperty<T> {
         return connectionChecker.test(a, b);
     }
 
+    /** Whether two values are the same resource (see {@link #sameChecker}). */
+    public boolean same(final T a, final T b) {
+        return sameChecker != null ? sameChecker.test(a, b) : connectionChecker.test(a, b);
+    }
+
     public int hashValue(final T value) {
         return hashCodeExtractor.applyAsInt(value);
+    }
+
+    /** The value's resource key; see {@link #keyExtractor}. */
+    public String key(final T value) {
+        return keyExtractor.apply(value);
+    }
+
+    public T copy(final T value) {
+        return copier.apply(value);
     }
 
     /** The ItemStack recipe viewers (NEI) show for this value; null if it has none. */

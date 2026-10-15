@@ -74,6 +74,59 @@ class CrashReportsTest {
             "another mod's ModularUI screen is not the planner's");
     }
 
+    /** NEI's layout crash in another screen, laid out through the planner's style as every screen was before. */
+    private static final String NEI_LAYOUT = """
+        ---- Minecraft Crash Report ----
+        Description: Rendering screen
+
+        java.lang.IndexOutOfBoundsException: Index: -1, Size: 81
+        \tat java.util.ArrayList.get(ArrayList.java:427)
+        \tat codechicken.nei.bookmark.BookmarkGrid.getMask(BookmarkGrid.java:300)
+        \tat codechicken.nei.BookmarkPanel.resize(BookmarkPanel.java:400)
+        \tat codechicken.nei.LayoutStyleMinecraft.layout(LayoutStyleMinecraft.java:122)
+        \tat com.gtnhplanner.nei.FlowchartLayoutStyle.layout(FlowchartLayoutStyle.java:39)
+        \tat codechicken.nei.LayoutManager.layout(LayoutManager.java:395)
+        \tat codechicken.nei.LayoutManager.renderObjects(LayoutManager.java:275)
+        \tat com.cleanroommc.modularui.screen.GuiContainerWrapper.drawScreen(GuiContainerWrapper.java:100)
+
+
+        A detailed walkthrough of the error, its code path and all known details is as follows:
+        -- System Details --
+        Details:
+        """;
+
+    @Test
+    void neiLaidOutThroughThePlannerIsNeisWhenThePlannerIsShut() {
+        // As in #494: NEI's own crash (its bookmarks, on GTNH 2.9.0-RC-1) in another screen, offered as the planner's.
+        assertFalse(CrashReports.plannerAtFault(NEI_LAYOUT + "\tGTNH Planner: 0.2.0, screen MetaTileEntityGui\n"));
+        assertTrue(
+            CrashReports.plannerAtFault(
+                NEI_LAYOUT + "\tGTNH Planner: 0.2.0, plan 'x' (1 cards, 0 drawers), the planner open\n"),
+            "on the board the layout is the planner's");
+    }
+
+    @Test
+    void onlyThePlannersOwnLineSaysItWasOpen() {
+        final String toolkit = """
+            ---- Minecraft Crash Report ----
+            Description: Rendering screen
+
+            java.lang.NullPointerException: oops
+            \tat Launch//com.cleanroommc.modularui.screen.ModularPanel.draw(ModularPanel.java:10)
+
+
+            A detailed walkthrough of the error, its code path and all known details is as follows:
+            -- System Details --
+            Details:
+            \tGTNH Planner: 0.2.0, plan 'x' (1 cards, 0 drawers), screen MetaTileEntityGui
+
+            Complete log:
+            [10:00:00] [Client thread/FATAL]: \tGTNH Planner: 0.2.0, plan 'x' (1 cards, 0 drawers), the planner open
+            """;
+        assertFalse(CrashReports.plannerOpen(toolkit), "an earlier crash in the log is not this one");
+        assertFalse(CrashReports.plannerAtFault(toolkit));
+    }
+
     @Test
     void theErrorInALine() {
         assertEquals(

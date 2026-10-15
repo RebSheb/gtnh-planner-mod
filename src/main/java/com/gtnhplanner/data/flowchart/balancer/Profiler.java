@@ -45,9 +45,6 @@ public interface Profiler {
     /** A solve produced a point the independent validation rejected; {@code reason} is why. */
     default void pointRejected(final String label, final String reason) {}
 
-    /** The pass-2 "every machine runs" replay ran, with how many machines were idle in pass 1. */
-    default void floorReplay(final int idleBefore) {}
-
     /** The zero-gate fast path committed the point without stages 1-3. */
     default void fastPath() {}
 

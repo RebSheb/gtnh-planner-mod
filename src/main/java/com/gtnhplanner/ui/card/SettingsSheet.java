@@ -2,12 +2,17 @@ package com.gtnhplanner.ui.card;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.cleanroommc.modularui.api.UpOrDown;
 import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.screen.viewport.ModularGuiContext;
 import com.cleanroommc.modularui.theme.WidgetThemeEntry;
 import com.cleanroommc.modularui.widget.Widget;
+import com.gtnhplanner.ui.BoardSession;
+import com.gtnhplanner.ui.canvas.BoardCanvas;
 import com.gtnhplanner.ui.popup.Popup;
 import com.gtnhplanner.ui.theme.Hyb;
 
@@ -28,16 +33,24 @@ public final class SettingsSheet extends Popup {
     /** At most this many settings in one column; more go in two. */
     private static final int ONE_COLUMN = 7;
 
-    private SettingsSheet(final RecipeCard card, final Sheet sheet) {
+    private SettingsSheet(@Nullable final BoardCanvas board, final RecipeCard card, final Sheet sheet) {
         super("gtnhplanner_card_settings", sheet.w, sheet.h);
-        child(new Body(card, this, sheet).pos(0, 0));
+        child(new Body(board, card, this, sheet).pos(0, 0));
     }
 
-    /** Opens the card's settings with its top left at a screen point (nudged onto the screen). */
-    static void open(final RecipeCard card, final int x, final int y) {
+    /**
+     * Opens the card's settings with its top left at a screen point (nudged onto the screen), over the board's own
+     * panel. The sheet follows the card on {@code board} from then on (see {@link Body#card()}).
+     */
+    static void open(final RecipeCard card, @Nullable final BoardCanvas board, final int x, final int y) {
         final CardModel m = card.model();
         if (m == null) return;
-        Popup.open(card.getPanel(), new SettingsSheet(card, Sheet.of(m)), x, y);
+        Popup.open(
+            card.session()
+                .panel(),
+            new SettingsSheet(board, card, Sheet.of(m)),
+            x,
+            y);
     }
 
     @Override
@@ -144,21 +157,50 @@ public final class SettingsSheet extends Popup {
 
     private static final class Body extends Widget<Body> implements Interactable {
 
-        private final RecipeCard card;
+        @Nullable
+        private final BoardCanvas board;
+        /** The card the sheet was opened on, and its id on the board. */
+        private final RecipeCard opened;
+        private final UUID cardId;
+        private final BoardSession session;
         private final SettingsSheet popup;
         private Sheet sheet;
 
-        Body(final RecipeCard card, final SettingsSheet popup, final Sheet sheet) {
-            this.card = card;
+        Body(@Nullable final BoardCanvas board, final RecipeCard card, final SettingsSheet popup, final Sheet sheet) {
+            this.board = board;
+            this.opened = card;
+            this.cardId = card.nodeId;
+            this.session = card.session();
             this.popup = popup;
             this.sheet = sheet;
             size(sheet.w, sheet.h);
         }
 
-        /** Reads the settings afresh; when some come or go (a multiblock's own appear when it is one), resizes. */
+        /**
+         * The card as the board has it now; null once it is gone (deleted, undone, another plan). The sheet stays open
+         * while settings change, and a change that adds or takes away a port (a boiler's fuel) has the board build
+         * every card afresh: the one the sheet opened on is then on no panel, ModularUI throws when it is asked for
+         * one, and its model is no longer the plan's (issue 492).
+         */
+        @Nullable
+        private RecipeCard card() {
+            final RecipeCard live = board != null ? board.cards()
+                .get(cardId) : opened;
+            return live != null && live.isValid() ? live : null;
+        }
+
+        /**
+         * Reads the settings afresh; when some come or go (a multiblock's own appear when it is one), resizes. Closes
+         * once its card is gone.
+         */
         @Override
         public void onUpdate() {
             super.onUpdate();
+            final RecipeCard card = card();
+            if (card == null) {
+                popup.closeIfOpen();
+                return;
+            }
             final CardModel m = card.model();
             if (m == null) return;
             final Sheet next = Sheet.of(m);
@@ -197,7 +239,8 @@ public final class SettingsSheet extends Popup {
 
         @Override
         public void draw(final ModularGuiContext context, final WidgetThemeEntry<?> widgetTheme) {
-            final CardModel m = card.model();
+            final RecipeCard card = card();
+            final CardModel m = card == null ? null : card.model();
             if (m == null) return;
             final Line hot = lineAtMouse();
             final int mx = mouseX();
@@ -438,11 +481,7 @@ public final class SettingsSheet extends Popup {
             final SettingControls.Control c = l.control();
             final int x = l.x(), y = l.y();
             if (hot && c.enabled()) Hyb.rect(x + 1, y, COL - 2, ROW, 0x0DFFFFFF);
-            final boolean pinned = SettingPins.pinned(
-                card.session()
-                    .graph(),
-                m,
-                c);
+            final boolean pinned = SettingPins.pinned(session.graph(), m, c);
             pinGlyph(x + 6, y + 4, pinned ? Hyb.LIT : hot && mx < 16 ? Hyb.INK : hot ? Hyb.MUTED : 0xFF44474F);
             final int[] box = controlBox(c);
             int lx = x + 18;
@@ -549,17 +588,14 @@ public final class SettingsSheet extends Popup {
         @Override
         public Result onMousePressed(final int mouseButton) {
             final Line l = lineAtMouse();
-            final CardModel m = card.model();
+            final RecipeCard card = card();
+            final CardModel m = card == null ? null : card.model();
             if (l == null || m == null || mouseButton > 1) return Result.ACCEPT;
             final SettingControls.Control c = l.control();
             final int mx = mouseX() - l.x();
             if (mx < 16) {
                 if (mouseButton == 0) {
-                    SettingPins.toggle(
-                        card.session()
-                            .graph(),
-                        m,
-                        c);
+                    SettingPins.toggle(session.graph(), m, c);
                     Hyb.click();
                 }
                 return Result.SUCCESS;
@@ -579,7 +615,8 @@ public final class SettingsSheet extends Popup {
         @Override
         public boolean onMouseScroll(final UpOrDown direction, final int amount) {
             final Line l = lineAtMouse();
-            if (l == null) return false;
+            final RecipeCard card = card();
+            if (l == null || card == null) return false;
             final SettingControls.Control c = l.control();
             if (!c.enabled() || c.type() == SettingControls.Type.READING) return false;
             card.stepSetting(c, direction == UpOrDown.UP ? 1 : -1);

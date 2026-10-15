@@ -3,7 +3,6 @@ package com.gtnhplanner.machines.web;
 import static com.gtnhplanner.machines.web.MachineControls.*;
 import static com.gtnhplanner.machines.web.MachineTable.*;
 
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,8 +30,7 @@ final class MachineTableEntries {
         .hidesControls(PIPE);
 
     private static boolean distillery(final Context c) {
-        return c.recipeMap != null && c.recipeMap.toLowerCase(Locale.ROOT)
-            .equals("distillery");
+        return DangoteDistillus.distillery(c.recipeMap);
     }
 
     static void register(final Map<String, Behaviour> machines) {
@@ -654,18 +652,25 @@ final class MachineTableEntries {
                 .parallels(c -> c.voltageTier * (c.tier(LATEX_SINGULARITY) == 1 ? 16 : 8))
                 .controls(LATEX_SINGULARITY_CONTROL)
                 .note("Rubber cost discounts are not counted."));
-        // MTEAdvDistillationTower: mode follows the recipe map; Java charges 15% EU in distillery mode.
+        // MTEAdvDistillationTower: mode follows the recipe map; Java charges 15% EU in distillery mode. The height is
+        // ours (DangoteDistillus): the website assumes 12 layers, the setting's default.
         machines.put(
-            "Dangote Distillus",
+            DangoteDistillus.MACHINE,
             machine().overclock(normal())
                 .speed(c -> distillery(c) ? 2 : 3)
                 .power(c -> distillery(c) ? 0.15 : 1)
-                .parallels(c -> distillery(c) ? 8 * c.voltageTier : 12)
+                .parallels(
+                    c -> DangoteDistillus.parallels(
+                        distillery(c),
+                        c.voltageTier,
+                        DangoteDistillus.height(c.value(DangoteDistillus.HEIGHT))))
+                .controlsFor(DangoteDistillus::controls)
                 .recipeTierFromBase()
                 .hidesControls("machineParallel", "voltageParallel")
                 .note(
-                    "Distillery mode assumes 12 layers: 8 parallels per voltage tier. Tower mode has 12 parallels. "
-                        + "Power comes from ordinary energy hatches; multi-amp and laser hatches are not supported."));
+                    "Distillery mode: 2 parallels per voltage tier for every 3 layers of height, 8 at the full 12. "
+                        + "Tower mode has 12 parallels. Power comes from ordinary energy hatches; multi-amp and laser "
+                        + "hatches are not supported."));
         // goodgenerator's MTEExtremeHeatExchanger: a fixed 20-tick cycle draining up to the recipe's hot fluid once
         // per cycle, so the recipe's amounts are per second. No energy hatch, parallels or overclocks.
         machines.put(

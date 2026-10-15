@@ -88,11 +88,11 @@ class BalanceViewTest {
         final List<Boundary> voided = of(flows, Kind.EXCESS);
         assertEquals(1, voided.size());
         assertEquals(
-            "nitrogen",
+            "charcoal",
             voided.get(0)
                 .ingredient());
         assertEquals(
-            530.0,
+            10.6,
             voided.get(0)
                 .ratePerSecond(),
             1e-4);
@@ -108,7 +108,7 @@ class BalanceViewTest {
             of(flows, Kind.PRODUCT).stream()
                 .noneMatch(
                     b -> b.ingredient()
-                        .equals("nitrogen")),
+                        .equals("charcoal")),
             "and is not double-counted as a separate product line");
         assertTrue(
             of(flows, Kind.PRODUCT).stream()
@@ -163,13 +163,13 @@ class BalanceViewTest {
 
     @Test
     void theHeuristicThatPickedTheAnswerIsStatedInWords() {
-        // mk1's default beats its alternative on a constant somebody chose, not on a measurement.
-        // If that sentence ever stops reaching the panel, the tilt is invisible again.
+        // mk1's default leaves a surplus where its alternative imports: the planner buys only what the
+        // pins need. If that sentence ever stops reaching the panel, the rule that chose is invisible.
         final Graph graph = chart("mk1");
         final Alternatives a = alternatives(graph);
         final Alternative alternative = onlyOption(a.options(), o -> !o.isCurrent());
         assertEquals(
-            SolverMessage.REASON_IMPORTS_INSTEAD,
+            SolverMessage.REASON_BUYS_MORE,
             alternative.toNote()
                 .message());
 
@@ -236,14 +236,13 @@ class BalanceViewTest {
 
     @Test
     void theReasonMatchesWhichWayTheAnswerLeans() {
-        // Both lose on the same objective - more external quantity - but one throws away and the
-        // other imports, and one sentence cannot honestly describe both.
+        // One loses on selling and the other on buying, and one sentence cannot honestly describe both.
         assertEquals(
-            SolverMessage.REASON_LEAVES_EXCESS,
+            SolverMessage.REASON_SELLS_MORE,
             onlyOption(alternatives(chart("excess_choice")).options(), o -> !o.isCurrent()).toNote()
                 .message());
         assertEquals(
-            SolverMessage.REASON_IMPORTS_MORE,
+            SolverMessage.REASON_BUYS_MORE,
             onlyOption(alternatives(chart("loopGraph")).options(), o -> !o.isCurrent()).toNote()
                 .message());
     }

@@ -20,6 +20,7 @@ import com.gtnhplanner.GtnhPlanner;
 import com.gtnhplanner.Tags;
 import com.gtnhplanner.data.flowchart.Graph;
 import com.gtnhplanner.data.flowchart.Plan;
+import com.gtnhplanner.library.ReportText;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.ICrashCallable;
@@ -50,7 +51,7 @@ public final class CrashReports {
 
                 @Override
                 public String getLabel() {
-                    return "GTNH Planner";
+                    return LABEL;
                 }
 
                 @Override
@@ -116,24 +117,46 @@ public final class CrashReports {
 
     /**
      * Whether the error that ended the game ran through the planner: one of its frames in the report's first stack
-     * trace (before the walkthrough, which also lists every thread and mod).
+     * trace (before the walkthrough, which also lists every thread and mod). NEI laid out every screen through the
+     * planner's layout before 0.2.0-alpha.6, so with the planner shut that frame is NEI's own work (#494: an NEI
+     * bookmark crash was offered as the planner's).
      */
     public static boolean plannerAtFault(final String report) {
-        final int walkthrough = report.indexOf("A detailed walkthrough of the error");
+        final int walkthrough = report.indexOf(ReportText.WALKTHROUGH);
         final String head = walkthrough > 0 ? report.substring(0, walkthrough) : report;
+        final boolean open = plannerOpen(report);
         boolean toolkit = false;
         for (final String line : head.split("\n")) {
             final String t = line.trim();
             if (!t.startsWith("at ")) continue;
-            if (t.contains("gtnhplanner")) return true;
+            if (t.contains("gtnhplanner") && (open || !t.contains(NEI_LAYOUT))) return true;
             toolkit |= t.contains("cleanroommc.modularui");
         }
         // The planner's screens are drawn by ModularUI: its errors there are the planner's too.
-        return toolkit && report.contains(PLANNER_OPEN);
+        return toolkit && open;
     }
 
-    /** What the planner's section of a crash report says while its screen is up. */
-    static final String PLANNER_OPEN = "the planner open";
+    /** The planner's layout of NEI's panels. */
+    private static final String NEI_LAYOUT = "com.gtnhplanner.nei.FlowchartLayoutStyle.layout";
+
+    /**
+     * Whether the planner was up when the game crashed, as its line in the report's details says (never anything in
+     * the log GTNH's reports end with, which can hold any text, an earlier crash report too).
+     */
+    static boolean plannerOpen(final String report) {
+        final int walkthrough = Math.max(0, report.indexOf(ReportText.WALKTHROUGH));
+        int end = report.indexOf("\nComplete log:", walkthrough);
+        if (end < 0) end = report.length();
+        for (final String line : report.substring(walkthrough, end)
+            .split("\n")) {
+            final String t = line.trim();
+            if (t.startsWith(LABEL + ":")) return t.endsWith(PLANNER_OPEN);
+        }
+        return false;
+    }
+
+    /** The planner's section of a crash report: its label, and what it says while its screen is up. */
+    static final String LABEL = "GTNH Planner", PLANNER_OPEN = "the planner open";
 
     /** The error in a line: the exception and its message, under the report's description. */
     public static String summary(final String report) {

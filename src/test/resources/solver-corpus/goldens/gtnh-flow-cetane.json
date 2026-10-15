@@ -26,10 +26,10 @@
       "0fe9ba73-0a17-3717-9e69-b82bcef24104": 10.0,
       "12e02d90-bfb4-3b1f-9194-0ad56beb4ede": 10.0,
       "4a6eaea9-7f5e-3baf-8fdc-c73b8ea9b223": 80.0,
-      "6ba0f54f-58b1-3086-80b2-dcd22836c015": 4.9998779375,
-      "70739c3a-325e-39d7-b869-cd97086e03e8": 1.220625E-4,
+      "6ba0f54f-58b1-3086-80b2-dcd22836c015": 5.00000000000001,
+      "70739c3a-325e-39d7-b869-cd97086e03e8": 0.0,
       "707dac55-7a39-3fe3-8690-66bd5d4d5fc9": 80.0,
-      "8002ffbb-1338-3a2f-a4e2-00899351ff66": 5.0,
+      "8002ffbb-1338-3a2f-a4e2-00899351ff66": 5.00000000000001,
       "d467fce0-ceaf-30b6-be9d-28235bd70154": 1000.0,
       "d659f80f-f797-32f4-9703-ff38121b084e": 20.0,
       "ee6f25e0-c1ed-37c8-b169-dd73d7d8d678": 1000.0
@@ -42,7 +42,7 @@
           "portIndex": 1.0,
           "input": false
         },
-        "ratePerSecond": 75.0001220625
+        "ratePerSecond": 74.99999999999999
       },
       {
         "port": {
@@ -50,7 +50,7 @@
           "portIndex": 1.0,
           "input": false
         },
-        "ratePerSecond": 89.99987793750002
+        "ratePerSecond": 90.00000000000001
       }
     ],
     "terminalInputs": [
@@ -161,10 +161,10 @@
         "ratePerSecond": 1500000.0
       }
     ],
+    "unneeded": [],
     "openGates": 1.0,
     "externalQuantity": 165.0,
     "totalInternalFlow": 2210.0,
-    "floorsUsed": false,
     "notes": [],
     "key": {
       "gateAnchors": [
@@ -198,7 +198,7 @@
                   "portIndex": 1.0,
                   "input": false
                 },
-                "ratePerSecond": 75.0001220625
+                "ratePerSecond": 74.99999999999999
               },
               {
                 "port": {
@@ -206,7 +206,7 @@
                   "portIndex": 1.0,
                   "input": false
                 },
-                "ratePerSecond": 89.99987793750002
+                "ratePerSecond": 90.00000000000001
               }
             ],
             "max": 165.0,
@@ -278,7 +278,7 @@
               "portIndex": 1.0,
               "input": false
             },
-            "ratePerSecond": 75.0001220625
+            "ratePerSecond": 74.99999999999999
           },
           {
             "port": {
@@ -286,10 +286,42 @@
               "portIndex": 1.0,
               "input": false
             },
-            "ratePerSecond": 89.99987793750002
+            "ratePerSecond": 90.00000000000001
           }
         ],
         "rank": "DEFAULT"
+      },
+      {
+        "key": {
+          "gateAnchors": [
+            {
+              "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
+              "portIndex": 1.0,
+              "input": true
+            }
+          ]
+        },
+        "replaces": {
+          "nodeId": "d7b4d405-0f86-3667-a437-55fbe01a2190",
+          "portIndex": 1.0,
+          "input": false
+        },
+        "opens": {
+          "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
+          "portIndex": 1.0,
+          "input": true
+        },
+        "externals": [
+          {
+            "port": {
+              "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
+              "portIndex": 1.0,
+              "input": true
+            },
+            "ratePerSecond": 20.0
+          }
+        ],
+        "rank": "MOVES_LESS"
       },
       {
         "key": {
@@ -354,38 +386,6 @@
           }
         ],
         "rank": "MOVES_MORE"
-      },
-      {
-        "key": {
-          "gateAnchors": [
-            {
-              "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
-              "portIndex": 1.0,
-              "input": true
-            }
-          ]
-        },
-        "replaces": {
-          "nodeId": "d7b4d405-0f86-3667-a437-55fbe01a2190",
-          "portIndex": 1.0,
-          "input": false
-        },
-        "opens": {
-          "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
-          "portIndex": 1.0,
-          "input": true
-        },
-        "externals": [
-          {
-            "port": {
-              "nodeId": "c3ca8ac5-d84d-33c9-bfa1-763ccb0235be",
-              "portIndex": 1.0,
-              "input": true
-            },
-            "ratePerSecond": 20.0
-          }
-        ],
-        "rank": "IMPORTS_INSTEAD"
       }
     ],
     "complete": true,

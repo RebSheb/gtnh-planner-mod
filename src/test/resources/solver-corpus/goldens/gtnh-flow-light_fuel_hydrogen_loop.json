@@ -45,10 +45,10 @@
         "ratePerSecond": 0.00208333333333
       }
     ],
+    "unneeded": [],
     "openGates": 0.0,
     "externalQuantity": 0.0,
     "totalInternalFlow": 31.24999999999999,
-    "floorsUsed": false,
     "notes": [],
     "key": {
       "gateAnchors": []

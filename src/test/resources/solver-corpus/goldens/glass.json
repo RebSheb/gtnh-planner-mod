@@ -142,10 +142,10 @@
         "ratePerSecond": 3.3333333333333335
       }
     ],
+    "unneeded": [],
     "openGates": 9.0,
     "externalQuantity": 130.05933334032704,
     "totalInternalFlow": 376.20066669782017,
-    "floorsUsed": false,
     "notes": [
       {
         "message": "WIRING_UNLINKED",

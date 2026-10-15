@@ -299,7 +299,6 @@ public final class Balancer {
                                 .ports()
                                 .get(0)))]);
             }
-            whole.floorsUsed |= c.floorsUsed;
             whole.stageNotes.addAll(c.notes.subList(c.constructionNotes, c.notes.size()));
             whole.stageNotes.addAll(c.stageNotes);
             whole.unmetDrawers.addAll(c.unmetDrawers);

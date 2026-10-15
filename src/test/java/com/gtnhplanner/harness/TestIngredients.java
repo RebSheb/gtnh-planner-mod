@@ -36,6 +36,8 @@ public final class TestIngredients {
         // test_ingredient" and any test of what a player would read asserts nothing.
         .displayFormatter(i -> i.name)
         .hashCodeExtractor(i -> i.name.hashCode())
+        .keyExtractor(i -> i.name)
+        .copier(i -> new TestIngredient(i.name, i.amount))
         .build();
 
     private TestIngredients() {}
@@ -50,6 +52,18 @@ public final class TestIngredients {
         final int amount = (int) Math.ceil(perCraft);
         final float chance = (float) (perCraft / amount);
         return new Port<>(TEST, new TestIngredient(name, amount), chance);
+    }
+
+    /**
+     * A port of the first name that NEI would let a player change to any of the others (an ore dictionary slot): its
+     * items, its own first.
+     */
+    public static Port<TestIngredient> choice(final double perCraft, final String... names) {
+        final Port<TestIngredient> port = port(names[0], perCraft);
+        final java.util.List<TestIngredient> items = new java.util.ArrayList<>();
+        for (final String name : names) items.add(new TestIngredient(name, 1));
+        port.setAlternatives(items);
+        return port;
     }
 
     public static String nameOf(final Port<?> port) {

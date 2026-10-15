@@ -15,7 +15,8 @@
 #
 # Env: PLANNH_DEV_PORT (25599), PLANNH_RUN_TASK (runClient25), PLANNH_DEV_WIDTH/HEIGHT (1920x1080),
 #      PLANNH_DEV_GUI_SCALE (2), PLANNH_DEV_SOUND (master volume, 0.0 = muted),
-#      PLANNH_GTNH=1 (load GregTech and the pack's recipes; slow first start).
+#      PLANNH_GTNH=1 (load GregTech and the pack's recipes; slow first start),
+#      PLANNH_BEES=1 with it (Forestry and NEI Addons too, for bee cards).
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -96,7 +97,12 @@ start() {
     local run_args=(downgradeMainClasses "$TASK" --console=plain)
     # The GTNH core mod pulls in GregTech and the pack's recipes: ~180 dependencies, a much slower start.
     # Its own world too: a world saved with GregTech asks about missing blocks when opened without it.
-    [ "$GTNH" = 1 ] && run_args=(-PgtnhRecipes "${run_args[@]}" "--mcJvmArgs=-Dgtnhplanner.dev.world=plannh-dev-gtnh")
+    if [ "$GTNH" = 1 ] && [ "${PLANNH_BEES:-0}" = 1 ]; then
+        # Forestry and NEI Addons beside GregTech, for bee cards; a world of its own, as GregTech's has.
+        run_args=(-PgtnhRecipes -PbeesDev "${run_args[@]}" "--mcJvmArgs=-Dgtnhplanner.dev.world=plannh-dev-bees")
+    elif [ "$GTNH" = 1 ]; then
+        run_args=(-PgtnhRecipes "${run_args[@]}" "--mcJvmArgs=-Dgtnhplanner.dev.world=plannh-dev-gtnh")
+    fi
     # The harness listens where this script calls it (another game, the full pack's, may hold the default port).
     [ "$PORT" != 25599 ] && run_args+=("--mcJvmArgs=-Dgtnhplanner.dev.port=$PORT")
     # JetBrains Runtime + HotswapAgent + a JDWP port so `mc.sh swap` can push recompiled classes into the game.

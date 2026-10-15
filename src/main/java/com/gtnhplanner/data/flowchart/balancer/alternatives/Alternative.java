@@ -8,7 +8,6 @@ import com.gtnhplanner.data.flowchart.balancer.ChoiceKey;
 import com.gtnhplanner.data.flowchart.balancer.External;
 import com.gtnhplanner.data.flowchart.balancer.Note;
 import com.gtnhplanner.data.flowchart.balancer.PortRef;
-import com.gtnhplanner.data.flowchart.balancer.SolverMessage;
 
 /**
  * One answer the user may pick. A chart with several open gates poses several independent
@@ -28,19 +27,6 @@ public record Alternative(ChoiceKey key, PortRef replaces, PortRef opens, List<E
     }
 
     public @Nullable Note toNote() {
-        if (this.rank() != Rank.VOIDS_MORE) return this.rank()
-            .toNote();
-        boolean voids = false;
-        boolean imports = false;
-        for (final External e : this.externals()) {
-            if (e.port()
-                .input()) {
-                imports = true;
-            } else {
-                voids = true;
-            }
-        }
-        if (voids && imports) return SolverMessage.REASON_CROSSES_MORE.toNote();
-        return imports ? SolverMessage.REASON_IMPORTS_MORE.toNote() : SolverMessage.REASON_LEAVES_EXCESS.toNote();
+        return rank.toNote();
     }
 }

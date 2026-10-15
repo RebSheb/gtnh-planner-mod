@@ -71,6 +71,11 @@ Left out on purpose: the website's crops (CropsNH, not in the pack) and bees (th
 variants (they agree with the generic path), recipe input overrides, and the Tree Growth Simulator and Bacterial Vat
 (`NodeMath.covers` says no; `machines/game/MachineModels` runs them, already matched to the website).
 
+Added that the website lacks (issue 495): the Dangote Distillus's height (`DangoteDistillus`, `machine:distillusHeight`,
+3 to 12 layers, distillery mode only; 2 parallels per voltage tier per 3 layers, from MTEAdvDistillationTower). Its
+default is the website's assumed 12, so the goldens hold; `MachineGoldensTest` leaves the control out of its settings
+check. The card also reads out the mode, which is the recipe's map. Once the website has the setting, drop this note.
+
 ## A card's settings, as the website's node fields
 
 Stored in the card's settings map under these keys, so plans go both ways unchanged:
