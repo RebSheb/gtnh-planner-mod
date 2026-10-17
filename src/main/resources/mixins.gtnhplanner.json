@@ -12,6 +12,8 @@
         "GuiDrawMixin",
         "GuiScreenShiftMixin",
         "GuiContextMixin",
-        "MuiNeiHandlerMixin"
+        "MuiNeiHandlerMixin",
+        "ItemPanelMixin",
+        "ItemsPanelGridMixin"
     ]
 }

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,31 @@ public class Plan {
     /** The slots' undo histories; transient, so a loaded plan starts with none. */
     private final transient UndoHistories histories = new UndoHistories();
 
+    /**
+     * The account whose cloud plans these are ({@code cloud/session/CloudSession}: kept in the account, saved on every
+     * edit, tabs per device); null for this world's own save.
+     */
+    @Nullable
+    private transient String cloudAccount;
+
     private Plan() {}
+
+    /** A signed-in account's cloud plans, none yet: the account's session fills them. */
+    public static Plan cloud(final String accountId) {
+        final Plan p = new Plan();
+        p.cloudAccount = accountId;
+        return p;
+    }
+
+    /** Whether these are an account's cloud plans rather than this world's save. */
+    public boolean isCloud() {
+        return cloudAccount != null;
+    }
+
+    @Nullable
+    public String cloudAccount() {
+        return cloudAccount;
+    }
 
     /**
      * Opens a slot: it becomes the active one, with a tab. The one it replaces was open until now, and is stamped so.
@@ -86,6 +111,24 @@ public class Plan {
         return out;
     }
 
+    /**
+     * Puts the open plans' tabs in a new order: {@code order} lists the open slots (as {@link #openSlots()} does) in
+     * the order they should now run. The plans move among the places the open ones held, so a closed plan keeps its
+     * own place and the active plan stays active. Anything that is not a permutation of the open slots changes nothing.
+     *
+     * @return whether the order changed
+     */
+    public boolean reorderOpen(final List<Integer> order) {
+        final List<Integer> open = openSlots();
+        if (order.size() != open.size() || !new java.util.HashSet<>(order).equals(new java.util.HashSet<>(open))
+            || order.equals(open)) return false;
+        final List<Graph> before = new ArrayList<>(graphs);
+        final Graph active = activeIndex >= 0 && activeIndex < before.size() ? before.get(activeIndex) : null;
+        for (int k = 0; k < open.size(); k++) graphs.set(open.get(k), before.get(order.get(k)));
+        if (active != null) activeIndex = graphs.indexOf(active);
+        return true;
+    }
+
     /** The slots' indices, most recently open first: the active one, then by when each was last open. */
     public List<Integer> byRecency() {
         final List<Integer> order = new ArrayList<>();
@@ -102,9 +145,12 @@ public class Plan {
         return order;
     }
 
-    /** The undo history of the slot {@code graph} is; it survives undo and redo swapping the graph. */
+    /**
+     * The undo history of the slot {@code graph} is; it survives undo and redo swapping the graph. Cloud plans keep
+     * none here: their undo is the player's own edits' inverses.
+     */
     public UndoHistory history(final Graph graph) {
-        return histories.of(graph);
+        return cloudAccount != null ? UndoHistory.off() : histories.of(graph);
     }
 
     public static Plan getInstance() {
@@ -152,7 +198,37 @@ public class Plan {
         }
     }
 
+    /**
+     * Where the plans come from while an account is signed in ({@code cloud/session}): its cloud plans. Unset, or
+     * answering null, the plans are this world's save, as when signed out.
+     */
+    @Nullable
+    private static Supplier<Plan> cloudSource;
+
+    public static void setCloudSource(@Nullable final Supplier<Plan> source) {
+        cloudSource = source;
+    }
+
     private static Plan loadPlan() {
+        if (cloudSource != null) {
+            try {
+                final Plan cloud = cloudSource.get();
+                if (cloud != null) return cloud;
+            } catch (final RuntimeException e) {
+                com.gtnhplanner.GtnhPlanner.LOG.error("Could not open the account's plans; this world's are open", e);
+            }
+        }
+        final Plan local = loadLocal();
+        if (local != null) return local;
+        final Plan plan = new Plan();
+        plan.getGraphs()
+            .add(new Graph("Slot 1"));
+        return plan;
+    }
+
+    /** This world's own save, read now whatever plans are in hand; null when it has none. Client thread (NEI). */
+    @Nullable
+    public static Plan loadLocal() {
         try {
             File saveFile = PlanAPI.getSaveFile();
             if (!saveFile.isFile()) saveFile = PlanAPI.getLegacySaveFile();
@@ -161,16 +237,35 @@ public class Plan {
                 return Serializer.decodePlan(data);
             }
         } catch (final Exception | Error ignored) {}
-        final Plan plan = new Plan();
-        plan.getGraphs()
-            .add(new Graph("Slot 1"));
-        return plan;
+        return null;
     }
 
     public static void unloadPlan() {
         leaveSandbox();
         PlanAPI.save();
         INSTANCE = null;
+    }
+
+    /** Set when the plans were to be loaded afresh while the tour stood in for them: done once it ends. */
+    private static boolean reloadAfterTour;
+
+    /**
+     * Lets go of the plans in hand, saved first, so the next ask loads them from where they now come from: signing in
+     * or out changes that. During the tour, once it ends.
+     */
+    public static void reload() {
+        if (aside != null) {
+            reloadAfterTour = true;
+            return;
+        }
+        if (INSTANCE != null) PlanAPI.save();
+        INSTANCE = null;
+    }
+
+    /** The player's plans, the tour's sandbox aside: the ones in hand, or null when none are loaded. */
+    @Nullable
+    public static Plan player() {
+        return aside != null ? aside : INSTANCE;
     }
 
     // region The tour's sandbox
@@ -202,6 +297,10 @@ public class Plan {
         if (aside == null) return;
         INSTANCE = aside;
         aside = null;
+        if (reloadAfterTour) {
+            reloadAfterTour = false;
+            reload();
+        }
     }
 
     // endregion

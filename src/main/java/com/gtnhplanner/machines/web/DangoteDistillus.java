@@ -28,18 +28,9 @@ public final class DangoteDistillus {
     /** The modes, as the game names them. */
     public static final String DISTILLERY = "Distillery", TOWER = "Distillation Tower";
 
-    /** The height, 3 to 12 layers; 12 unless set. Only distillery mode reads it. */
-    public static final Web.Control HEIGHT_CONTROL;
-
-    static {
-        final Web.Control control = MachineControls.countControl(HEIGHT, "Height", MAX_HEIGHT);
-        final Web.Numeric numeric = new Web.Numeric();
-        numeric.min = MIN_HEIGHT;
-        numeric.max = (double) MAX_HEIGHT;
-        numeric.step = 1.0;
-        control.numeric = numeric;
-        HEIGHT_CONTROL = control;
-    }
+    /** The height, 3 to 12 layers; 12 unless set. Only distillery mode reads it. The website's ladder, 3 to 12. */
+    public static final Web.Control HEIGHT_CONTROL = MachineControls
+        .countControl(HEIGHT, "Height", new int[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, 9);
 
     /** Whether a recipe map (the website's name for it) runs the machine in distillery mode. */
     public static boolean distillery(@Nullable final String recipeMap) {

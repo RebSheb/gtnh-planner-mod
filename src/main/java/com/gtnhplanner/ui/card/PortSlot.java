@@ -96,6 +96,20 @@ public final class PortSlot extends Widget<PortSlot>
             if (mouseButton == 0) card.chooseForLink();
             return Result.ACCEPT;
         }
+        // The middle button on its rate (the number or its rule key) unsets it: the plan decides the rate again.
+        if (mouseButton == 2 && overRate()) {
+            final BoardCanvas canvas = canvas();
+            final CardModel model = canvas == null ? null
+                : canvas.session()
+                    .model(node());
+            if (model != null && canvas.session()
+                .portTarget(model.node, output, index) != null) {
+                canvas.session()
+                    .setPortTarget(model.node, output, index, 0);
+                return Result.SUCCESS;
+            }
+            return Result.IGNORE;
+        }
         // Left: its recipes, or a drag for a wire; right: its uses. As NEI's own lists.
         pressed = mouseButton == 0 || mouseButton == 1 ? mouseButton : -1;
         pressedOnExtra = onExtraRow();

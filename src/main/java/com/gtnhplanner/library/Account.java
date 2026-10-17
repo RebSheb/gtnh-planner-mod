@@ -31,9 +31,21 @@ public final class Account {
 
     private Account() {}
 
+    /** The session the site gave ({@code gtnh_session}), sent with every signed-in call; null when signed out. */
     @Nullable
-    static String token() {
+    public static String token() {
         return load().getProperty(SESSION);
+    }
+
+    /**
+     * The signed-in account's id, as the session names it ({@code <id>.<expires>.<signature>}): known offline, so the
+     * account's plans open without the site. Null when signed out.
+     */
+    @Nullable
+    public static String accountId() {
+        final String t = token();
+        final int dot = t == null ? -1 : t.indexOf('.');
+        return dot <= 0 ? null : t.substring(0, dot);
     }
 
     /** Who is signed in, or null. */
@@ -46,10 +58,28 @@ public final class Account {
         return token() != null;
     }
 
+    /** The signed-in account's id (the session's first part, {@code <userId>.<expires>.<hmac>}), or null. */
+    @Nullable
+    public static String userId() {
+        final String token = token();
+        if (token == null) return null;
+        final int dot = token.indexOf('.');
+        return dot > 0 ? token.substring(0, dot) : null;
+    }
+
+    /** Hears every sign-in and sign-out (the account's plans come and go with it). Client thread. */
+    @Nullable
+    private static Runnable changed;
+
+    public static void onChange(@Nullable final Runnable listener) {
+        changed = listener;
+    }
+
     static void signedIn(final CommunityApi.SignedIn s) {
         load().setProperty(SESSION, s.token());
         load().setProperty(USERNAME, s.username());
         save();
+        if (changed != null) changed.run();
     }
 
     /** Who signed in last, signed in now or not: the sign-in form starts from it. */
@@ -60,8 +90,10 @@ public final class Account {
 
     /** Signs out; the name stays, for the next sign-in. */
     public static void signOut() {
+        final boolean was = signedIn();
         load().remove(SESSION);
         save();
+        if (was && changed != null) changed.run();
     }
 
     /** This game's id for the site, made once. */

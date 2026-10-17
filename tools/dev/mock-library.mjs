@@ -6,11 +6,15 @@
 //   node tools/dev/mock-library.mjs [port]          (default 8789)
 //   tools/dev/mc.sh call 'library?url=http://127.0.0.1:8789'   points the running game at it
 //   tools/dev/mc.sh call 'library?url=https://gtnhplanner.com' back to the real site
+//
+// Cloud plans, sharing and the live service come from tools/dev/mock-live.mjs: point the live service here too with
+//   tools/dev/mc.sh call 'library?url=http://127.0.0.1:8789&live=ws://127.0.0.1:8789/live'
 import { createServer } from "node:http";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mockLive } from "./mock-live.mjs";
 
 const port = Number(process.argv[2] ?? 8789);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -38,9 +42,23 @@ const userOf = (req) => {
   const m = /(?:^|;\s*)gtnh_session=([^;]+)/.exec(req.headers.cookie ?? "");
   return m ? sessions.get(m[1]) : undefined;
 };
+const ids = new Map(); // name -> account id
+// Accounts and sign-ins outlast a restart of the mock (build/dev-client/mock-accounts.json), so a signed-in game stays so.
+const accountsFile = join(root, "build", "dev-client", "mock-accounts.json");
+if (existsSync(accountsFile)) {
+  const saved = JSON.parse(readFileSync(accountsFile, "utf8"));
+  for (const [k, v] of saved.users ?? []) users.set(k, v);
+  for (const [k, v] of saved.sessions ?? []) sessions.set(k, v);
+  for (const [k, v] of saved.ids ?? []) ids.set(k, v);
+}
+const saveAccounts = () =>
+  writeFileSync(accountsFile, JSON.stringify({ users: [...users], sessions: [...sessions], ids: [...ids] }));
 const signIn = (res, name) => {
-  const token = randomUUID();
+  if (!ids.has(name)) ids.set(name, randomUUID());
+  // Spelled as the website's session is, <userId>.<expiresMs>.<hmac>, so the game reads the account's id from it.
+  const token = `${ids.get(name)}.${Date.now() + 15552000000}.${randomUUID().replaceAll("-", "")}`;
   sessions.set(token, name);
+  saveAccounts();
   json(res, 200, { username: name, isAdmin: false }, {
     "Set-Cookie": `gtnh_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=15552000`,
   });
@@ -58,10 +76,12 @@ const body = (req) =>
     });
   });
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${port}`);
   const path = url.pathname;
   console.log(new Date().toISOString().slice(11, 19), req.method, req.url, userOf(req) ? `(as ${userOf(req)})` : "");
+  // Cloud plans, sharing and the live service (tools/dev/mock-live.mjs).
+  if (await live.rest(req, res, url, json)) return;
   if (req.method === "POST" && path === "/api/community/auth/register") {
     const { username = "", password = "" } = await body(req);
     if (!/^[a-zA-Z0-9_-]{3,24}$/.test(username.trim()))
@@ -79,7 +99,7 @@ createServer(async (req, res) => {
   }
   if (req.method === "GET" && path === "/api/community/auth/me") {
     const name = userOf(req);
-    return json(res, 200, { user: name ? { username: name, isAdmin: false } : null });
+    return json(res, 200, { user: name ? { id: ids.get(name), username: name, isAdmin: false } : null });
   }
   if (req.method === "POST" && path === "/api/community/plans") {
     const b = await body(req);
@@ -165,4 +185,11 @@ createServer(async (req, res) => {
     return json(res, 200, { plans: shown, total: shown.length, page: 1, pageSize: 48, gameVersions: ["2.8.4"] });
   }
   json(res, 404, { error: "not found" });
-}).listen(port, "127.0.0.1", () => console.log(`mock gtnhplanner.com on http://127.0.0.1:${port}`));
+});
+const live = mockLive(server, {
+  who: (req) => (userOf(req) ? { id: ids.get(userOf(req)), name: userOf(req) } : undefined),
+  ids,
+  stateFile: join(root, "build", "dev-client", "mock-designs.json"),
+  users,
+});
+server.listen(port, "127.0.0.1", () => console.log(`mock gtnhplanner.com on http://127.0.0.1:${port}, its live service at ws://127.0.0.1:${port}/live`));

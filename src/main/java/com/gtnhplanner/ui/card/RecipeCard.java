@@ -570,6 +570,14 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             com.gtnhplanner.ui.power.PowerPicker.gauge(0, 0, CUSTOM_RATE_INK);
             org.lwjgl.opengl.GL11.glPopMatrix();
         } else drawMachineArt(m, (w - side) / 2f, (h - side) / 2f, side, side, side, z, true);
+        // On a task: its dot in the top left corner, ten screen pixels across while that is small beside the card.
+        final com.gtnhplanner.data.flowchart.Tasks.Status task = com.gtnhplanner.ui.canvas.PlanPicture.drawing() ? null
+            : session.taskStatus(nodeId);
+        if (task != null) {
+            final float d = Math.min(w / 6f, 10 / zoom);
+            com.gtnhplanner.ui.task.TaskLook
+                .dot(rim + d / 2, rim + d / 2, d, com.gtnhplanner.ui.task.TaskLook.colour(task));
+        }
         if (countless()) {
             if (canvas() != null) canvas().labelCard(m.machineName, m.node.x, m.node.y, w, h);
             return;
@@ -699,9 +707,14 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
         // has no other machine to pick: its name alone, in the power wing's amber.
         final boolean menu = !m.isPower();
         if (hover == Part.MACHINE && menu) Hyb.rect(BAR_X - 4, y, barRight() - BAR_X + 4, CHIP_H, 0x14FFFFFF);
+        // On a task: a dot in its column's colour before the name (the most pressing task's, when on several).
+        final com.gtnhplanner.data.flowchart.Tasks.Status task = com.gtnhplanner.ui.canvas.PlanPicture.drawing() ? null
+            : session.taskStatus(nodeId);
+        if (task != null) com.gtnhplanner.ui.task.TaskLook
+            .dot(BAR_X, y + (CHIP_H - 9) / 2f, 9, com.gtnhplanner.ui.task.TaskLook.colour(task));
         final float end = CardPaint.name(
             m.machineName,
-            BAR_X,
+            BAR_X + (task != null ? 14 : 0),
             barRight() - (menu ? 12 : 0),
             com.gtnhplanner.power.Holders.is(m.node) ? CUSTOM_RATE_INK : m.isPower() ? 0xFFFEF3C7 : Hyb.INK);
         if (menu) chevron(Math.round(end + 5), y + 9, hover == Part.MACHINE ? Hyb.INK : Hyb.MUTED);
@@ -1899,9 +1912,16 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
             }
             case MACHINES -> {
                 if (mouseButton == 0) openPin();
+                // The middle button unpins: the plan decides the count again.
+                else if (mouseButton == 2 && pinned()) session.pin(model.node, 0);
             }
             default -> {
-                // The body: a click selects it (Shift adds); the right button is the board's.
+                // The body: a click selects it (Shift adds); the right button opens its actions, as the key does
+                // (docs/design/groups.md, Menus).
+                if (mouseButton == 1) {
+                    openActionsAt(getContext().getAbsMouseX(), getContext().getAbsMouseY());
+                    return Result.SUCCESS;
+                }
                 if (mouseButton != 0) return Result.IGNORE;
                 if (canvas() != null) canvas().clickSelect(nodeId);
                 return Result.SUCCESS;
@@ -2150,8 +2170,8 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
     }
 
     /**
-     * The pin key's menu, here and on the overview's machine lines: place the card on a block in the world, and put
-     * it on the pin list shown on screen while playing, or take it off.
+     * The pin key's menu, here and on the overview's machine lines: place the card on a block in the world, put it on
+     * the pin list shown on screen while playing (or take it off), or add it to a task.
      */
     public void openPlaceMenu(final int screenX, final int screenY) {
         if (model == null) return;
@@ -2177,6 +2197,11 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                 Hyb.INK,
                 false,
                 () -> session.togglePinList(nodeId)));
+        rows.add(
+            PickList.Entry.of(
+                "Add to a task",
+                () -> com.gtnhplanner.ui.task.TaskActions
+                    .addMenu(session, session.panel(), List.of(nodeId), screenX, screenY)));
         Popup.open(session.panel(), PickList.popup("gtnhplanner_place", null, rows, false, 150), screenX, screenY);
     }
 
@@ -2259,9 +2284,21 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
     }
 
     private void openActions() {
+        openActionsAt(screenX(KEY_X), screenY(CHIP_Y + CHIP_H + 2));
+    }
+
+    /** The card's actions (its key's menu, and a right click on it) at a screen point. */
+    private void openActionsAt(final int sx, final int sy) {
         final Node node = model.node;
         final List<PickList.Entry> rows = new ArrayList<>();
         rows.add(PickList.Entry.of("Clone node", () -> session.cloneNode(node)));
+        // Into a task, with every card selected with it: a machine thing each.
+        final List<UUID> taskCards = session.isSelected(nodeId) ? session.cardsIn(session.selection())
+            : List.of(nodeId);
+        rows.add(
+            PickList.Entry.of(
+                "Add to a task",
+                () -> com.gtnhplanner.ui.task.TaskActions.addMenu(session, session.panel(), taskCards, sx, sy)));
         // Its place in the world, once it has one.
         if (placed()) {
             rows.add(
@@ -2272,12 +2309,9 @@ public final class RecipeCard extends ParentWidget<RecipeCard> implements Intera
                     "Remove from the world",
                     () -> com.gtnhplanner.ui.world.WorldLinks.clear(session.graph(), node)));
         }
+        rows.add(PickList.Entry.rule());
         rows.add(new PickList.Entry(null, "Delete node", "", Hyb.RED_INK, false, () -> session.delete(node)));
-        Popup.open(
-            session.panel(),
-            PickList.popup("gtnhplanner_actions", null, rows, false, 150),
-            screenX(KEY_X),
-            screenY(CHIP_Y + CHIP_H + 2));
+        Popup.open(session.panel(), PickList.popup("gtnhplanner_actions", null, rows, false, 150), sx, sy);
     }
 
     private void openMachines() {

@@ -76,7 +76,8 @@
     "drawers": {
       "rates": {},
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

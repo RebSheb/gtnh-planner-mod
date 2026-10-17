@@ -249,12 +249,12 @@ class FfPlanParserTest {
         assertTrue(
             plan.notes()
                 .stream()
-                .anyMatch(s -> s.contains("1 drawing")),
-            "an annotation of no kind is no text note");
+                .anyMatch(s -> s.contains("unknown kind")),
+            "an annotation of no kind is left out");
     }
 
     @Test
-    void keepsTextNotesAndLeavesOutOtherDrawings() {
+    void keepsTextNotesAndDrawings() {
         final FfPlan plan = FfPlanParser.parse(
             """
                 {"name": "N", "recipes": [], "nodes": [], "edges": [],
@@ -268,7 +268,7 @@ class FfPlanParserTest {
                    {"id": "b2", "kind": "box", "position": {"x": 0, "y": 0}, "size": {"width": 40, "height": 40}}]}
                 """);
         assertEquals(
-            2,
+            5,
             plan.textNotes()
                 .size());
         final FfNote first = plan.textNotes()
@@ -283,7 +283,7 @@ class FfPlanParserTest {
         assertEquals(20, first.fontSize());
 
         final FfNote bare = plan.textNotes()
-            .get(1);
+            .get(2);
         assertEquals(1040, bare.x(), "a note on a board lands where the board puts it, as a card does");
         assertEquals(560, bare.y());
         assertEquals(240, bare.width(), "no size reads as FF's new note");
@@ -292,9 +292,25 @@ class FfPlanParserTest {
         assertNull(bare.fontSize());
         assertEquals("", bare.text());
 
+        assertEquals(
+            List.of("box", "arrow", "box"),
+            plan.textNotes()
+                .stream()
+                .filter(n -> n.drawing() != null)
+                .map(
+                    n -> n.drawing()
+                        .kind())
+                .toList(),
+            "boxes and arrows come over too");
+        assertEquals(
+            "red",
+            plan.textNotes()
+                .get(1)
+                .colorTag());
         assertTrue(
             plan.notes()
-                .contains("2 boxes and 1 arrow on the board left out; only text notes come over."),
+                .stream()
+                .noneMatch(s -> s.contains("left out")),
             plan.notes()
                 .toString());
     }
@@ -406,11 +422,17 @@ class FfPlanParserTest {
                 .getFirst()
                 .y());
         assertEquals(
-            20,
+            9020,
             plan.nodes()
                 .get(1)
                 .x(),
-            "a board that never stood open keeps its members' coordinates");
+            "a board that never stood open has its members a cell inside its frame, as the website opens it");
+        assertEquals(
+            9060,
+            plan.nodes()
+                .get(1)
+                .y(),
+            "and under its title strip");
         assertEquals(
             20,
             plan.nodes()
@@ -422,10 +444,29 @@ class FfPlanParserTest {
             plan.storages()
                 .getFirst()
                 .x());
-        assertTrue(
-            plan.notes()
-                .stream()
-                .anyMatch(s -> s.contains("3 boards")));
+        assertEquals(
+            3,
+            plan.boards()
+                .size(),
+            "boards come along as groups");
+        assertEquals(
+            1100,
+            plan.boards()
+                .get(1)
+                .x(),
+            "a nested board's corner is absolute too");
+        assertEquals(
+            "inner",
+            plan.boardOf()
+                .get("a"));
+        assertEquals(
+            "outer",
+            plan.boardOf()
+                .get("s"));
+        assertNull(
+            plan.boardOf()
+                .get("c"),
+            "a missing board holds nothing");
     }
 
     @Test

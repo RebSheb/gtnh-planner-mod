@@ -279,6 +279,12 @@ public final class ModelBuilder {
                 final int machine = drawer.extentMachines()[i];
                 row.set(extentVars[machine], drawer.extentQty()[i] * extentFactor(machine) * scale);
             }
+            // A buffer's total is the flow on its edges; every model that has edges has their flows.
+            if (flows) {
+                for (final int e : drawer.flowEdges()) {
+                    row.set(flowVars[e], scale);
+                }
+            }
             if (bind) {
                 for (final int p : drawer.externalPorts()) {
                     row.set(extVars[p], scale);

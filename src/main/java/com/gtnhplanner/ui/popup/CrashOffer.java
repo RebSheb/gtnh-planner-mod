@@ -9,7 +9,6 @@ import com.cleanroommc.modularui.theme.WidgetThemeEntry;
 import com.cleanroommc.modularui.widget.Widget;
 import com.gtnhplanner.client.CrashReports;
 import com.gtnhplanner.ui.BoardSession;
-import com.gtnhplanner.ui.PlannerScale;
 import com.gtnhplanner.ui.canvas.BoardCanvas;
 import com.gtnhplanner.ui.card.CardPaint;
 import com.gtnhplanner.ui.sound.Sfx;
@@ -57,7 +56,7 @@ public final class CrashOffer extends Widget<CrashOffer> implements Interactable
         };
         popup.child(new CrashOffer(board, session, canvas, crash).pos(0, 0));
         final Minecraft mc = Minecraft.getMinecraft();
-        Popup.open(board, popup, (PlannerScale.width() - W) / 2, (PlannerScale.height() - H) / 3);
+        Popup.openCentred(board, popup, 1 / 3f);
     }
 
     private int[] sendRect() {

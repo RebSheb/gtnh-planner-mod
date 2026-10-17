@@ -185,13 +185,14 @@ final class DrawerRelaxation {
             .isFeasible()) return null;
         final Handles h = builder.handles();
         final double[] extents = values(h.extentVars());
+        final double[] flows = values(h.flowVars());
         final double[] externals = values(h.extVars());
         final int drawers = ctx.model.drawers.size();
         final double[] slack = new double[drawers];
         final double[] total = new double[drawers];
         for (int d = 0; d < drawers; d++) {
             slack[d] = builder.drawerSlack(d);
-            total[d] = ctx.drawerTotal(d, extents, externals);
+            total[d] = ctx.drawerTotal(d, extents, flows, externals);
         }
         return new Relaxed(slack, total);
     }

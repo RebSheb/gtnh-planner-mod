@@ -62,7 +62,7 @@ class FfDrawersTest {
         assertEquals(Drawer.Kind.PRODUCT, FfDrawers.kindOf(Role.PRODUCT));
         assertEquals(Drawer.Kind.PRODUCT, FfDrawers.kindOf(Role.BYPRODUCT), "a byproduct is a product with no rule");
         assertEquals(Drawer.Kind.TRASH, FfDrawers.kindOf(Role.TRASH));
-        assertNull(FfDrawers.kindOf(Role.BUFFER));
+        assertEquals(Drawer.Kind.BUFFER, FfDrawers.kindOf(Role.BUFFER), "a buffer is a buffer drawer");
         assertNull(FfDrawers.kindOf(Role.IDLE));
     }
 

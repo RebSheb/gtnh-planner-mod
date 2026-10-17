@@ -102,7 +102,7 @@ public final class ChatShare {
         if (mc.theWorld == null || mc.thePlayer == null) return "Join a world to share a plan in chat";
         if (!NEIClientConfig.hasSMPCounterPart()) return "This server can't pass plans through chat";
         final String name = nameOf(graph);
-        final String data = Serializer.encode(graph);
+        final String data = Serializer.encodeShared(graph);
         final ItemStack paper = paper(name);
         if (payloads()) {
             final NBTTagCompound payload = BookmarkPayload.of(paper, null)

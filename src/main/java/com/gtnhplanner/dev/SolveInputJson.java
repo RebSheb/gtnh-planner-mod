@@ -105,17 +105,10 @@ public final class SolveInputJson {
                 d.rule()
                     .name());
             j.addProperty("rate", d.rate());
-            final JsonArray links = new JsonArray();
-            for (final Drawer.Link l : d.links()) {
-                final JsonObject link = new JsonObject();
-                link.addProperty(
-                    "node",
-                    l.nodeId()
-                        .toString());
-                link.addProperty("port", l.portIndex());
-                links.add(link);
-            }
-            j.add("links", links);
+            j.add("links", linksJson(d.links()));
+            // Only a buffer has takers; left out otherwise, so every dump from before buffers reads the same.
+            if (!d.takers()
+                .isEmpty()) j.add("takers", linksJson(d.takers()));
             drawers.add(j);
         }
         o.add("drawers", drawers);
@@ -211,17 +204,8 @@ public final class SolveInputJson {
         final List<SolveInput.DrawerIn> drawers = new ArrayList<>();
         for (final JsonElement e : o.getAsJsonArray("drawers")) {
             final JsonObject j = e.getAsJsonObject();
-            final List<Drawer.Link> links = new ArrayList<>();
-            for (final JsonElement l : j.getAsJsonArray("links")) {
-                final JsonObject link = l.getAsJsonObject();
-                links.add(
-                    new Drawer.Link(
-                        UUID.fromString(
-                            link.get("node")
-                                .getAsString()),
-                        link.get("port")
-                            .getAsInt()));
-            }
+            final List<Drawer.Link> links = linksOf(j.getAsJsonArray("links"));
+            final List<Drawer.Link> takers = j.has("takers") ? linksOf(j.getAsJsonArray("takers")) : List.of();
             drawers.add(
                 new SolveInput.DrawerIn(
                     UUID.fromString(
@@ -237,7 +221,8 @@ public final class SolveInputJson {
                             .getAsString()),
                     j.get("rate")
                         .getAsDouble(),
-                    links));
+                    links,
+                    takers));
         }
         final Map<UUID, Double> pins = new LinkedHashMap<>();
         for (final Map.Entry<String, JsonElement> e : o.getAsJsonObject("extentPins")
@@ -340,4 +325,32 @@ public final class SolveInputJson {
                 .getAsBoolean());
     }
 
+    private static JsonArray linksJson(final List<Drawer.Link> list) {
+        final JsonArray links = new JsonArray();
+        for (final Drawer.Link l : list) {
+            final JsonObject link = new JsonObject();
+            link.addProperty(
+                "node",
+                l.nodeId()
+                    .toString());
+            link.addProperty("port", l.portIndex());
+            links.add(link);
+        }
+        return links;
+    }
+
+    private static List<Drawer.Link> linksOf(final JsonArray array) {
+        final List<Drawer.Link> links = new ArrayList<>();
+        for (final JsonElement l : array) {
+            final JsonObject link = l.getAsJsonObject();
+            links.add(
+                new Drawer.Link(
+                    UUID.fromString(
+                        link.get("node")
+                            .getAsString()),
+                    link.get("port")
+                        .getAsInt()));
+        }
+        return links;
+    }
 }

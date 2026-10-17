@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
 import com.gtnhplanner.GtnhPlanner;
+import com.gtnhplanner.cloud.session.CloudSession;
 import com.gtnhplanner.data.flowchart.Graph;
 import com.gtnhplanner.data.flowchart.Plan;
 import com.gtnhplanner.data.flowchart.Serializer;
@@ -49,7 +50,7 @@ public final class PlanAPI {
 
     /** Copies the serialised graph to the system clipboard. */
     public static void copyToClipboard(final Graph graph) {
-        GuiScreen.setClipboardString(Serializer.encode(graph));
+        GuiScreen.setClipboardString(Serializer.encodeShared(graph));
     }
 
     /**
@@ -82,19 +83,37 @@ public final class PlanAPI {
         lastSavedPlans = plans;
         if (!saveFile.isFile() || backedUpThisSession && !fewer) return;
         backedUpThisSession = true;
+        copyToBackups(saveFile, fewer ? "-before-delete" : "");
+    }
+
+    /**
+     * Copies the save on disk into {@code backups} now, whatever the session has already backed up (a change about to
+     * touch every plan, such as uploading them). The newest ten are kept. False when there was nothing to copy or it
+     * failed. The suffix must not be empty.
+     */
+    public static boolean backUpNow(final String suffix) {
+        // The session's own backup has no suffix and the same stamp format: it must never be overwritten by this one.
+        if (suffix == null || suffix.isBlank()) throw new IllegalArgumentException("a backup needs a suffix");
+        final File saveFile = getSaveFile();
+        return saveFile.isFile() && copyToBackups(saveFile, suffix);
+    }
+
+    private static boolean copyToBackups(final File saveFile, final String suffix) {
         try {
             final File dir = new File(saveFile.getParentFile(), "backups");
             dir.mkdirs();
             final String stamp = new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new java.util.Date());
-            final File copy = new File(dir, "plans-" + stamp + (fewer ? "-before-delete" : "") + ".dat");
+            final File copy = new File(dir, "plans-" + stamp + suffix + ".dat");
             Files.copy(saveFile.toPath(), copy.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             final File[] all = dir.listFiles((d, name) -> name.startsWith("plans-") && name.endsWith(".dat"));
             if (all != null && all.length > 10) {
                 java.util.Arrays.sort(all, java.util.Comparator.comparing(File::getName));
                 for (int i = 0; i < all.length - 10; i++) all[i].delete();
             }
+            return true;
         } catch (final Exception e) {
             com.gtnhplanner.GtnhPlanner.LOG.warn("Could not back up the plans", e);
+            return false;
         }
     }
 
@@ -114,7 +133,7 @@ public final class PlanAPI {
     static {
         // A save still waiting when the game closes is written before it goes.
         Runtime.getRuntime()
-            .addShutdownHook(new Thread(PlanAPI::writePending, "GTNH Planner save on exit"));
+            .addShutdownHook(new Thread(() -> writePending(), "GTNH Planner save on exit"));
     }
 
     /**
@@ -125,6 +144,13 @@ public final class PlanAPI {
     public static void save() {
         // The tour's own plans are never written.
         if (Plan.sandboxed()) return;
+        // An account's cloud plans: every change the boards made goes to the account, never into this world's save.
+        if (Plan.getInstance()
+            .isCloud()) {
+            final CloudSession cloud = CloudSession.current();
+            if (cloud != null) cloud.save(Plan.getInstance());
+            return;
+        }
         final Pending save = new Pending(
             getSaveFile(),
             Serializer.planTree(Plan.getInstance()),
@@ -134,10 +160,42 @@ public final class PlanAPI {
         if (PENDING.getAndSet(save) == null) WRITER.execute(PlanAPI::writePending);
     }
 
-    /** Writes the newest save waiting, if any: a backup first when one is due, then the file, replaced whole. */
-    private static synchronized void writePending() {
+    /**
+     * Saves every plan now, on the calling thread (client thread: it encodes the plans there): when this returns the
+     * file on disk holds them, whatever the writer had queued. False when it could not be written.
+     */
+    public static boolean saveNow() {
+        if (Plan.sandboxed()) return true;
+        if (Plan.getInstance()
+            .isCloud()) {
+            save();
+            return true;
+        }
+        return saveLocal(Plan.getInstance());
+    }
+
+    /**
+     * Writes {@code plan} as this world's save now, on the calling thread (client thread), whatever plans are in hand:
+     * a world's own plans kept while an account's are open (their cloud keys, once sent). False when it failed.
+     */
+    public static boolean saveLocal(final Plan plan) {
+        final Pending save = new Pending(
+            getSaveFile(),
+            Serializer.planTree(plan),
+            plan.getGraphs()
+                .size());
+        // Whatever was queued is older than this; the writer's queued task finds nothing left and ends.
+        PENDING.set(save);
+        return writePending();
+    }
+
+    /**
+     * Writes the newest save waiting, if any: a backup first when one is due, then the file, replaced whole. True when
+     * there was nothing to write or it went down.
+     */
+    private static synchronized boolean writePending() {
         final Pending save = PENDING.getAndSet(null);
-        if (save == null) return;
+        if (save == null) return true;
         try {
             save.file()
                 .getParentFile()
@@ -155,8 +213,10 @@ public final class PlanAPI {
                     .toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING,
                 java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            return true;
         } catch (final Exception e) {
             GtnhPlanner.LOG.warn("Could not save the plans", e);
+            return false;
         }
     }
 

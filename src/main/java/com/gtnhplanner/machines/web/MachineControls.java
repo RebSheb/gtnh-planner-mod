@@ -336,6 +336,16 @@ public final class MachineControls {
         4,
         5,
         6);
+    /**
+     * The Mega Distillation Tower's Tower Height: its middle slices, 1 to 5, as its tooltip and the hologram count them
+     * (the top slice is extra). Only distillery mode reads it; the full 5 is the default.
+     */
+    public static final String MEGA_DT_HEIGHT = "megaDtHeight";
+    public static final Web.Control MEGA_DT_HEIGHT_CONTROL = countControl(
+        MEGA_DT_HEIGHT,
+        "Tower Height",
+        new int[] { 1, 2, 3, 4, 5 },
+        4);
     public static final Web.Control LATEX_SINGULARITY_CONTROL = choiceControl(
         LATEX_SINGULARITY,
         "Controller Slot",

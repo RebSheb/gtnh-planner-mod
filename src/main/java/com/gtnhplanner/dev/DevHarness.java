@@ -362,6 +362,166 @@ public final class DevHarness {
                 });
             case "/board":
                 return onClient(DevBoard::board);
+            case "/totals":
+                // The open plan's overview as numbers, to compare a plan's solve with the website's: inputs and outputs
+                // a second, EU/t used and made, a line per card (machines, EU/t), and whether it is still solving.
+                return onClient(() -> {
+                    final com.gtnhplanner.ui.BoardScreen screen = DevBoard.screen();
+                    if (screen == null) return error("the planner is not open");
+                    final com.gtnhplanner.ui.BoardSession s = screen.session();
+                    final com.gtnhplanner.ui.BoardSession.Totals t = s.totals();
+                    final Map<String, Object> r = new LinkedHashMap<>();
+                    r.put(
+                        "plan",
+                        s.graph()
+                            .getName());
+                    r.put("solving", s.solving());
+                    r.put("cards", s.graph().nodes.size());
+                    r.put("euPerTick", t.euPerTick());
+                    r.put("euMade", t.euMade());
+                    final java.util.function.Function<List<com.gtnhplanner.ui.BoardSession.TotalLine>, List<Object>> lines = ls -> {
+                        final List<Object> out = new ArrayList<>();
+                        for (final com.gtnhplanner.ui.BoardSession.TotalLine l : ls)
+                            out.add(Map.of("key", l.key(), "name", l.label(), "perSecond", l.amount()));
+                        return out;
+                    };
+                    r.put("inputs", lines.apply(t.inputs()));
+                    r.put("outputs", lines.apply(t.outputs()));
+                    final List<Object> machines = new ArrayList<>();
+                    for (final com.gtnhplanner.ui.BoardSession.MachineLine m : t.machines()) machines.add(
+                        Map.of(
+                            "node",
+                            String.valueOf(m.nodeId()),
+                            "name",
+                            m.name(),
+                            "machines",
+                            m.machines(),
+                            "euPerTick",
+                            m.euPerTick(),
+                            "tier",
+                            String.valueOf(m.tier())));
+                    r.put("machines", machines);
+                    return r;
+                });
+            case "/tasks":
+                // The task board: whether the open plan is one, each column's cards with their GUI rects, and the task
+                // box open; open=<task id> opens a task's box, scroll=<y> scrolls its page. For setting up a board to
+                // look at: newboard=<name> makes a task board and opens it; add=<title>[&status=doing] makes a task;
+                // task=<id> (or the task just added) with comment=<text>&by=<id>&name=<name>[&ago=<minutes>] writes a
+                // comment as someone else, assign=<id> puts someone on it, block=<id> or unblock=<id> sets what it
+                // waits on. view=board|chain switches the board's view; select=<id> selects a task in the chain view.
+                return onClient(() -> {
+                    final com.gtnhplanner.ui.BoardScreen screen = DevBoard.screen();
+                    if (screen == null) return error("the planner is not open");
+                    final com.gtnhplanner.ui.BoardSession session = screen.session();
+                    // demo=1: a team's board a few weeks into a build, made from the open plan (dev/DevTaskBoard).
+                    if (q.containsKey("demo")) DevTaskBoard.fill(session);
+                    if (q.containsKey("newboard")) session.addTaskBoard(true)
+                        .setName(q.get("newboard"));
+                    final com.gtnhplanner.data.flowchart.Graph g = session.graph();
+                    String made = null;
+                    if (q.containsKey("add")) {
+                        final String id = java.util.UUID.randomUUID()
+                            .toString();
+                        final com.gtnhplanner.data.flowchart.Tasks.Status status = com.gtnhplanner.data.flowchart.Tasks.Status
+                            .of(q.getOrDefault("status", "todo"));
+                        session.editTasks(
+                            () -> com.gtnhplanner.data.flowchart.TaskEdits.add(
+                                g,
+                                id,
+                                q.get("add"),
+                                status == null ? com.gtnhplanner.data.flowchart.Tasks.Status.TODO : status,
+                                List.of(),
+                                com.gtnhplanner.ui.task.TaskLook.me(),
+                                com.gtnhplanner.ui.task.TaskLook.now()));
+                        made = id;
+                    }
+                    final String task = q.containsKey("task") ? q.get("task") : made;
+                    if (task != null && q.containsKey("comment")) {
+                        final long ago = Long.parseLong(q.getOrDefault("ago", "0"));
+                        final String at = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                            .withZone(java.time.ZoneOffset.UTC)
+                            .format(
+                                java.time.Instant.now()
+                                    .minusSeconds(ago * 60));
+                        session.editTasks(
+                            () -> com.gtnhplanner.data.flowchart.TaskEdits.addComment(
+                                g,
+                                java.util.UUID.randomUUID()
+                                    .toString(),
+                                task,
+                                q.getOrDefault("by", com.gtnhplanner.ui.task.TaskLook.me()),
+                                q.getOrDefault("name", com.gtnhplanner.ui.task.TaskLook.myName()),
+                                at,
+                                q.get("comment")));
+                    }
+                    if (task != null && q.containsKey("assign")) {
+                        final com.gtnhplanner.data.flowchart.Tasks.Task t = com.gtnhplanner.data.flowchart.TaskEdits
+                            .task(g, task);
+                        if (t != null && !t.assignees()
+                            .contains(q.get("assign"))) {
+                            final List<String> next = new ArrayList<>(t.assignees());
+                            next.add(q.get("assign"));
+                            session.editTasks(
+                                () -> com.gtnhplanner.data.flowchart.TaskEdits
+                                    .put(g, com.gtnhplanner.data.flowchart.TaskEdits.withAssignees(t, next)));
+                        }
+                    }
+                    if (task != null && (q.containsKey("priority") || q.containsKey("age"))) {
+                        // priority=high|medium|low and age=<days in its column> (movedAt put back that far).
+                        final com.gtnhplanner.data.flowchart.Tasks.Task t = com.gtnhplanner.data.flowchart.TaskEdits
+                            .task(g, task);
+                        if (t != null) {
+                            final String since = q.containsKey("age")
+                                ? java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                                    .withZone(java.time.ZoneOffset.UTC)
+                                    .format(
+                                        java.time.Instant.now()
+                                            .minusSeconds((long) (Double.parseDouble(q.get("age")) * 86400)))
+                                : t.movedAt();
+                            session.editTasks(
+                                () -> com.gtnhplanner.data.flowchart.TaskEdits.put(
+                                    g,
+                                    new com.gtnhplanner.data.flowchart.Tasks.Task(
+                                        t.id(),
+                                        t.title(),
+                                        t.text(),
+                                        t.status(),
+                                        t.order(),
+                                        t.assignees(),
+                                        t.links(),
+                                        t.createdBy(),
+                                        t.createdAt(),
+                                        t.doneAt(),
+                                        q.containsKey("priority") ? q.get("priority") : t.priority(),
+                                        since,
+                                        t.blockedBy())));
+                        }
+                    }
+                    if (task != null && q.containsKey("block")) {
+                        // block=<id>: the task waits on that one (refused, as the box refuses it, if it would loop);
+                        // unblock=<id> takes it off.
+                        session.editTasks(
+                            () -> com.gtnhplanner.data.flowchart.TaskEdits.addBlocker(g, task, q.get("block")));
+                    }
+                    if (task != null && q.containsKey("unblock")) session.editTasks(
+                        () -> com.gtnhplanner.data.flowchart.TaskEdits.removeBlocker(g, task, q.get("unblock")));
+                    final com.gtnhplanner.ui.task.TaskBoardView boardView = (com.gtnhplanner.ui.task.TaskBoardView) screen
+                        .key("taskBoard");
+                    if (q.containsKey("view")) boardView.showView(q.get("view"));
+                    if (q.containsKey("select")) boardView.selectInChain(q.get("select"));
+                    if (q.containsKey("open")) com.gtnhplanner.ui.task.TaskPanel.open(session, q.get("open"));
+                    if (q.containsKey("scroll")) com.gtnhplanner.ui.task.TaskPanel.scrollTo(intArg(q, "scroll"));
+                    final Map<String, Object> m = new LinkedHashMap<>();
+                    m.put(
+                        "view",
+                        screen.session()
+                            .showsTasks() ? "tasks" : "plan");
+                    if (made != null) m.put("made", made);
+                    m.put("board", ((com.gtnhplanner.ui.task.TaskBoardView) screen.key("taskBoard")).describe());
+                    m.put("panel", com.gtnhplanner.ui.task.TaskPanel.describe());
+                    return m;
+                });
             case "/pin":
                 // Pins card N (the board report's order) at a count, or unpins it with no count or 0: for setting up a
                 // plan to look at without clicking every card.
@@ -553,6 +713,8 @@ public final class DevHarness {
                             mc.currentScreen.setWorldAndResolution(mc, sr.getScaledWidth(), sr.getScaledHeight());
                         }
                     }
+                    // The planner's Size (the gear's: 0 Tiny to 3 Large), laid out again at once.
+                    if (q.containsKey("size")) com.gtnhplanner.ui.popup.SettingsPanel.setSize(intArg(q, "size"));
                     final ScaledResolution sr = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
                     final Map<String, Object> r = new LinkedHashMap<>();
                     r.put("width", mc.displayWidth);
@@ -560,6 +722,8 @@ public final class DevHarness {
                     r.put("guiScale", mc.gameSettings.guiScale);
                     r.put("guiWidth", sr.getScaledWidth());
                     r.put("guiHeight", sr.getScaledHeight());
+                    r.put("plannerSize", com.gtnhplanner.ui.PlannerSettings.size());
+                    r.put("plannerScale", com.gtnhplanner.ui.PlannerScale.board());
                     return r;
                 });
             case "/sfx":
@@ -596,10 +760,77 @@ public final class DevHarness {
                 // The site the library reads and posts to: url=<base> (tools/dev/mock-library.mjs for a local
                 // stand-in).
                 if (q.containsKey("url")) com.gtnhplanner.library.CommunityApi.useSite(q.get("url"));
+                // live=<ws url> points the live service elsewhere; live= (empty) goes back to the site's.
+                if (q.containsKey("live")) com.gtnhplanner.cloud.net.CloudApi.useLive(q.get("live"));
                 return onClient(() -> {
                     final Map<String, Object> r = new LinkedHashMap<>();
                     r.put("site", com.gtnhplanner.library.CommunityApi.site());
+                    r.put("live", com.gtnhplanner.cloud.net.CloudApi.live());
                     r.put("signedInAs", com.gtnhplanner.library.Account.username());
+                    return r;
+                });
+            case "/cloud":
+                // The account's cloud plans on this device: where they stand, and each plan's copy and room.
+                // fake=N puts N stand-in people on the open plan (moving cursors, selections; dev/DevPeople), fake=0
+                // takes them off.
+                return onClient(() -> {
+                    final Map<String, Object> r = new LinkedHashMap<>();
+                    if (q.containsKey("fake")) DevPeople.set(intArg(q, "fake"));
+                    // scene=1: four stand-ins at work on the plan, for footage (dev/DevScene); scene=0 stops them.
+                    if (q.containsKey("scene")) {
+                        if (intArg(q, "scene") > 0) DevScene.start();
+                        else DevScene.stop();
+                    }
+                    final com.gtnhplanner.ui.BoardSession board = com.gtnhplanner.ui.BoardSession.current();
+                    if (board != null) {
+                        final List<String> here = new ArrayList<>();
+                        for (final com.gtnhplanner.ui.live.Peers.Peer who : board.peers()
+                            .all())
+                            here.add(
+                                who.username() + " ("
+                                    + who.client()
+                                    + (who.hasCursor() ? ", at " + Math.round(who.x()) + "," + Math.round(who.y()) : "")
+                                    + ", "
+                                    + who.selected()
+                                        .size()
+                                    + " selected)");
+                        r.put("peers", here);
+                    }
+                    r.put("fake", DevPeople.count());
+                    final com.gtnhplanner.cloud.session.CloudSession s = com.gtnhplanner.cloud.session.CloudSession
+                        .current();
+                    final com.gtnhplanner.data.flowchart.Plan p = com.gtnhplanner.data.flowchart.Plan.player();
+                    r.put("signedInAs", com.gtnhplanner.library.Account.username());
+                    r.put("account", com.gtnhplanner.library.Account.accountId());
+                    r.put("cloudPlans", p != null && p.isCloud());
+                    if (s == null) return r;
+                    r.put("status", s.status());
+                    r.put("editsWaiting", s.editsWaiting());
+                    final List<Map<String, Object>> plans = new ArrayList<>();
+                    if (p != null) for (final com.gtnhplanner.data.flowchart.Graph g : p.getGraphs()) {
+                        final Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("name", g.getName());
+                        m.put("key", g.getCloudKey());
+                        m.put("tab", g.isOpen());
+                        m.put("cards", g.nodes.size());
+                        final com.gtnhplanner.cloud.session.LiveDoc d = s.doc(g);
+                        if (d != null) {
+                            m.put("seq", d.seq());
+                            m.put("waiting", d.waiting());
+                            m.put("making", d.creating());
+                            m.put("known", d.known());
+                            m.put("inRoom", d.inRoom());
+                            m.put("role", d.role());
+                            m.put("sharedBy", s.sharedBy(g));
+                            final List<String> present = new ArrayList<>();
+                            for (final com.gtnhplanner.cloud.net.LiveClient.Person who : d.present())
+                                present.add(who.username() + " (" + who.client() + ")");
+                            m.put("present", present);
+                            m.put("canUndo", d.canUndo());
+                        }
+                        plans.add(m);
+                    }
+                    r.put("plans", plans);
                     return r;
                 });
             case "/nei":
@@ -612,6 +843,32 @@ public final class DevHarness {
                         "1".equals(q.get("uses")),
                         !"0".equals(q.get("planner")),
                         q.getOrDefault("tab", "")));
+            case "/website":
+                // The website's "Open in the mod" (client/WebsiteInbox): the port it listens on and the plan waiting;
+                // answer=open or answer=drop answers it as the prompt would. link=1 opens the open plan's website link
+                // in the browser, as the Share menu's "Open in website" does; code=1 returns that link instead.
+                return onClient(() -> {
+                    final Map<String, Object> r = new LinkedHashMap<>();
+                    if ("open".equals(q.get("answer")))
+                        r.put("opened", String.valueOf(com.gtnhplanner.client.WebsiteInbox.open(null)));
+                    if ("drop".equals(q.get("answer"))) com.gtnhplanner.client.WebsiteInbox.drop(null);
+                    final com.gtnhplanner.ui.BoardScreen board = DevBoard.screen();
+                    if (board != null && "1".equals(q.get("link"))) board.session()
+                        .openInWebsite();
+                    if (board != null && "1".equals(q.get("code"))) {
+                        board.session()
+                            .copyPlanLink();
+                        r.put("link", net.minecraft.client.gui.GuiScreen.getClipboardString());
+                    }
+                    r.put("port", com.gtnhplanner.client.WebsiteInbox.port());
+                    final com.gtnhplanner.client.WebsiteInbox.Pending p = com.gtnhplanner.client.WebsiteInbox.pending();
+                    r.put(
+                        "pending",
+                        p == null ? null
+                            : p.arrival()
+                                .name());
+                    return r;
+                });
             case "/update":
                 // The update offer: latest=<tag>[&url=] fakes the newest release and offers it again on the next open.
                 return onClient(() -> {
@@ -908,6 +1165,20 @@ public final class DevHarness {
             case "/clearplan":
                 requireWorld();
                 return onClient(DevRecipes::clearPlan);
+            case "/notice":
+                // A notice along the top of the open board, as the planner raises one: text=<sentence>[&level=info|
+                // warn|error]. For seeing how notices read on a narrow board.
+                return onClient(() -> {
+                    final com.gtnhplanner.ui.BoardScreen board = DevBoard.screen();
+                    if (board == null) throw new IllegalStateException("the planner is not open");
+                    board.session()
+                        .flash(
+                            com.gtnhplanner.data.flowchart.balancer.Severity.valueOf(
+                                q.getOrDefault("level", "info")
+                                    .toUpperCase(java.util.Locale.ROOT)),
+                            arg(q, "text"));
+                    return ok();
+                });
             case "/exportff":
                 // Writes the open plan as the site's project JSON, as posting it would send: file=<path> (from the repo
                 // root when relative).
@@ -1025,7 +1296,8 @@ public final class DevHarness {
                 "/recipeinfo?output[&handler][&input] - what NEI and GTNH Planner see in a recipe (stacks, ports), read-only",
                 "/nei?item[&uses=1][&planner=0][&tab] - open NEI's recipes for an item, over the planner or (planner=0) from the inventory",
                 "/sound[?volume=0..1] - the master volume, set or read",
-                "/library[?url=<base>] - the site the library uses (tools/dev/mock-library.mjs is a local stand-in)",
+                "/library[?url=<base>][&live=<ws url>] - the site the library uses (tools/dev/mock-library.mjs is a local stand-in) and its live service",
+                "/cloud[?fake=N] - signed in: the account's cloud plans on this device (status, each plan's seq, edits waiting, room, who is in it); fake=N puts N stand-in people on the open plan (0 clears), peers lists who the board shows",
                 "/chat[?lines=N][&share=1] - the chat's newest lines and what clicking each part runs; share=1 shares the open plan there first",
                 "/gtmachines?q=turbine[&all=1][&art=1] - GregTech multiblocks (all=1: every machine) as the game names them; art=1 adds the bundled picture each resolves to",
                 "/machinedata?dir=<path> - writes the website's TGS, Bacterial Vat and radio hatch side files from this game (run in the full pack)",
@@ -1033,6 +1305,8 @@ public final class DevHarness {
                 "/crops[?items=<id,id>] - every CropsNH crop's drops against its card's outputs: lost drops, amounts, drops sharing an ore name (full pack); items= lists ore names",
                 "/slots[?add=name | switch=i | delete=i] - list, open, switch or delete plan slots",
                 "/clearplan - empty the active board (one undoable edit)",
+                "/notice?text=<sentence>[&level=info|warn|error] - a notice along the top of the open board",
+                "/window[?w&h][&scale][&size=0..3] - the window's size, the GUI scale and the planner's Size",
                 "/board - open board as data: view, and per card its state and every control's GUI rect (cx, cy)",
                 "/view?zoom&panX&panY - set the board view (defaults 1, 0, 0)",
                 "/structurepic?meta=1000 - (re)build that GT multiblock's card picture, save it as screenshots/structure-<meta>.png; no meta lists the controllers",

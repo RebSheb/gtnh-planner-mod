@@ -29,7 +29,11 @@ public final class Unanchored {
         for (final Drawer d : graph.getDrawers()) parent.put(d.getId(), d.getId());
         for (final Edge e : graph.getEdges()) join(parent, e.sourceNodeId, e.targetNodeId);
         for (final Drawer d : graph.getDrawers())
-            for (final Drawer.Link l : d.getLinks()) join(parent, d.getId(), l.nodeId());
+            for (final Drawer.Held h : d.held()) join(
+                parent,
+                d.getId(),
+                h.link()
+                    .nodeId());
         for (final Group g : graph.getGroups()) if (g instanceof MachineGroup) {
             UUID first = null;
             for (final UUID id : g.getNodeIds()) {

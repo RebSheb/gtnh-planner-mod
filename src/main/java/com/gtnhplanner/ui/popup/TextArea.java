@@ -1,5 +1,9 @@
 package com.gtnhplanner.ui.popup;
 
+import java.util.function.Consumer;
+
+import javax.annotation.Nullable;
+
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.ChatAllowedCharacters;
 
@@ -17,7 +21,8 @@ import com.gtnhplanner.ui.theme.Hyb;
 /**
  * Text of many lines to write in, in the planner's look: wrapped at word breaks (the sticky notes' layout), a caret
  * and a selection, the keys the notes take (arrows, Home and End, Ctrl with a word or the clipboard), a hint while it
- * is empty, and the wheel when it runs longer than the box.
+ * is empty, and the wheel when it runs longer than the box. It can write bigger, at a {@link #scale} (a heading), and
+ * keep to one paragraph ({@link #singleLine}: Enter ends the writing).
  */
 public final class TextArea extends Widget<TextArea> implements Interactable, IFocusedWidget {
 
@@ -31,6 +36,11 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
     private long caretSince;
     /** The last key event taken, so one offered twice is typed once. */
     private long lastKeyNanos = -1;
+    /** How big it writes: 1 the game's font. */
+    private float scale = 1;
+    /** One paragraph: Enter ends the writing, and pasted lines are joined. */
+    private boolean single;
+    private int ink = Hyb.INK;
 
     public TextArea(final String hint) {
         this.hint = hint;
@@ -38,6 +48,57 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
 
     public String text() {
         return text;
+    }
+
+    /** Puts text in the box (its caller keeps it from changing what is being written). */
+    public TextArea text(@Nullable final String text) {
+        this.text = text == null ? "" : text;
+        caret = anchor = Math.min(caret, this.text.length());
+        return this;
+    }
+
+    /** Told what was written each time the box lets go of the keyboard. */
+    @Nullable
+    private Consumer<String> onDone;
+
+    /** Lets {@code done} hear the text each time writing ends (Esc, or a click elsewhere). */
+    public TextArea onDone(final Consumer<String> done) {
+        onDone = done;
+        return this;
+    }
+
+    /** Writes bigger: a heading at a size that keeps whole screen pixels (see the caller). */
+    public TextArea scale(final float scale) {
+        this.scale = scale;
+        return this;
+    }
+
+    /** Keeps to one paragraph: Enter ends the writing, as Esc does. */
+    public TextArea singleLine() {
+        single = true;
+        return this;
+    }
+
+    /** The colour it writes in. */
+    public TextArea ink(final int colour) {
+        ink = colour;
+        return this;
+    }
+
+    /** The height a text takes at {@code width}: its lines and the padding round them. */
+    public int heightFor(final String text, final int width) {
+        final int lines = NoteText.of(text, (width - 2 * PAD - 2) / scale, Hyb::width)
+            .lines()
+            .size();
+        return Math.round(Math.max(1, lines) * LINE * scale) + 2 * PAD;
+    }
+
+    /** The most it holds, in characters. */
+    private int maxLength = Integer.MAX_VALUE;
+
+    public TextArea maxLength(final int max) {
+        maxLength = max;
+        return this;
     }
 
     /** Stops taking input, as a form being sent does. */
@@ -52,17 +113,21 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
     }
 
     private NoteText layout() {
-        return NoteText.of(text, getArea().width - 2 * PAD - 2, Hyb::width);
+        return NoteText.of(text, (getArea().width - 2 * PAD - 2) / scale, Hyb::width);
+    }
+
+    private float line() {
+        return LINE * scale;
     }
 
     private int rows() {
-        return Math.max(1, (getArea().height - 2 * PAD) / LINE);
+        return Math.max(1, (int) ((getArea().height - 2 * PAD + 1) / line()));
     }
 
     @Override
     public void draw(final ModularGuiContext context, final WidgetThemeEntry<?> widgetTheme) {
         if (text.isEmpty() && !focused) {
-            Hyb.text(hint, PAD, PAD + 1, 0xFF6A6C74);
+            Hyb.text(hint, PAD, PAD + 1, scale, 0xFF6A6C74);
             return;
         }
         final NoteText lay = layout();
@@ -77,19 +142,19 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
         scroll = Math.max(0, Math.min(scroll, lines - rows()));
         final int a = Math.min(caret, anchor), b = Math.max(caret, anchor);
         for (int i = scroll; i < Math.min(lines, scroll + rows()); i++) {
-            final int y = PAD + (i - scroll) * LINE;
+            final float y = PAD + (i - scroll) * line();
             final NoteText.Line l = lay.lines()
                 .get(i);
             if (b > a && b > l.start() && a < l.end()) {
                 final int from = Math.max(a, l.start()), to = Math.min(b, l.end());
                 final int x0 = Hyb.width(text.substring(l.start(), from)),
                     x1 = Hyb.width(text.substring(l.start(), to));
-                Hyb.rect(PAD + x0, y - 1, Math.max(2, x1 - x0), LINE, SELECTION);
+                Hyb.rect(PAD + x0 * scale, y - scale, Math.max(2, (x1 - x0) * scale), line(), SELECTION);
             }
-            Hyb.text(lay.shown(i), PAD, y, Hyb.INK);
+            Hyb.text(lay.shown(i), PAD, y, scale, ink);
         }
         if (focused && (System.currentTimeMillis() - caretSince) % 1000 < 600 && at >= scroll && at < scroll + rows())
-            Hyb.rect(PAD + lay.xOf(caret), PAD + (at - scroll) * LINE - 1, 1, LINE, Hyb.INK);
+            Hyb.rect(PAD + lay.xOf(caret) * scale, PAD + (at - scroll) * line() - scale, 1, line(), ink);
         if (lines > rows()) {
             final int track = getArea().height - 4, bar = Math.max(8, track * rows() / lines);
             Hyb.rect(getArea().width - 3, 2 + (track - bar) * scroll / Math.max(1, lines - rows()), 2, bar, Hyb.MUTED);
@@ -106,8 +171,8 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
         if (mouseButton != 0 || !enabled) return Result.ACCEPT;
         getContext().focus(this);
         final NoteText lay = layout();
-        final int line = scroll + (getContext().getAbsMouseY() - getArea().y - PAD) / LINE;
-        caret = lay.caretAt(line, getContext().getAbsMouseX() - getArea().x - PAD);
+        final int line = scroll + (int) ((getContext().getAbsMouseY() - getArea().y - PAD) / line());
+        caret = lay.caretAt(line, Math.round((getContext().getAbsMouseX() - getArea().x - PAD) / scale));
         if (!GuiScreen.isShiftKeyDown()) anchor = caret;
         caretSince = System.currentTimeMillis();
         return Result.SUCCESS;
@@ -115,6 +180,9 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
 
     @Override
     public boolean onMouseScroll(final UpOrDown direction, final int amount) {
+        // Only while it runs longer than the box: else the wheel is for what holds it.
+        if (layout().lines()
+            .size() <= rows()) return false;
         scroll += direction == UpOrDown.UP ? -1 : 1;
         return true;
     }
@@ -132,7 +200,9 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
 
     @Override
     public void onRemoveFocus(final ModularGuiContext context) {
+        final boolean was = focused;
         focused = false;
+        if (was && onDone != null) onDone.accept(text);
     }
 
     @Override
@@ -149,7 +219,8 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
                 return Result.SUCCESS;
             }
             case Keyboard.KEY_RETURN, Keyboard.KEY_NUMPADENTER -> {
-                insert("\n");
+                if (single) getContext().removeFocus();
+                else insert("\n");
                 return Result.SUCCESS;
             }
             case Keyboard.KEY_BACK -> {
@@ -203,9 +274,11 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
                         insert("");
                     }
                 }
-                case Keyboard.KEY_V -> insert(
-                    GuiScreen.getClipboardString()
-                        .replace("\r", ""));
+                case Keyboard.KEY_V -> {
+                    final String pasted = GuiScreen.getClipboardString()
+                        .replace("\r", "");
+                    insert(single ? pasted.replace('\n', ' ') : pasted);
+                }
                 default -> {}
             }
             return Result.SUCCESS;
@@ -215,8 +288,9 @@ public final class TextArea extends Widget<TextArea> implements Interactable, IF
         return Result.SUCCESS;
     }
 
-    private void insert(final String s) {
+    private void insert(final String typed) {
         final int a = Math.min(caret, anchor), b = Math.max(caret, anchor);
+        final String s = typed.substring(0, Math.max(0, Math.min(typed.length(), maxLength - text.length() + b - a)));
         text = text.substring(0, a) + s + text.substring(b);
         caret = anchor = a + s.length();
     }

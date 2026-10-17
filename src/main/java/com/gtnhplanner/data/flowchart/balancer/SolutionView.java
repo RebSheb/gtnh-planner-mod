@@ -70,7 +70,8 @@ public final class SolutionView {
             machineCounts.put(md.spec.id(), ctx.extents()[m] * md.durTicks / (double) Numerics.TICKS_PER_SECOND);
             if (Double.isNaN(ctx.pinnedExtent[m]) && ctx.extents()[m] <= tol) unneeded.add(md.spec.id());
         }
-        for (int e = 0; e < model.edges.size(); e++) {
+        // The plan's own wires only: a buffer's edges are the solver's, read out per port on the drawer.
+        for (int e = 0; e < model.drawnEdges; e++) {
             edgeFlowsPerSecond.put(
                 model.edges.get(e)
                     .id(),
@@ -96,7 +97,7 @@ public final class SolutionView {
         this.totalInternalFlow = flow;
         this.wallMillis = wallMillis;
         this.key = ctx.keyOf(ctx.support());
-        this.drawers = DrawerReadout.of(ctx, ctx.extents(), ctx.externals());
+        this.drawers = DrawerReadout.of(ctx, ctx.extents(), ctx.flows(), ctx.externals());
         final List<Note> allNotes = new ArrayList<>();
         allNotes.addAll(ctx.notes);
         allNotes.addAll(ctx.stageNotes);

@@ -25,10 +25,42 @@ import com.gtnhplanner.ui.theme.Hyb;
  */
 public final class PickList extends Widget<PickList> implements Interactable {
 
-    public record Entry(ItemStack icon, String label, String detail, int labelColor, boolean current, Runnable action) {
+    /**
+     * A row: an icon or a coloured dot before its label ({@code dot} 0 for none), a detail at its right, shaded when it
+     * is the current choice.
+     */
+    public record Entry(ItemStack icon, String label, String detail, int labelColor, boolean current, Runnable action,
+        int dot) {
+
+        public Entry(final ItemStack icon, final String label, final String detail, final int labelColor,
+            final boolean current, final Runnable action) {
+            this(icon, label, detail, labelColor, current, action, 0);
+        }
 
         public static Entry of(final String label, final Runnable action) {
             return new Entry(null, label, "", Hyb.INK, false, action);
+        }
+
+        /** A row with a dot of {@code colour} before its label, as a task's status shows. */
+        public static Entry dotted(final int colour, final String label, final String detail, final Runnable action) {
+            return new Entry(null, label, detail, Hyb.INK, false, action, colour);
+        }
+
+        /** A row that makes something new: a plus before its label, in line with dotted rows. */
+        public static Entry adding(final String label, final String detail, final Runnable action) {
+            return new Entry(null, label, detail, Hyb.INK, false, action, PLUS);
+        }
+
+        /** The {@link #dot} that draws a plus instead (no colour has no alpha and is drawn). */
+        static final int PLUS = 0x00FFFFFF;
+
+        /** A line between groups of rows: it does nothing. */
+        public static Entry rule() {
+            return new Entry(null, "", "", Hyb.INK, false, null);
+        }
+
+        boolean isRule() {
+            return action == null && label.isEmpty();
         }
     }
 
@@ -79,10 +111,15 @@ public final class PickList extends Widget<PickList> implements Interactable {
         for (final Entry e : entries) {
             final int detail = e.detail() == null || e.detail()
                 .isEmpty() ? 0 : Hyb.width(e.detail()) + 12;
-            width = Math.max(width, (e.icon() == null ? 6 : 26) + Hyb.width(e.label()) + detail + 18);
+            width = Math
+                .max(width, (e.icon() != null ? 26 : e.dot() != 0 ? 18 : 6) + Hyb.width(e.label()) + detail + 18);
         }
-        width = Math.min(width, 360);
-        final PickList list = new PickList(entries, width - 8, maxRows);
+        // Inside the planner's room: narrower drops a row's detail rather than cut its label; shorter scrolls.
+        final int[] room = Popup.room(null);
+        width = Math.min(width, Math.min(360, room[2] - 4));
+        final int above = 8 + (title == null ? 0 : 14) + (filterable ? 18 : 0);
+        final int fits = Math.max(2, (room[3] - 4 - above) / ROW);
+        final PickList list = new PickList(entries, width - 8, Math.min(maxRows, fits));
         list.hover = onHover;
         int y = 4;
         final List<com.cleanroommc.modularui.api.widget.IWidget> top = new ArrayList<>();
@@ -171,16 +208,29 @@ public final class PickList extends Widget<PickList> implements Interactable {
             if (i >= shown.size()) break;
             final Entry e = shown.get(i);
             final int y = r * ROW;
+            if (e.isRule()) {
+                Hyb.rect(4, y + ROW / 2, w - 8, 1, 0xFF3A3C42);
+                continue;
+            }
             if (i == hovered) Hyb.rect(0, y, w, ROW, Hyb.MENU_HOVER);
             else if (e.current) Hyb.rect(0, y, w, ROW, Hyb.TILE);
             int x = 4;
             if (e.icon != null) {
                 Hyb.item(e.icon, x, y + 2, 16, z);
                 x += 20;
+            } else if (e.dot == Entry.PLUS) {
+                com.gtnhplanner.ui.theme.Icons.plus(x, y + 5, Hyb.MUTED);
+                x += 14;
+            } else if (e.dot != 0) {
+                Hyb.roundRect(x + 2, y + 7, 6, 6, 3, e.dot);
+                x += 14;
             }
-            final int detailW = e.detail.isEmpty() ? 0 : Hyb.width(e.detail) + 8;
-            Hyb.text(Hyb.fit(e.label, w - x - detailW - 4), x, y + 6, e.labelColor);
-            if (!e.detail.isEmpty()) Hyb.textRight(e.detail, w - 4, y + 6, Hyb.MUTED);
+            // The label says what the row does, so it is never cut for the detail: a detail with no room is left out.
+            final String label = Hyb.fit(e.label, w - x - 4);
+            final int room = w - 4 - (x + Hyb.width(label) + 8);
+            final String detail = e.detail.isEmpty() || room < 30 ? "" : Hyb.fit(e.detail, room);
+            Hyb.text(label, x, y + 6, e.labelColor);
+            if (!detail.isEmpty()) Hyb.textRight(detail, w - 4, y + 6, Hyb.MUTED);
         }
         if (shown.size() > rows) {
             final int barH = Math.max(8, rows * ROW * rows / shown.size());
@@ -194,6 +244,7 @@ public final class PickList extends Widget<PickList> implements Interactable {
         final int i = hoveredRow();
         if (mouseButton != 0 || i < 0 || i >= shown.size()) return Result.IGNORE;
         final Entry e = shown.get(i);
+        if (e.isRule()) return Result.SUCCESS;
         final ModularPanel panel = getPanel();
         Hyb.click();
         panel.closeIfOpen();

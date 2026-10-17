@@ -9,6 +9,7 @@ import net.minecraft.util.ChatAllowedCharacters;
 
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
 
 import com.cleanroommc.modularui.api.UpOrDown;
 import com.cleanroommc.modularui.api.widget.IDraggable;
@@ -21,6 +22,7 @@ import com.cleanroommc.modularui.widget.sizer.Area;
 import com.gtnhplanner.data.flowchart.Note;
 import com.gtnhplanner.ui.BoardSession;
 import com.gtnhplanner.ui.canvas.BoardCanvas;
+import com.gtnhplanner.ui.note.DrawingGrips.Grip;
 import com.gtnhplanner.ui.popup.PickList;
 import com.gtnhplanner.ui.popup.Popup;
 import com.gtnhplanner.ui.popup.Tip;
@@ -32,6 +34,12 @@ import com.gtnhplanner.ui.theme.Hyb;
  * Hovering shows its keys: delete at its top left, smaller and bigger text at its top right; a right-click offers
  * editing, the colour, the text size and delete. Notes take no part in the solve or the wiring: they sit over the wires
  * and under the cards.
+ *
+ * <p>
+ * A box, zone or arrow (a drawing) is the same widget with a few more holds ({@link DrawingGrips}): a box moves by its
+ * border and resizes by its corners and edges, an arrow moves by its line and is reshaped by its end handles, and a
+ * right-click offers its colour and style. Its widget reaches {@link DrawingGrips#PAD} outside it so those can be
+ * held.
  */
 public final class NoteCard extends Widget<NoteCard> implements Interactable, IDraggable, IFocusedWidget {
 
@@ -69,8 +77,9 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         this.noteId = noteId;
         final Note n = note();
         if (n != null) {
-            pos(n.getX(), n.getY());
-            size(n.getWidth(), n.getHeight());
+            final int pad = n.isDrawing() ? DrawingGrips.PAD : 0;
+            pos(n.getX() - pad, n.getY() - pad);
+            size(n.getWidth() + 2 * pad, n.getHeight() + 2 * pad);
         }
     }
 
@@ -105,14 +114,30 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         shownY = n.getY();
         shownW = w;
         shownH = h;
-        pos(n.getX(), n.getY());
-        size(w, h);
+        final int pad = n.isDrawing() ? DrawingGrips.PAD : 0;
+        pos(n.getX() - pad, n.getY() - pad);
+        size(w + 2 * pad, h + 2 * pad);
         scheduleResize();
     }
 
     @Override
     public boolean canHover() {
         return true;
+    }
+
+    /**
+     * A box or zone takes the pointer only at its border (and just outside it, to resize) and an arrow only at its
+     * line and ends (the cards over and inside them keep every click); a note takes its whole face.
+     */
+    @Override
+    public boolean isInside(final com.cleanroommc.modularui.api.layout.IViewportStack stack, final int mx, final int my,
+        final boolean transform) {
+        if (!super.isInside(stack, mx, my, transform)) return false;
+        final Note n = note();
+        if (n == null || !n.isDrawing()) return true;
+        if (canvas() == null) return true;
+        // The mouse as the rest of the card reads it (localX), which the hover pass is asking about.
+        return DrawingGrips.at(n, n.getWidth(), n.getHeight(), localX(), localY()) != null;
     }
 
     // region Geometry
@@ -143,6 +168,8 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
 
     public Part partAt(final float x, final float y) {
         final int w = w(), h = h(), f = fold();
+        final Note self = note();
+        if (self != null && self.isDrawing()) return Part.BODY;
         // The keys first: the text size key sits at the right edge, in the band that resizes.
         if (keysShown()) for (final Part key : KEYS) {
             final float[] r = keyRect(key);
@@ -179,6 +206,7 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
     /** Whether the three keys fit on the note at their size, with room between the left one and the right two. */
     private boolean keysFit() {
         final float u = keyUnit();
+        final Note self = note();
         return w() >= (3 * KEY + 2 * KEY_GAP + 2 * KEY_INSET) * u && h() >= (2 * KEY + 1) * u;
     }
 
@@ -240,6 +268,10 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
     public void draw(final ModularGuiContext context, final WidgetThemeEntry<?> widgetTheme) {
         final Note n = note();
         if (n == null) return;
+        if (n.isDrawing()) {
+            drawDrawing(n);
+            return;
+        }
         final String tag = n.colorTag();
         final int w = w(), h = h(), f = fold();
         final BoardCanvas board = canvas();
@@ -321,6 +353,61 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         }
     }
 
+    /**
+     * A box, zone or arrow: its own look; the outline round it only with several selected; its handles (a box's
+     * corners, an arrow's ends) while it is the one selected, an arrow's also while hovered.
+     */
+    private void drawDrawing(final Note n) {
+        final int w = n.getWidth(), h = n.getHeight(), pad = DrawingGrips.PAD;
+        GL11.glPushMatrix();
+        GL11.glTranslatef(pad, pad, 0);
+        DrawingPaint.draw(n, w, h);
+        Hyb.beginBatch();
+        if (session.showsSelected(noteId)) Hyb.ring(
+            -2,
+            -2,
+            w + 4,
+            h + 4,
+            Math.max(
+                1,
+                1f / session.graph()
+                    .getZoom()),
+            Hyb.SELECTION);
+        final boolean alone = session.isSelected(noteId) && session.selection()
+            .size() == 1 && !com.gtnhplanner.ui.canvas.PlanPicture.drawing();
+        final Grip lit = isHovering() ? DrawingGrips.at(n, w, h, localX(), localY()) : null;
+        final float side = 6 * keyUnit();
+        if (Note.ARROW.equals(n.kind())) {
+            if (alone || isHovering() && !hideHandles()) {
+                final float[] e = DrawingPaint.ends(n, w, h);
+                handle(e[0], e[1], side, lit == Grip.TAIL || grabbed == Grip.TAIL);
+                handle(e[2], e[3], side, lit == Grip.HEAD || grabbed == Grip.HEAD);
+            }
+        } else if (alone) {
+            final boolean zone = Note.ZONE.equals(n.kind());
+            for (final Grip corner : new Grip[] { Grip.TL, Grip.TR, Grip.BL, Grip.BR }) {
+                if (zone && corner != Grip.BR) continue;
+                final float cx = corner == Grip.TL || corner == Grip.BL ? 0 : w;
+                final float cy = corner == Grip.TL || corner == Grip.TR ? 0 : h;
+                handle(cx, cy, side, lit == corner || grabbed == corner);
+            }
+        }
+        Hyb.endBatch();
+        GL11.glPopMatrix();
+    }
+
+    /** Whether the handles stay hidden: while the drawing is carried they would only be in the way. */
+    private boolean hideHandles() {
+        final BoardCanvas c = canvas();
+        return c != null && c.isCarried(noteId);
+    }
+
+    /** A handle: a small square in the selection colour with a dark edge, lit while held or pointed at. */
+    private static void handle(final float cx, final float cy, final float side, final boolean lit) {
+        Hyb.rect(cx - side / 2 - 1, cy - side / 2 - 1, side + 2, side + 2, 0xFF0E7490);
+        Hyb.rect(cx - side / 2, cy - side / 2, side, side, lit ? 0xFFFFFFFF : Hyb.SELECTION);
+    }
+
     /** A key: a small dark square with a cross, a minus or a plus, drawn in its own pixels however far out. */
     private void drawKey(final Part key, final boolean enabled) {
         final float[] r = keyRect(key);
@@ -347,6 +434,20 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
     @Nullable
     public Tip tip() {
         if (editing) return null;
+        final Note self = note();
+        if (self != null && self.isDrawing()) {
+            final Grip grip = DrawingGrips.at(self, self.getWidth(), self.getHeight(), localX(), localY());
+            if (grip == null) return null;
+            return switch (grip) {
+                case TAIL, HEAD -> Tip.of("Arrow end")
+                    .action(Tip.Input.DRAG, "Reshape");
+                case BODY -> Tip.of(capital(kindWord(self)))
+                    .action(Tip.Input.DRAG, "Move")
+                    .action(Tip.Input.RIGHT, "Colour, style, delete");
+                default -> Tip.of("Resize")
+                    .action(Tip.Input.DRAG, "Drag the corner or edge");
+            };
+        }
         final Part part = partUnderMouse();
         if (part == null) return null;
         return switch (part) {
@@ -362,12 +463,30 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         };
     }
 
+    private static String kindWord(final Note n) {
+        return switch (n.kind()) {
+            case Note.BOX -> "box";
+            case Note.ZONE -> "zone";
+            default -> "arrow";
+        };
+    }
+
+    private static String capital(final String s) {
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
     // endregion
 
     // region Mouse
 
     /** The part a left press went down on: let go without moving, a click on it; moved, the note is carried. */
     private Part pressed;
+    /** A drawing: what the press went down on, and what is being dragged (a corner, an edge, an arrow's end). */
+    private Grip held, grabbed;
+    private DrawingGrips.Rect gripFrom;
+    private String gripDirection, gripUndo;
+    private int gripMouseX, gripMouseY;
+    private boolean gripMoved;
 
     @Override
     public Result onMousePressed(final int mouseButton) {
@@ -379,6 +498,7 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         }
         if (mouseButton != 0) return Result.IGNORE;
         pressed = partAt(localX(), localY());
+        held = n.isDrawing() ? DrawingGrips.at(n, n.getWidth(), n.getHeight(), localX(), localY()) : null;
         // ModularUI takes the focus away from a press that may become a drag; written on, the note keeps writing
         // through it and takes the focus back when the press ends.
         holdFocus = editing;
@@ -413,6 +533,12 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
             case SMALLER -> stepFont(-1);
             case BIGGER -> stepFont(1);
             default -> {
+                // A drawing is selected by a click, never written on.
+                final Note self = note();
+                if (self != null && self.isDrawing()) {
+                    if (canvas() != null) canvas().clickSelect(noteId);
+                    return;
+                }
                 // Shift adds it to the selection, as it does a card.
                 if (!editing && GuiScreen.isShiftKeyDown()) {
                     if (canvas() != null) canvas().clickSelect(noteId);
@@ -446,6 +572,32 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         final BoardCanvas board = canvas();
         if (n == null || board == null) return;
         final List<PickList.Entry> rows = new ArrayList<>();
+        if (n.isDrawing()) {
+            rows.add(PickList.Entry.of("Colour...", () -> onLive(board, NoteCard::openColours)));
+            if (Note.ARROW.equals(n.kind())) {
+                rows.add(
+                    PickList.Entry.of("Thickness...", () -> onLive(board, c -> c.openChoices("Thickness", THICKNESS))));
+                rows.add(PickList.Entry.of("Heads...", () -> onLive(board, c -> c.openChoices("Heads", HEADS))));
+            } else {
+                rows.add(PickList.Entry.of("Fill...", () -> onLive(board, c -> c.openChoices("Fill", FILL))));
+                rows.add(PickList.Entry.of("Border...", () -> onLive(board, c -> c.openChoices("Border", BORDER))));
+                rows.add(PickList.Entry.of("Marks...", () -> onLive(board, c -> c.openChoices("Marks", MARKS))));
+            }
+            rows.add(
+                new PickList.Entry(
+                    null,
+                    "Delete " + kindWord(n),
+                    "",
+                    Hyb.RED_INK,
+                    false,
+                    () -> session.deleteNote(noteId)));
+            Popup.open(
+                session.panel(),
+                PickList.popup("gtnhplanner_note", null, rows, false, 140),
+                getContext().getAbsMouseX(),
+                getContext().getAbsMouseY());
+            return;
+        }
         rows.add(PickList.Entry.of("Write on it", () -> onLive(board, NoteCard::startEditing)));
         rows.add(PickList.Entry.of("Colour...", () -> onLive(board, NoteCard::openColours)));
         rows.add(
@@ -469,6 +621,89 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         if (live != null && live.isValid()) action.accept(live);
     }
 
+    /** One style choice: what it is called and the value it sets. */
+    private record Choice(String label, String value) {}
+
+    /** A box's or arrow's style: which property the choices set. */
+    private enum Style {
+        FILL,
+        BORDER,
+        MARKS,
+        THICKNESS,
+        HEADS
+    }
+
+    private record Choices(Style style, List<Choice> items) {}
+
+    private static final Choices FILL = new Choices(
+        Style.FILL,
+        List.of(new Choice("Tint", "tint"), new Choice("Solid", "solid"), new Choice("None", "none")));
+    private static final Choices BORDER = new Choices(
+        Style.BORDER,
+        List.of(new Choice("Solid", "solid"), new Choice("Dashed", "dashed")));
+    private static final Choices MARKS = new Choices(
+        Style.MARKS,
+        List.of(
+            new Choice("None", "none"),
+            new Choice("Dots", "dots"),
+            new Choice("Grid", "grid"),
+            new Choice("Graph", "graph"),
+            new Choice("Ruled", "ruled"),
+            new Choice("Hatch", "hatch")));
+    private static final Choices THICKNESS = new Choices(
+        Style.THICKNESS,
+        List.of(new Choice("Thin", "1"), new Choice("Normal", "2"), new Choice("Thick", "4")));
+    private static final Choices HEADS = new Choices(
+        Style.HEADS,
+        List.of(new Choice("One end", "end"), new Choice("Both ends", "both")));
+
+    /** What the note has now for a style, as the value a choice sets. */
+    private static String current(final Note n, final Style style) {
+        return switch (style) {
+            case FILL -> n.fillStyle();
+            case BORDER -> n.borderStyle();
+            case MARKS -> n.marksStyle();
+            case THICKNESS -> String.valueOf(n.arrowThickness());
+            case HEADS -> n.bothHeads() ? "both" : "end";
+        };
+    }
+
+    /** Sets a style. */
+    private static void apply(final Note n, final Style style, final String value) {
+        switch (style) {
+            case FILL -> n.setFill(value);
+            case BORDER -> n.setBorder(value);
+            case MARKS -> n.setMarks(value);
+            case THICKNESS -> n.setArrowWidth(Integer.parseInt(value));
+            case HEADS -> n.setArrowHeads(value);
+        }
+    }
+
+    /** A short list of one style's choices, the one in force ticked; picking one sets it as one undoable step. */
+    private void openChoices(final String title, final Choices choices) {
+        final Note n = note();
+        if (n == null) return;
+        final String now = current(n, choices.style());
+        final List<PickList.Entry> rows = new ArrayList<>();
+        for (final Choice c : choices.items()) rows.add(
+            new PickList.Entry(
+                null,
+                c.label(),
+                "",
+                Hyb.INK,
+                c.value()
+                    .equals(now),
+                () -> {
+                    com.gtnhplanner.ui.sound.Sfx.ADJUST.play();
+                    session.editLayout(() -> apply(n, choices.style(), c.value()));
+                }));
+        Popup.open(
+            session.panel(),
+            PickList.popup("gtnhplanner_note_style", title, rows, false, 120),
+            getContext().getAbsMouseX(),
+            getContext().getAbsMouseY());
+    }
+
     private void openColours() {
         final Note n = note();
         if (n == null) return;
@@ -476,7 +711,13 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         for (final String[] c : NoteColors.MENU) rows
             .add(new PickList.Entry(null, "■ " + c[1], "", NoteColors.paper(c[0]), c[0].equals(n.colorTag()), () -> {
                 com.gtnhplanner.ui.sound.Sfx.ADJUST.play();
-                session.editLayout(() -> n.setColor(c[0]));
+                session.editLayout(() -> {
+                    n.setColor(c[0]);
+                    if (n.isDrawing()) {
+                        n.setBorderColor(null);
+                        n.setFillColor(null);
+                    }
+                });
             }));
         Popup.open(
             session.panel(),
@@ -498,6 +739,25 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         final Note n = note();
         if (button != 0 || n == null || canvas() == null) return false;
         final float x = localX(), y = localY();
+        if (n.isDrawing()) {
+            // A corner, an edge or an arrow's end: held, it reshapes the drawing; the rest of it carries it.
+            if (held != null && held != Grip.BODY) {
+                grabbed = held;
+                gripFrom = new DrawingGrips.Rect(n.getX(), n.getY(), n.getWidth(), n.getHeight());
+                gripDirection = n.getArrowDirection();
+                gripPoints = n.getPoints();
+                gripMouseX = getContext().getAbsMouseX();
+                gripMouseY = getContext().getAbsMouseY();
+                gripMoved = false;
+                gripUndo = com.gtnhplanner.api.PlanAPI.undoHistory(session.graph())
+                    .beginEdit(session.graph());
+                if (!session.isSelected(noteId) || session.selection()
+                    .size() > 1) session.select(noteId, false);
+                return true;
+            }
+            canvas().beginMove(noteId);
+            return true;
+        }
         if (partAt(x, y) == Part.RESIZE) {
             resizing = true;
             // As partAt decides: the corner and its margin take both ways, an edge's band its own way.
@@ -520,13 +780,26 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
 
     @Override
     public void onDrag(final int mouseButton, final long timeSinceLastClick) {
+        if (grabbed != null) {
+            dragGrip();
+            return;
+        }
         if (resizing) {
             final float zoom = session.graph()
                 .getZoom();
-            if (resizeW) liveW = Math
-                .max(Note.MIN_W, BoardSession.snap(startW + (getContext().getAbsMouseX() - startMouseX) / zoom));
-            if (resizeH) liveH = Math
-                .max(Note.MIN_H, BoardSession.snap(startH + (getContext().getAbsMouseY() - startMouseY) / zoom));
+            final Note self = note();
+            final boolean drawing = self != null && self.isDrawing();
+            final int minW = drawing ? Note.DRAWING_MIN : Note.MIN_W, minH = drawing ? Note.DRAWING_MIN : Note.MIN_H;
+            if (resizeW)
+                liveW = Math.max(minW, BoardSession.snap(startW + (getContext().getAbsMouseX() - startMouseX) / zoom));
+            if (resizeH)
+                liveH = Math.max(minH, BoardSession.snap(startH + (getContext().getAbsMouseY() - startMouseY) / zoom));
+            if (drawing && Note.IMAGE.equals(self.kind())) {
+                // A picture keeps its proportions: the way the corner went further decides.
+                final float sx = liveW / (float) startW, sy = liveH / (float) startH;
+                if (sx >= sy) liveH = Math.max(minH, BoardSession.snap(startH * sx));
+                else liveW = Math.max(minW, BoardSession.snap(startW * sy));
+            }
             sync();
             return;
         }
@@ -535,10 +808,22 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
 
     @Override
     public void onDragEnd(final boolean successful) {
+        if (grabbed != null) {
+            endGrip(successful);
+            return;
+        }
         if (resizing) {
             resizing = false;
             final Note n = note();
             if (n != null && (liveW != startW || liveH != startH)) {
+                // A zone's outline grows with it.
+                if (n.getPoints() != null && startW > 0 && startH > 0) {
+                    final List<int[]> scaled = new ArrayList<>();
+                    for (final int[] p : n.getPoints()) scaled.add(
+                        new int[] { Math.round(p[0] * (liveW / (float) startW)),
+                            Math.round(p[1] * (liveH / (float) startH)) });
+                    n.setPoints(scaled);
+                }
                 n.setWidth(liveW);
                 n.setHeight(liveH);
                 // Written on, it stays the size it was dragged to.
@@ -563,6 +848,86 @@ public final class NoteCard extends Widget<NoteCard> implements Interactable, ID
         pressed = null;
         regainFocus();
         if (canvas() != null && canvas().endMove(successful) && part != null && note() != null) click(part);
+    }
+
+    /** A zone's outline as it was when the grip was taken, so scaling never compounds. */
+    private List<int[]> gripPoints;
+
+    /** The drawing as the pointer has it now: the note itself changes as it goes, the undo step comes at the end. */
+    private void dragGrip() {
+        final Note n = note();
+        if (n == null) return;
+        final float zoom = session.graph()
+            .getZoom();
+        final int mx = getContext().getAbsMouseX() - gripMouseX, my = getContext().getAbsMouseY() - gripMouseY;
+        gripMoved |= Math.max(Math.abs(mx), Math.abs(my)) >= 3;
+        if (!gripMoved) return;
+        final float dx = mx / zoom, dy = my / zoom;
+        if (grabbed == Grip.TAIL || grabbed == Grip.HEAD) {
+            final Note was = new Note();
+            was.setArrowDirection(gripDirection);
+            final DrawingGrips.Shape s = DrawingGrips.reshaped(was, gripFrom, grabbed, dx, dy);
+            n.setX(
+                s.box()
+                    .x());
+            n.setY(
+                s.box()
+                    .y());
+            n.setWidth(
+                s.box()
+                    .w());
+            n.setHeight(
+                s.box()
+                    .h());
+            n.setArrowDirection(s.direction());
+        } else {
+            final DrawingGrips.Rect r = DrawingGrips.resized(gripFrom, grabbed, dx, dy);
+            n.setX(r.x());
+            n.setY(r.y());
+            // A zone's outline grows with it.
+            if (gripPoints != null && gripFrom.w() > 0 && gripFrom.h() > 0) {
+                final List<int[]> scaled = new ArrayList<>();
+                for (final int[] p : gripPoints) scaled.add(
+                    new int[] { Math.round(p[0] * (r.w() / (float) gripFrom.w())),
+                        Math.round(p[1] * (r.h() / (float) gripFrom.h())) });
+                n.setPoints(scaled);
+            }
+            n.setWidth(r.w());
+            n.setHeight(r.h());
+        }
+        sync();
+    }
+
+    private void endGrip(final boolean successful) {
+        final Note n = note();
+        final boolean moved = gripMoved;
+        grabbed = null;
+        held = null;
+        pressed = null;
+        final List<int[]> originalPoints = gripPoints;
+        gripPoints = null;
+        final String undo = gripUndo;
+        gripUndo = null;
+        if (n == null) return;
+        if (!moved || !successful) {
+            if (moved) {
+                // Given up: back to where it was.
+                n.setX(gripFrom.x());
+                n.setY(gripFrom.y());
+                n.setWidth(gripFrom.w());
+                n.setHeight(gripFrom.h());
+                n.setArrowDirection(gripDirection);
+                if (originalPoints != null) n.setPoints(originalPoints);
+                sync();
+            } else if (canvas() != null) canvas().clickSelect(noteId);
+            return;
+        }
+        com.gtnhplanner.api.PlanAPI.undoHistory(session.graph())
+            .commitEdit(undo, session.graph());
+        session.graph()
+            .touchLayout();
+        com.gtnhplanner.api.PlanAPI.save();
+        com.gtnhplanner.ui.sound.Sfx.DROP.play();
     }
 
     @Override

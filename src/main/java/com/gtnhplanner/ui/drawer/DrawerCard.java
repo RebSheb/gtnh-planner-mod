@@ -27,7 +27,8 @@ import com.gtnhplanner.ui.theme.Hyb;
 
 /**
  * A drawer on the board: what the player brings in (source), what leaves the plan (product: a rate wanted, or with no
- * rule whatever arrives), or what is voided (trash). It is a card's port row lifted off the card ({@link
+ * rule whatever arrives), what is voided (trash), or what passes from makers to users inside the plan (buffer: an input
+ * dropped on a product, or an output on a source, makes one). It is a card's port row lifted off the card ({@link
  * com.gtnhplanner.ui.card.CardPaint#drawerRow}): its resource, what the plan moves through it, its name, and under
  * them its rule key and rate box (trash: what it does). The rule key's menu also turns a product into trash and back.
  * It is moved by the thin bar along its top, where its delete key shows at the left; dragged anywhere else it draws a
@@ -408,7 +409,10 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
             default -> {
                 final com.gtnhplanner.ui.popup.Tip tip = com.gtnhplanner.ui.popup.Tip.of(m.label)
                     .sub(kindName(m.kind))
-                    .row(m.kind == Drawer.Kind.SOURCE ? "Supplies" : "Takes", m.rate(m.rate, unit));
+                    .row(
+                        m.kind == Drawer.Kind.SOURCE ? "Supplies" : m.kind == Drawer.Kind.BUFFER ? "Passes" : "Takes",
+                        m.rate(m.rate, unit));
+                if (m.kind == Drawer.Kind.BUFFER) tip.muted("Its makers put in what its users take out.");
                 if (!m.linked) tip.note("Unconnected", com.gtnhplanner.ui.popup.Tip.WARN);
                 if (m.shortfall != null) tip.note(
                     "Reaches only " + m.rate(m.shortfall.reachable(), unit)
@@ -424,6 +428,12 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
 
     /** What a rule asks of the plan, in a sentence. */
     private static String ruleMeaning(final Drawer.Kind kind, final Drawer.Rule rule) {
+        if (kind == Drawer.Kind.BUFFER) return switch (rule) {
+            case ANY -> "No target: the plan passes whatever its users take.";
+            case AT_LEAST -> "The plan passes at least the rate through it.";
+            case EXACTLY -> "The plan passes exactly the rate through it.";
+            case AT_MOST -> "The plan passes no more than the rate through it.";
+        };
         final String flow = kind == Drawer.Kind.SOURCE ? "draws from it" : "puts in it";
         return switch (rule) {
             case ANY -> "No target: the plan " + flow + " whatever it needs.";
@@ -439,6 +449,7 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
             case PRODUCT -> "Product";
             case BYPRODUCT -> "Product";
             case TRASH -> "Trash";
+            case BUFFER -> "Buffer";
         };
     }
 
@@ -467,17 +478,40 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
                 if (mouseButton == 0) session.deleteDrawer(drawer);
             }
             case RULE -> {
-                if (mouseButton == 1 && hasRule()) stepRule(-1);
+                // The middle button unsets the drawer: back to Any, no rate.
+                if (mouseButton == 2) {
+                    if (hasRule()) session.setDrawerRule(drawer, Drawer.Rule.ANY);
+                } else if (mouseButton == 1 && hasRule()) stepRule(-1);
                 else openRules();
             }
             case RATE -> {
-                if (mouseButton == 0) {
+                if (mouseButton == 2) {
+                    if (hasRule()) session.setDrawerRule(drawer, Drawer.Rule.ANY);
+                } else if (mouseButton == 0) {
                     if (canvas() != null) canvas().editDrawerRate(model);
                     else openRate();
                 }
             }
             default -> {
-                // The body: a click selects it (Shift adds); the right button is the board's.
+                // The body: a click selects it (Shift adds); the right button opens its menu: its rule key's rows and
+                // Delete drawer (docs/design/groups.md, Menus).
+                if (mouseButton == 1) {
+                    final List<PickList.Entry> rows = ruleRows(session, model);
+                    rows.add(
+                        new PickList.Entry(
+                            null,
+                            "Delete drawer",
+                            "",
+                            Hyb.RED_INK,
+                            false,
+                            () -> session.deleteDrawer(drawer)));
+                    Popup.open(
+                        session.panel(),
+                        PickList.popup("gtnhplanner_drawer", null, rows, false, 120),
+                        getContext().getAbsMouseX(),
+                        getContext().getAbsMouseY());
+                    return Result.SUCCESS;
+                }
                 if (mouseButton != 0) return Result.IGNORE;
                 if (canvas() != null) canvas().clickSelect(drawerId);
                 return Result.SUCCESS;
@@ -552,6 +586,17 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
      */
     public static void openRules(final ModularPanel panel, final BoardSession session, final DrawerModel model,
         final int screenX, final int screenY) {
+        Popup.open(
+            panel,
+            PickList.popup("gtnhplanner_rule", null, ruleRows(session, model), false, 110),
+            screenX,
+            screenY);
+    }
+
+    /**
+     * The rule rows (each rule, the current one ticked) and the product and trash row, for the rule key and the menu.
+     */
+    public static List<PickList.Entry> ruleRows(final BoardSession session, final DrawerModel model) {
         final List<PickList.Entry> rows = new ArrayList<>();
         if (model.kind.hasRule()) for (final Drawer.Rule rule : Drawer.Rule.values()) {
             rows.add(
@@ -563,7 +608,8 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
                     rule == model.rule,
                     () -> session.setDrawerRule(model.drawer, rule)));
         }
-        if (model.kind != Drawer.Kind.SOURCE) rows.add(
+        // Product and trash take turns; a source and a buffer are what their wires make them.
+        if (model.kind == Drawer.Kind.PRODUCT || model.kind == Drawer.Kind.TRASH) rows.add(
             new PickList.Entry(
                 null,
                 model.kind == Drawer.Kind.TRASH ? TO_PRODUCT : TO_TRASH,
@@ -571,7 +617,7 @@ public final class DrawerCard extends Widget<DrawerCard> implements Interactable
                 Hyb.MUTED,
                 false,
                 () -> session.cycleDrawer(model.drawer)));
-        Popup.open(panel, PickList.popup("gtnhplanner_rule", null, rows, false, 110), screenX, screenY);
+        return rows;
     }
 
     /** The rate box for a drawer, in the board's unit; the overview's drawer rows open the same one. */

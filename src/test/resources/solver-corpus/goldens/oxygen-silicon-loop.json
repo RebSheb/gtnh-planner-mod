@@ -88,7 +88,8 @@
         "b37c22b4-0e66-4841-9b3d-c952d0003ba7": 0.2
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

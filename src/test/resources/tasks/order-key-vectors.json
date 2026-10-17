@@ -1,0 +1,510 @@
+{
+ "description": "Order key vectors generated from order-key.ts; the game's OrderKeys must match.",
+ "between": [
+  {
+   "before": null,
+   "after": null,
+   "expected": "V"
+  },
+  {
+   "before": "V",
+   "after": null,
+   "expected": "k"
+  },
+  {
+   "before": null,
+   "after": "V",
+   "expected": "F"
+  },
+  {
+   "before": "V",
+   "after": "W",
+   "expected": "VV"
+  },
+  {
+   "before": "V",
+   "after": "X",
+   "expected": "W"
+  },
+  {
+   "before": "0",
+   "after": "1",
+   "expected": "0V"
+  },
+  {
+   "before": "z",
+   "after": null,
+   "expected": "zV"
+  },
+  {
+   "before": "zz",
+   "after": null,
+   "expected": "zzV"
+  },
+  {
+   "before": "zzz",
+   "after": null,
+   "expected": "zzzV"
+  },
+  {
+   "before": null,
+   "after": "1",
+   "expected": "0V"
+  },
+  {
+   "before": null,
+   "after": "01",
+   "expected": "00V"
+  },
+  {
+   "before": "0",
+   "after": "2",
+   "expected": "1"
+  },
+  {
+   "before": "a0",
+   "after": "a1",
+   "expected": "a0V"
+  },
+  {
+   "before": "a0",
+   "after": null,
+   "expected": "n"
+  },
+  {
+   "before": null,
+   "after": "a0",
+   "expected": "I"
+  },
+  {
+   "before": "a1",
+   "after": "a2",
+   "expected": "a1V"
+  },
+  {
+   "before": "Zz",
+   "after": "a0",
+   "expected": "ZzV"
+  },
+  {
+   "before": "Zz",
+   "after": null,
+   "expected": "m"
+  },
+  {
+   "before": null,
+   "after": "Zz",
+   "expected": "H"
+  },
+  {
+   "before": "a0V",
+   "after": "a1",
+   "expected": "a0k"
+  },
+  {
+   "before": "a0",
+   "after": "a0V",
+   "expected": "a0F"
+  },
+  {
+   "before": "a0",
+   "after": "a1V",
+   "expected": "a0V"
+  },
+  {
+   "before": "a",
+   "after": "a0",
+   "expected": "a0V"
+  },
+  {
+   "before": "b",
+   "after": null,
+   "expected": "n"
+  },
+  {
+   "before": "V",
+   "after": "V",
+   "expected": "k"
+  },
+  {
+   "before": "W",
+   "after": "V",
+   "expected": "l"
+  },
+  {
+   "before": "a1",
+   "after": "a0",
+   "expected": "n"
+  },
+  {
+   "before": "",
+   "after": "V",
+   "expected": "F"
+  },
+  {
+   "before": "",
+   "after": null,
+   "expected": "V"
+  },
+  {
+   "before": null,
+   "after": "",
+   "expected": "V"
+  },
+  {
+   "before": "V",
+   "after": "",
+   "expected": "k"
+  },
+  {
+   "before": "é",
+   "after": null,
+   "expected": "zV"
+  },
+  {
+   "before": "é",
+   "after": "ê",
+   "expected": "zV"
+  },
+  {
+   "before": "V",
+   "after": "é",
+   "expected": "k"
+  },
+  {
+   "before": "-",
+   "after": "~",
+   "expected": "U"
+  },
+  {
+   "before": "~",
+   "after": null,
+   "expected": "zV"
+  },
+  {
+   "before": null,
+   "after": "~",
+   "expected": "U"
+  },
+  {
+   "before": "!",
+   "after": "\"",
+   "expected": "0V"
+  },
+  {
+   "before": " ",
+   "after": "!",
+   "expected": "0V"
+  },
+  {
+   "before": "Ω",
+   "after": "Ωa",
+   "expected": "zI"
+  },
+  {
+   "before": "V",
+   "after": "Va",
+   "expected": "VI"
+  },
+  {
+   "before": "Va",
+   "after": "Vb",
+   "expected": "VaV"
+  },
+  {
+   "before": "Vz",
+   "after": "W",
+   "expected": "VzV"
+  },
+  {
+   "before": "Vzz",
+   "after": "W",
+   "expected": "VzzV"
+  },
+  {
+   "before": "1",
+   "after": "1V",
+   "expected": "1F"
+  },
+  {
+   "before": "a0G",
+   "after": "a0V",
+   "expected": "a0N"
+  },
+  {
+   "before": "a08",
+   "after": "a0G",
+   "expected": "a0C"
+  },
+  {
+   "before": "A",
+   "after": "a",
+   "expected": "N"
+  },
+  {
+   "before": "a",
+   "after": "b",
+   "expected": "aV"
+  },
+  {
+   "before": "y",
+   "after": "z",
+   "expected": "yV"
+  },
+  {
+   "before": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+   "after": null,
+   "expected": "k"
+  },
+  {
+   "before": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+   "after": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV1",
+   "expected": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV0V"
+  },
+  {
+   "before": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+   "after": null,
+   "expected": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzV"
+  },
+  {
+   "before": null,
+   "after": "111111111111111111111111111111",
+   "expected": "0V"
+  },
+  {
+   "before": "00000000001",
+   "after": "1",
+   "expected": "0V"
+  },
+  {
+   "before": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+   "after": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVW",
+   "expected": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+  },
+  {
+   "before": "zy",
+   "after": "zz",
+   "expected": "zyV"
+  },
+  {
+   "before": "zz",
+   "after": "zzz",
+   "expected": "zzU"
+  },
+  {
+   "before": "Zy",
+   "after": "Zz",
+   "expected": "ZyV"
+  },
+  {
+   "before": "Y00",
+   "after": "Z",
+   "expected": "YV"
+  },
+  {
+   "before": "😀",
+   "after": null,
+   "expected": "zzV"
+  },
+  {
+   "before": "V",
+   "after": "😀",
+   "expected": "k"
+  }
+ ],
+ "chains": [
+  {
+   "mode": "after",
+   "start": null,
+   "n": 12,
+   "expected": [
+    "V",
+    "k",
+    "s",
+    "w",
+    "y",
+    "z",
+    "zV",
+    "zk",
+    "zs",
+    "zw",
+    "zy",
+    "zz"
+   ]
+  },
+  {
+   "mode": "before",
+   "start": null,
+   "n": 12,
+   "expected": [
+    "V",
+    "F",
+    "7",
+    "3",
+    "1",
+    "0V",
+    "0F",
+    "07",
+    "03",
+    "01",
+    "00V",
+    "00F"
+   ]
+  },
+  {
+   "mode": "after",
+   "start": "a0",
+   "n": 6,
+   "expected": [
+    "n",
+    "t",
+    "w",
+    "y",
+    "z",
+    "zV"
+   ]
+  },
+  {
+   "mode": "between",
+   "start": "a0",
+   "end": "a1",
+   "n": 12,
+   "expected": [
+    "a0V",
+    "a0F",
+    "a07",
+    "a03",
+    "a01",
+    "a00V",
+    "a00F",
+    "a007",
+    "a003",
+    "a001",
+    "a000V",
+    "a000F"
+   ]
+  }
+ ],
+ "sorting": [
+  {
+   "items": [
+    {
+     "id": "b",
+     "order": "V"
+    },
+    {
+     "id": "a",
+     "order": "V"
+    },
+    {
+     "id": "c",
+     "order": "I"
+    }
+   ],
+   "expected": [
+    "c",
+    "a",
+    "b"
+   ]
+  },
+  {
+   "items": [
+    {
+     "id": "x",
+     "order": "a1"
+    },
+    {
+     "id": "y",
+     "order": "a0"
+    },
+    {
+     "id": "z",
+     "order": "V"
+    },
+    {
+     "id": "w",
+     "order": "a0V"
+    },
+    {
+     "id": "v",
+     "order": "Zz"
+    }
+   ],
+   "expected": [
+    "z",
+    "v",
+    "y",
+    "w",
+    "x"
+   ]
+  },
+  {
+   "items": [
+    {
+     "id": "2",
+     "order": "é"
+    },
+    {
+     "id": "1",
+     "order": "z"
+    },
+    {
+     "id": "3",
+     "order": "Z"
+    },
+    {
+     "id": "4",
+     "order": ""
+    }
+   ],
+   "expected": [
+    "4",
+    "3",
+    "1",
+    "2"
+   ]
+  },
+  {
+   "items": [
+    {
+     "id": "B",
+     "order": "a0"
+    },
+    {
+     "id": "b",
+     "order": "a0"
+    },
+    {
+     "id": "A",
+     "order": "a0"
+    }
+   ],
+   "expected": [
+    "A",
+    "B",
+    "b"
+   ]
+  },
+  {
+   "items": [
+    {
+     "id": "q",
+     "order": "V1"
+    },
+    {
+     "id": "p",
+     "order": "V"
+    },
+    {
+     "id": "r",
+     "order": "V0"
+    }
+   ],
+   "expected": [
+    "p",
+    "r",
+    "q"
+   ]
+  }
+ ]
+}

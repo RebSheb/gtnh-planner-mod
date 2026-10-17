@@ -33,6 +33,13 @@ final class MachineTableEntries {
         return DangoteDistillus.distillery(c.recipeMap);
     }
 
+    /** The Mega Distillation Tower's middle slices a setting reads as: 1 to 5, the full 5 when unset. */
+    private static int megaDtSlices(final Context c) {
+        final double value = c.value(MEGA_DT_HEIGHT);
+        if (!(value >= 1)) return 5;
+        return (int) Math.min(5, Math.floor(value));
+    }
+
     static void register(final Map<String, Behaviour> machines) {
         // -- Heat: the machines that overclock on coil heat (each machine's setMachineHeat) --
         machines.put(
@@ -205,12 +212,25 @@ final class MachineTableEntries {
         // Tower mode; distillery mode is a different recipe map and not covered.
         machines.put(
             "Mega Distillation Tower",
+            // MTEMegaDistillationTower: the mode follows the recipe map. Tower mode: 1.5x speed, 90% EU, 256
+            // parallels. Distillery mode: 2x speed, 50% EU, getMaxParallelRecipes = 256 * (1 + height / 2) with Java's
+            // whole division, height being the middle slices plus the top (checkMachine counts on past the last middle
+            // slice): 512, 512, 768, 768 and 1024 for 1 to 5 slices. The dataset's own tower height carries made-up
+            // multipliers, so ours stands in for it.
             machine().overclock(normal())
-                .speed(1.5)
-                .power(0.9)
-                .parallels(256)
+                .speed(c -> distillery(c) ? 2 : 1.5)
+                .power(c -> distillery(c) ? 0.5 : 0.9)
+                .parallels(c -> distillery(c) ? 256 * (1 + Math.floor((megaDtSlices(c) + 1) / 2.0)) : 256)
                 .fullPowerPool()
-                .unlimitedTierSkip());
+                .unlimitedTierSkip()
+                .hidesControls("structure-tower-height")
+                .controlsFor(
+                    recipe -> DangoteDistillus.distillery(RecipeRules.recipeMapName(recipe))
+                        ? java.util.List.of(MEGA_DT_HEIGHT_CONTROL)
+                        : java.util.List.of())
+                .note(
+                    "Distillery mode: 512 parallels at 1 or 2 slices, 768 at 3 or 4, 1024 at the full 5. Tower mode has "
+                        + "256 parallels at any height."));
         machines.put("Molecular Transformer", machine().overclock(normal()));
         machines.put(
             "Nuclear Salt Processing Plant",

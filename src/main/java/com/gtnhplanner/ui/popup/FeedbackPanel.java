@@ -83,6 +83,7 @@ public final class FeedbackPanel extends ParentWidget<FeedbackPanel> implements 
     /** Opens the box in the middle of the screen; with a crash report to send when {@code crash} is one. */
     public static void open(final ModularPanel parent, final BoardSession session, final BoardCanvas canvas,
         @Nullable final CrashReports.Crash crash) {
+        if (Popup.toggled("feedback")) return;
         final Popup popup = new Popup("gtnhplanner_feedback", W, H) {
 
             @Override
@@ -97,6 +98,7 @@ public final class FeedbackPanel extends ParentWidget<FeedbackPanel> implements 
                 return false;
             }
         };
+        popup.toggledBy("feedback");
         popup.child(new FeedbackPanel(session, canvas, crash).pos(0, 0));
         final Minecraft mc = Minecraft.getMinecraft();
         Popup.open(parent, popup, (PlannerScale.width() - W) / 2, (PlannerScale.height() - H) / 2);

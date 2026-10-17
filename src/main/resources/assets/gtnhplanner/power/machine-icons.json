@@ -342,6 +342,18 @@
    "displayName": "Dyson Swarm Ground Unit",
    "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/dyson_swarm_ground_unit-ac01fe74b864.png",
    "dominantColor": "#006262"
+  },
+  "railcraft-water-tank": {
+   "id": "railcraft:machine.alpha@14",
+   "displayName": "Water Tank Siding",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/water_tank_siding-e971776c8704.png",
+   "dominantColor": "#483620"
+  },
+  "railcraft-boiler": {
+   "id": "railcraft:machine.beta@5",
+   "displayName": "Solid Fueled Boiler Firebox",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/solid_fueled_boiler_firebox-19dca2d277ff.png",
+   "dominantColor": "#333333"
   }
  }
 }

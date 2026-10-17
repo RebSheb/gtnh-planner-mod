@@ -12,13 +12,13 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import com.gtnhplanner.data.Settings;
+import com.gtnhplanner.data.flowchart.BoardGroup;
 import com.gtnhplanner.data.flowchart.Drawer;
 import com.gtnhplanner.data.flowchart.Edge;
 import com.gtnhplanner.data.flowchart.Graph;
+import com.gtnhplanner.data.flowchart.Groups;
 import com.gtnhplanner.data.flowchart.Node;
 import com.gtnhplanner.data.flowchart.Note;
-import com.gtnhplanner.data.flowchart.Port;
 import com.gtnhplanner.importer.FfDrawers.Role;
 import com.gtnhplanner.importer.FfDrawers.Target;
 import com.gtnhplanner.importer.FfPlan.FfEdge;
@@ -31,7 +31,6 @@ import com.gtnhplanner.importer.FfPlan.FfStorage;
 import com.gtnhplanner.importer.FfPlan.FfTarget;
 import com.gtnhplanner.importer.ImportReport.Kind;
 import com.gtnhplanner.importer.NodeMaker.PortInfo;
-import com.gtnhplanner.importer.RecipeIndex.Lookup;
 
 /**
  * Turns an {@link FfPlan} into a GTNH Planner {@link Graph}, reporting whatever does not carry over as it was.
@@ -40,8 +39,8 @@ import com.gtnhplanner.importer.RecipeIndex.Lookup;
  * <li>Cards become nodes, each FF recipe matched to an in-game one ({@link RecipeMatcher}); a card with no match is
  * left out. A shared machine stays one: its recipes become the sections of one shared card.</li>
  * <li>Wires become edges, landing on the port that holds the wire's resource (FF names ports by resource, never by
- * slot index). A buffer drawer (fed and drawn from) has no GTNH Planner counterpart: each feeder is wired straight to
- * each
+ * slot index). A buffer drawer (fed and drawn from) wired only to cards comes over as a buffer drawer, its feeders its
+ * makers and its takers its users; any other buffer has no counterpart, and each feeder is wired straight to each
  * taker.</li>
  * <li>Drawers keep the role their wires give them (FF's storage roles); their rate rules come over only from Solve
  * and Pool plans, the only plans where FF enforces them. Custom rate cards come in as custom rate cards (as drawers
@@ -54,12 +53,12 @@ import com.gtnhplanner.importer.RecipeIndex.Lookup;
  */
 public final class FfConverter {
 
-    /** FF's cards are 380 px wide, GTNH Planner's 320. */
-    static final double SCALE_X = 320.0 / 380.0;
     /**
-     * GTNH Planner's port rows are half FF's height; drawers and the gaps between cards are not, so a bit over half.
+     * FF's board px for ours: one to one. Its one-mode board draws our card (320 wide, rows of two cells) and our
+     * drawers, and places every plan, old ones too, where its positions say, so a plan reads here as it shows there.
      */
-    static final double SCALE_Y = 0.6;
+    static final double SCALE_X = 1;
+    static final double SCALE_Y = 1;
     static final int MARGIN = 40;
     /** Where a hatch's source drawer sits, left of its card, in GTNH Planner pixels. */
     static final int HATCH_DRAWER_DX = 180;
@@ -95,6 +94,8 @@ public final class FfConverter {
         final String converted;
         final List<Drawer.Link> links = new ArrayList<>();
         final List<PortInfo> infos = new ArrayList<>();
+        /** A buffer's users: the input ports it feeds. */
+        final List<Drawer.Link> takers = new ArrayList<>();
         /** A custom rate card's dial, when this drawer to be is one: it comes in as the card itself where it can. */
         @Nullable
         Dial dial;
@@ -116,6 +117,14 @@ public final class FfConverter {
             links.add(link);
             infos.add(info);
         }
+
+        /** A buffer's user: an input port it feeds. */
+        void taker(final Node node, final int port, final PortInfo info) {
+            final Drawer.Link link = new Drawer.Link(node.id, port);
+            if (takers.contains(link)) return;
+            takers.add(link);
+            infos.add(info);
+        }
     }
 
     private static final class Run {
@@ -135,15 +144,21 @@ public final class FfConverter {
         final Set<String> cardIds = new HashSet<>();
         /** Drawers to be, by FF storage id, custom rate card id, or "hatch:<card>:<fluid>". */
         final Map<String, PendingDrawer> pending = new LinkedHashMap<>();
-        final Map<UUID, List<PortInfo>> inPorts = new HashMap<>(), outPorts = new HashMap<>();
+        /** What each placed node's ports hold. */
+        final FfCards.Ports ports;
+        final FfCards.Context ctx;
         final double minX, minY;
         int lostWires;
+        /** Buffers joined into wires (wired to another drawer or by a cell wire): no drawer of their own. */
+        final Set<String> joinedBuffers = new HashSet<>();
 
         Run(final FfPlan plan, final RecipeIndex index, final NodeMaker maker) {
             this.plan = plan;
             this.index = index;
             this.maker = maker;
             this.graph = new Graph(plan.name());
+            this.ports = new FfCards.Ports(maker);
+            this.ctx = new FfCards.Context(index, maker, plan.solveMode(), report);
             this.recipes = plan.recipesById();
             for (final FfStorage s : plan.storages()) storages.put(s.id(), s);
             for (final FfNode n : plan.nodes()) cardIds.add(n.id());
@@ -165,8 +180,27 @@ public final class FfConverter {
             minY = Double.isFinite(y) ? y : 0;
         }
 
+        /** What each node and drawer the import made came from, by FF id (a card, storage or custom rate card). */
+        final Map<UUID, String> origin = new HashMap<>();
+
+        /** Notes what was added to the graph since {@code before} (node and drawer ids) as made from {@code ffId}. */
+        private void madeFrom(final Set<UUID> before, final String ffId) {
+            for (final UUID id : graph.nodes.keySet()) if (!before.contains(id)) origin.putIfAbsent(id, ffId);
+            for (final UUID id : graph.drawers.keySet()) if (!before.contains(id)) origin.putIfAbsent(id, ffId);
+        }
+
+        private Set<UUID> ids() {
+            final Set<UUID> ids = new HashSet<>(graph.nodes.keySet());
+            ids.addAll(graph.drawers.keySet());
+            return ids;
+        }
+
         Result run() {
-            for (final FfNode card : plan.nodes()) placeCard(card);
+            for (final FfNode card : plan.nodes()) {
+                final Set<UUID> before = ids();
+                placeCard(card);
+                madeFrom(before, card.id());
+            }
             if (plan.poolMode()) wirePool();
             else for (final FfEdge e : expandBuffers()) wire(e);
             supplyHatches();
@@ -174,6 +208,7 @@ public final class FfConverter {
             makeDrawers();
             reportUnusedStorages();
             placeNotes();
+            placeBoards();
             if (lostWires > 0) report.add(
                 Kind.WIRE,
                 "Plan",
@@ -240,184 +275,36 @@ public final class FfConverter {
          * card's pin (set on the first) the machine's count, which its recipes' machines then add up to.
          */
         void share(final List<Node> made) {
-            final com.gtnhplanner.data.flowchart.MachineGroup g = new com.gtnhplanner.data.flowchart.MachineGroup();
-            g.setHeader("Shared machine");
-            final Node host = made.getFirst();
-            if (host.isMachineCountFixed()) {
-                g.setMachineCapacity(host.machineConfig.getMachineCount());
-                g.setPinned(true);
-            }
-            for (final Node n : made) {
-                g.addSection(n.id);
-                n.setMachineCountFixed(false);
-                n.x = host.x;
-                n.y = host.y;
-            }
+            final com.gtnhplanner.data.flowchart.MachineGroup g = FfCards
+                .share(made, new com.gtnhplanner.data.flowchart.MachineGroup());
             graph.groups.put(g.getId(), g);
         }
 
         Node placeSection(final FfNode card, final FfRecipe recipe, final Map<Integer, FfSlot> overrides,
             final int section, final String name) {
-            final Lookup lookup = index.find(recipe);
-            // A crop is the crop it names, a bee the species: their rates are what the card's settings make of them,
-            // nothing to match by. A recipe found by its own id is the one.
-            final RecipeMatcher.Match match = recipe.isCrop() || recipe.isBee() || lookup.exact() ? lookup.candidates()
-                .isEmpty()
-                    ? new RecipeMatcher.Match(null, RecipeMatcher.Grade.NONE, "", 0)
-                    : new RecipeMatcher.Match(
-                        lookup.candidates()
-                            .getFirst(),
-                        RecipeMatcher.Grade.EXACT,
-                        "",
-                        1)
-                : RecipeMatcher.match(recipe, overrides, lookup.candidates());
-            if (!match.accepted()) {
-                String why = match.detail();
-                if (why.isEmpty()) why = lookup.note() != null ? lookup.note() : "no recipe like it in game";
-                report.add(Kind.UNMATCHED, name, why);
-                return null;
-            }
-            final RecipeIndex.GameRecipe game = match.recipe();
-            if (match.grade() == RecipeMatcher.Grade.SAME_RESOURCES)
-                report.add(Kind.FUZZY, name, "the in-game recipe differs: " + match.detail());
-            if (recipe.isPlannerTank())
-                report.add(Kind.CONVERTED, name, "the free, instant Tank is a Canner recipe in game");
-
-            final long eut = game.euPerTick() != null ? game.euPerTick() : Math.round(recipe.eut());
-            final FfSettings.Mapped mapped = FfSettings.map(card, recipe, eut, plan.solveMode(), section == 0);
-            final Node node = maker.make(game, mapped.machine());
-            if (node == null) {
-                report.add(Kind.UNMATCHED, name, "the game could not build a card for it");
-                return null;
-            }
-            node.x = px(card.x());
-            node.y = py(card.y());
-            maker.applySettings(node, mapped.settings());
-            // A single block's tier is its machine: where the game has none at the plan's tier, the card runs at the
-            // nearest it has.
-            final Object asked = mapped.settings()
-                .get(Settings.VOLTAGE.key()),
-                runs = node.machineConfig == null ? null : node.machineConfig.settings.get(Settings.VOLTAGE.key());
-            if (asked != null && runs != null && !asked.equals(runs)) report.add(
-                Kind.CONVERTED,
-                name,
-                "runs at " + runs + ", the nearest tier its machine comes in (the plan has " + asked + ")");
-            node.machineConfig.setMachineCount(mapped.machines());
-            node.setMachineCountFixed(mapped.pinned());
-            for (final String note : mapped.notes()) report.add(Kind.CONVERTED, name, note);
-            pickInputs(node, recipe, overrides, name);
+            final Node node = FfCards
+                .section(ctx, ports, card, recipe, overrides, section, name, px(card.x()), py(card.y()));
+            if (node == null) return null;
             graph.addNode(node);
             final Placed p = new Placed(node, card, recipe, overrides, section, name);
             placed.computeIfAbsent(card.id(), k -> new HashMap<>())
                 .put(section, p);
-
-            final FfTarget target = section == 0 ? card.targetOutput() : null;
-            if (target != null) {
-                final int out = findPort(node, true, target.kind(), List.of(target.resourceId()));
-                if (out >= 0) node.targetOutputRates.put(out, target.perSecond());
-                else report
-                    .add(Kind.WIRE, name, "its target rate names " + target.resourceId() + ", which it does not make");
-            }
             return node;
         }
 
-        /**
-         * The card's picks among the items a slot takes (FF's {@code recipeInputOverrides}, by its recipe's input
-         * index): each slot's port set to the picked item, when the game lists it for that slot. A pick of a whole ore
-         * dictionary group is no pick.
-         */
-        void pickInputs(final Node node, final FfRecipe recipe, final Map<Integer, FfSlot> overrides,
-            final String name) {
-            boolean picked = false;
-            for (final Map.Entry<Integer, FfSlot> o : overrides.entrySet()) {
-                final FfSlot chosen = o.getValue();
-                final int slot = o.getKey();
-                if (slot < 0 || slot >= recipe.inputs()
-                    .size()
-                    || chosen.id()
-                        .startsWith("oredict:"))
-                    continue;
-                final FfSlot own = recipe.inputs()
-                    .get(slot);
-                if (FfIds.same(own.id(), chosen.id())) continue;
-                final List<String> ids = new ArrayList<>(own.ids());
-                ids.add(chosen.id());
-                final int port = findPort(node, false, chosen.kind(), ids);
-                final Port<?> p = port < 0 ? null : node.inputs.get(port);
-                Object item = null;
-                if (p != null) for (final Object alt : p.getAlternatives()) {
-                    if (FfIds.same(
-                        maker.describe(p.withAlternative(alt))
-                            .ids()
-                            .getFirst(),
-                        chosen.id())) {
-                        item = alt;
-                        break;
-                    }
-                }
-                if (item == null) {
-                    report.add(
-                        Kind.CONVERTED,
-                        name,
-                        "takes " + chosen.displayName() + " in the plan, which its slot does not take in game");
-                    continue;
-                }
-                picked |= node.pickInput(port, p.keyOf(item));
-            }
-            // The ports' items changed: what they hold is read again.
-            if (picked) inPorts.remove(node.id);
-        }
-
-        /**
-         * A power card: the same generator at the same settings, which rebuilds its ports from the source as the site
-         * does on load. Its pin comes over as a pin in a Solve plan (an unpinned one's count as a starting count), its
-         * count pinned in a Build plan.
-         */
+        /** A power card (FfCards.power), placed. */
         void placePower(final FfNode card, final FfRecipe recipe) {
-            final Node node = maker.makePower(recipe.powerSource(), card.machineConfigTiers());
-            if (node == null) {
-                report.add(Kind.UNMATCHED, recipe.name(), "a generator GTNH Planner does not know");
-                return;
-            }
-            node.x = px(card.x());
-            node.y = py(card.y());
-            final Double pin = card.solvePin();
-            if (plan.solveMode() && pin != null && pin > 0) {
-                node.machineConfig.setMachineCount((int) Math.ceil(pin - 1e-9));
-                node.setMachineCountFixed(true);
-            } else {
-                node.machineConfig.setMachineCount((int) Math.max(1, Math.ceil(card.machineCount() - 1e-9)));
-                // Build runs every card at its count, generators too (as recipe cards come over: FfSettings).
-                if (!plan.solveMode()) node.setMachineCountFixed(true);
-            }
+            final Node node = FfCards.power(ctx, card, recipe, px(card.x()), py(card.y()));
+            if (node == null) return;
             graph.addNode(node);
             placed.computeIfAbsent(card.id(), k -> new HashMap<>())
                 .put(0, new Placed(node, card, recipe, Map.of(), 0, recipe.name()));
         }
 
-        /**
-         * FF's Tank card (its free mirror of a fluid Canner recipe) as a fluid tank card: emptying when the recipe
-         * takes the cell (its fluid comes out), filling when it takes the fluid. Its count is FF's crafts a second (a
-         * Tank craft is a tick), pinned only where FF pinned it. False when the game builds no tank for it.
-         */
+        /** FF's Tank card as a fluid tank card (FfCards.tank), placed; false when the game builds no tank for it. */
         boolean placeTank(final FfNode card, final FfRecipe recipe) {
-            boolean takesFluid = false;
-            for (final FfSlot in : recipe.inputs()) takesFluid |= "fluid".equals(in.kind());
-            final List<FfSlot> side = takesFluid ? recipe.outputs() : recipe.inputs();
-            FfSlot cell = null;
-            for (final FfSlot s : side) if ("item".equals(s.kind()) && cell == null) cell = s;
-            if (cell == null) return false;
-            final Node node = maker.makeTank(!takesFluid, cell.id());
+            final Node node = FfCards.tank(ctx, card, recipe, px(card.x()), py(card.y()));
             if (node == null) return false;
-            node.x = px(card.x());
-            node.y = py(card.y());
-            final double perSecond = card.machineCount() * 20.0 / Math.max(1, recipe.durationTicks());
-            final Double pin = card.solvePin();
-            if (plan.solveMode() && pin != null && pin > 0) {
-                node.machineConfig.setMachineCount((int) Math.ceil(pin * 20.0 / Math.max(1, recipe.durationTicks())));
-                node.setMachineCountFixed(true);
-            } else node.machineConfig
-                .setMachineCount((int) Math.max(1, Math.min(Integer.MAX_VALUE, Math.ceil(perSecond))));
             graph.addNode(node);
             placed.computeIfAbsent(card.id(), k -> new HashMap<>())
                 .put(0, new Placed(node, card, recipe, Map.of(), 0, recipe.name()));
@@ -492,6 +379,9 @@ public final class FfConverter {
             for (final Map.Entry<String, Role> r : roles.entrySet()) {
                 if (r.getValue() != Role.BUFFER) continue;
                 final String b = r.getKey();
+                // A buffer wired only to cards comes over as a buffer drawer; only the rest are joined into wires.
+                if (FfDrawers.keepsBuffer(b, plan.edges(), storages.keySet())) continue;
+                joinedBuffers.add(b);
                 final List<FfEdge> ins = new ArrayList<>(), outs = new ArrayList<>();
                 for (final FfEdge e : all) {
                     if (e.target()
@@ -524,7 +414,7 @@ public final class FfConverter {
                 report.add(
                     Kind.CONVERTED,
                     s == null ? b : storageName(s),
-                    "a buffer drawer (GTNH Planner has none), replaced by " + ins.size() * outs.size()
+                    "a buffer drawer wired to another drawer or by a cell wire, replaced by " + ins.size() * outs.size()
                         + " direct wire"
                         + (ins.size() * outs.size() == 1 ? "" : "s")
                         + " from its "
@@ -606,7 +496,8 @@ public final class FfConverter {
             final String drawerId = drawerFeeds ? from.drawer() : to.drawer();
             final Placed card = drawerFeeds ? to.card() : from.card();
             final PendingDrawer d = pendingFor(drawerId);
-            if (d == null || d.kind.linksInputs() != drawerFeeds) {
+            final boolean buffer = d != null && d.kind == Drawer.Kind.BUFFER;
+            if (d == null || !buffer && d.kind.linksInputs() != drawerFeeds) {
                 report.add(Kind.WIRE, e.resourceId(), "a drawer wired the wrong way round dropped");
                 return;
             }
@@ -620,7 +511,8 @@ public final class FfConverter {
                 report.add(Kind.WIRE, d.subject, "no port for it on " + card.name());
                 return;
             }
-            d.link(card.node(), port, describe(card.node(), !drawerFeeds).get(port));
+            if (buffer && drawerFeeds) d.taker(card.node(), port, describe(card.node(), false).get(port));
+            else d.link(card.node(), port, describe(card.node(), !drawerFeeds).get(port));
         }
 
         boolean known(final String id) {
@@ -644,47 +536,15 @@ public final class FfConverter {
          */
         int port(final Placed p, final boolean output, @Nullable final String handle, final FfEdge e,
             @Nullable final String extra) {
-            final FfHandle h = FfHandle.parse(handle);
-            final String kind = h != null ? h.kind() : e.resourceKind();
-            final List<String> want = new ArrayList<>();
-            if (h != null) want.add(h.resourceId());
-            want.add(e.resourceId());
-            if (extra != null) want.add(extra);
-            if (!output) {
-                final List<FfSlot> inputs = p.recipe()
-                    .inputs();
-                for (int i = 0; i < inputs.size(); i++) {
-                    final List<String> ids = new ArrayList<>(
-                        inputs.get(i)
-                            .ids());
-                    final FfSlot pick = p.overrides()
-                        .get(i);
-                    if (pick != null) ids.add(pick.id());
-                    if (FfIds.anySame(ids, want)) {
-                        want.addAll(ids);
-                        break;
-                    }
-                }
-            }
-            return findPort(p.node(), output, kind, want);
+            return FfCards.port(ports, p.node(), p.recipe(), p.overrides(), output, handle, e, extra);
         }
 
         int findPort(final Node node, final boolean output, final String kind, final List<String> ids) {
-            final List<PortInfo> infos = describe(node, output);
-            for (int i = 0; i < infos.size(); i++) {
-                final PortInfo info = infos.get(i);
-                if (info.kind()
-                    .equals(kind) && FfIds.anySame(info.ids(), ids)) return i;
-            }
-            return -1;
+            return ports.find(node, output, kind, ids);
         }
 
         List<PortInfo> describe(final Node node, final boolean output) {
-            return (output ? outPorts : inPorts).computeIfAbsent(node.id, k -> {
-                final List<PortInfo> infos = new ArrayList<>();
-                for (final Port<?> port : output ? node.outputs : node.inputs) infos.add(maker.describe(port));
-                return infos;
-            });
+            return ports.describe(node, output);
         }
 
         /** Pool plans: every maker of a resource wired to every user of it, drawers to every port of theirs. */
@@ -765,7 +625,8 @@ public final class FfConverter {
                     s.displayName(),
                     px(s.x()),
                     py(s.y()),
-                    FfDrawers.target(s, role, plan.solveMode()),
+                    // A buffer's rule is live only where a board enforced it: a one-mode plan.
+                    FfDrawers.target(s, role, role == Role.BUFFER ? plan.planMode() : plan.solveMode()),
                     null);
                 pending.put(id, d);
                 return d;
@@ -865,13 +726,38 @@ public final class FfConverter {
         }
 
         void makeDrawers() {
-            for (final PendingDrawer d : pending.values()) {
-                if (d.links.isEmpty()) {
+            for (final Map.Entry<String, PendingDrawer> entry : pending.entrySet()) {
+                final PendingDrawer d = entry.getValue();
+                final Set<UUID> before = ids();
+                try {
+                    makeDrawer(d);
+                } finally {
+                    // A hatch's drawer is its card's (hatch:<card>:<fluid>).
+                    final String key = entry.getKey();
+                    madeFrom(before, hatchCard(key));
+                }
+            }
+        }
+
+        /** The card a hatch drawer's key names, or the key itself when it is no hatch's. */
+        private String hatchCard(final String key) {
+            if (key.startsWith("hatch:"))
+                for (final String card : cardIds) if (key.startsWith("hatch:" + card + ":")) return card;
+            return key;
+        }
+
+        void makeDrawer(final PendingDrawer d) {
+            {
+                if (d.links.isEmpty() && d.takers.isEmpty()) {
                     report.add(Kind.DROPPED, d.subject, "a drawer with no wires left in GTNH Planner; left out");
-                    continue;
+                    return;
+                }
+                if (d.kind == Drawer.Kind.BUFFER) {
+                    makeBuffer(d);
+                    return;
                 }
                 final PortInfo first = d.infos.getFirst();
-                if (d.dial != null && makeCustomRate(d, first)) continue;
+                if (d.dial != null && makeCustomRate(d, first)) return;
                 final Drawer drawer = new Drawer(d.kind, first.key());
                 drawer.setLabel(d.label != null && !d.label.isEmpty() ? d.label : first.label());
                 drawer.setX(d.x);
@@ -892,22 +778,29 @@ public final class FfConverter {
         }
 
         /**
+         * A buffer: made a product, its makers linked, then its users, so it is a buffer when it has both and the end
+         * it still is when a side found no port ({@link Graph#linkDrawerPort}).
+         */
+        void makeBuffer(final PendingDrawer d) {
+            final PortInfo first = d.infos.getFirst();
+            final Drawer drawer = new Drawer(Drawer.Kind.PRODUCT, first.key());
+            drawer.setLabel(d.label != null && !d.label.isEmpty() ? d.label : first.label());
+            drawer.setX(d.x);
+            drawer.setY(d.y);
+            drawer.setTarget(d.target.rule(), d.target.rate());
+            graph.addDrawer(drawer);
+            for (final Drawer.Link link : d.links) graph.linkDrawerPort(drawer.getId(), link, false);
+            for (final Drawer.Link link : d.takers) graph.linkDrawerPort(drawer.getId(), link, true);
+        }
+
+        /**
          * A custom rate card as one: holding the resource of the ports it was wired to, at its dial, wired to them as
          * the drawer would have been linked. False when the maker builds none (it then comes in as a drawer).
          */
         boolean makeCustomRate(final PendingDrawer d, final PortInfo held) {
             final Dial dial = d.dial;
-            final boolean eu = com.gtnhplanner.power.Energy.KEY.equals(held.key());
-            final Map<String, String> settings = new LinkedHashMap<>();
-            settings.put(
-                com.gtnhplanner.power.CustomRate.MODE,
-                dial.supply() ? com.gtnhplanner.power.CustomRate.SUPPLY : com.gtnhplanner.power.CustomRate.REQUEST);
-            // The dial is EU/t on a card holding EU, a second's worth of anything else.
-            settings.put(
-                com.gtnhplanner.power.CustomRate.RATE,
-                String.valueOf(eu ? dial.perSecond() / 20 : dial.perSecond()));
-            settings.put(com.gtnhplanner.power.CustomRate.RESOURCE, held.key());
-            final Node node = maker.makeCustomRate(settings);
+            final Node node = maker
+                .makeCustomRate(FfCards.customRateSettings(dial.supply(), dial.perSecond(), held.key()));
             if (node == null) return false;
             node.x = d.x;
             node.y = d.y;
@@ -926,7 +819,7 @@ public final class FfConverter {
             for (final FfStorage s : plan.storages()) {
                 final Role role = roles.getOrDefault(s.id(), Role.IDLE);
                 if (role == Role.IDLE) report.add(Kind.DROPPED, storageName(s), "an unwired drawer; left out");
-                else if (role != Role.BUFFER && !pending.containsKey(s.id()))
+                else if (!joinedBuffers.contains(s.id()) && !pending.containsKey(s.id()))
                     report.add(Kind.DROPPED, storageName(s), "its wires all went to cards that were left out");
             }
         }
@@ -941,17 +834,71 @@ public final class FfConverter {
          */
         void placeNotes() {
             for (final FfNote n : plan.textNotes()) {
-                final Note note = new Note();
-                note.setX(px(n.x()));
-                note.setY(py(n.y()));
-                note.setWidth(Math.max(Note.MIN_W, (int) Math.round(n.width() * SCALE_X)));
-                note.setHeight(Math.max(Note.MIN_H, (int) Math.round(n.height() * SCALE_Y)));
-                if (n.colorTag() != null && !n.colorTag()
-                    .isEmpty()) note.setColor(n.colorTag());
-                if (n.fontSize() != null) note.setFontSize(n.fontSize());
-                note.setJoined(n.text());
+                final Note note = note(n, UUID.randomUUID(), px(n.x()), py(n.y()));
                 graph.notes.put(note.getId(), note);
+                if (!n.id()
+                    .isEmpty()) noteOrigin.put(note.getId(), n.id());
             }
+        }
+
+        /** The notes the import made, by the FF id of the annotation each came from. */
+        final Map<UUID, String> noteOrigin = new HashMap<>();
+
+        /**
+         * FF's boards as the board's groups: each frame at the cards' scale, open or collapsed as it was, its paper and
+         * colour kept, and what was in it in it again (docs/design/groups.md). A frame grows to hold its members, here
+         * with a guess at their sizes and again once the board knows them.
+         */
+        void placeBoards() {
+            if (plan.boards()
+                .isEmpty()) return;
+            final Map<String, BoardGroup> byFf = new HashMap<>();
+            for (final FfPlan.FfBoard b : plan.boards()) {
+                final BoardGroup g = group(
+                    b,
+                    UUID.randomUUID(),
+                    px(b.x()),
+                    py(b.y()),
+                    b.name() == null || b.name()
+                        .isEmpty() ? Groups.newName(graph) : b.name());
+                g.setFfId(b.id());
+                graph.boardGroups.put(g.getId(), g);
+                byFf.put(b.id(), g);
+            }
+            for (final FfPlan.FfBoard b : plan.boards()) {
+                final BoardGroup parent = b.parent() == null ? null : byFf.get(b.parent());
+                if (parent != null) Groups.setGroupOf(
+                    graph,
+                    byFf.get(b.id())
+                        .getId(),
+                    parent.getId());
+            }
+            for (final Map.Entry<UUID, String> e : origin.entrySet()) {
+                final String in = plan.boardOf()
+                    .get(e.getValue());
+                final BoardGroup g = in == null ? null : byFf.get(in);
+                if (g == null) continue;
+                final Node n = graph.nodes.get(e.getKey());
+                if (n != null) n.group = g.getId();
+                final Drawer d = graph.drawers.get(e.getKey());
+                if (d != null) d.setGroup(g.getId());
+            }
+            for (final Map.Entry<UUID, String> e : noteOrigin.entrySet()) {
+                final String in = plan.boardOf()
+                    .get(e.getValue());
+                final BoardGroup g = in == null ? null : byFf.get(in);
+                if (g != null) graph.notes.get(e.getKey())
+                    .setGroup(g.getId());
+            }
+            Groups.sanitize(graph);
+            Groups.fit(graph, id -> {
+                final Node n = graph.nodes.get(id);
+                if (n != null) return new int[] { n.x, n.y, 320, 60 };
+                final Drawer d = graph.drawers.get(id);
+                if (d != null) return new int[] { d.getX(), d.getY(), 40, 40 };
+                final Note note = graph.notes.get(id);
+                return note == null ? null : new int[] { note.getX(), note.getY(), note.getWidth(), note.getHeight() };
+            });
         }
 
         // endregion
@@ -963,6 +910,70 @@ public final class FfConverter {
         int py(final double ffY) {
             return snap((ffY - minY) * SCALE_Y) + MARGIN;
         }
+    }
+
+    /**
+     * An annotation as a board note at a place: sized at the cards' scale, never under a note's smallest size (a
+     * drawing's, which an arrow may go under on one axis to run level), with its colour, text size and text, and a
+     * drawing's kind and dress (docs/design/annotations.md).
+     */
+    public static Note note(final FfNote n, final UUID id, final int x, final int y) {
+        final Note note = new Note(id);
+        note.setX(x);
+        note.setY(y);
+        final FfPlan.FfDrawing d = n.drawing();
+        // An arrow may run level (an axis of 0); every other drawing is at least a cell.
+        final boolean arrow = d != null && Note.ARROW.equals(d.kind());
+        final int minW = d == null ? Note.MIN_W : arrow ? 0 : Note.DRAWING_MIN;
+        final int minH = d == null ? Note.MIN_H : arrow ? 0 : Note.DRAWING_MIN;
+        note.setWidth(Math.max(minW, (int) Math.round(n.width() * SCALE_X)));
+        note.setHeight(Math.max(minH, (int) Math.round(n.height() * SCALE_Y)));
+        if (n.colorTag() != null && !n.colorTag()
+            .isEmpty()) note.setColor(n.colorTag());
+        // A drawing with no tag keeps none (a picture is then framed in grey, not yellow).
+        else if (d != null) note.setColor("");
+        if (n.fontSize() != null) note.setFontSize(n.fontSize());
+        note.setJoined(n.text());
+        if (d != null) {
+            note.setKind(d.kind());
+            note.setArrowDirection(d.arrowDirection());
+            note.setArrowHeads(d.arrowHeads());
+            note.setArrowWidth(d.arrowWidth());
+            if (d.points() != null) {
+                final List<int[]> pts = new ArrayList<>();
+                for (final double[] p : d.points())
+                    pts.add(new int[] { (int) Math.round(p[0] * SCALE_X), (int) Math.round(p[1] * SCALE_Y) });
+                note.setPoints(pts);
+            }
+            note.setImageUrl(d.imageUrl());
+            note.setBorder(d.border());
+            note.setBorderColor(d.borderColor());
+            note.setFillColor(d.fillColor());
+            note.setFill(d.fill());
+            note.setMarks(d.marks());
+        }
+        return note;
+    }
+
+    /**
+     * A board (FF's pocket) as a group at a place, its parent and website id left to the caller: its frame at the
+     * cards' scale (the smallest a frame gets when it has no size), open or collapsed as it was, its colour and paper.
+     */
+    public static BoardGroup group(final FfPlan.FfBoard b, final UUID id, final int x, final int y, final String name) {
+        final BoardGroup g = new BoardGroup(id);
+        g.setName(name);
+        if (b.colorTag() != null && !b.colorTag()
+            .isEmpty()) g.setColor(b.colorTag());
+        g.setTheme(b.theme());
+        g.setPattern(b.pattern());
+        g.setCollapsed(!b.expanded());
+        g.setX(x);
+        g.setY(y);
+        g.setWidth(
+            b.width() == null ? BoardGroup.MIN_W : Math.max(BoardGroup.MIN_W, (int) Math.round(b.width() * SCALE_X)));
+        g.setHeight(
+            b.height() == null ? BoardGroup.MIN_H : Math.max(BoardGroup.MIN_H, (int) Math.round(b.height() * SCALE_Y)));
+        return g;
     }
 
     private static int snap(final double v) {

@@ -488,6 +488,8 @@ public final class SteamMakers {
         all.add(lavaBoiler());
         all.add(advancedBoiler());
         for (final BoilerSpec spec : boilerSpecs()) all.add(buildBoiler(spec));
+        // Railcraft's multiblock boiler, beside the GT boilers (Railcraft).
+        all.addAll(Railcraft.steamSources());
         for (final HeatExchanger entry : PowerData.get().heatExchangers) all.add(buildExchanger(entry));
         return List.copyOf(all);
     }

@@ -286,7 +286,8 @@
         "e666d1e6-bf91-4a50-9fa8-101605217031": 500.0
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

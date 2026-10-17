@@ -204,7 +204,8 @@
         "b494388d-af25-48b0-8d03-0320d6c6fa7e": 0.03125
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

@@ -1,5 +1,6 @@
 package com.gtnhplanner.importer;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -106,11 +107,11 @@ class FfConverterTest {
         assertEquals(Drawer.Kind.PRODUCT, water.getKind());
         assertEquals(List.of(new Drawer.Link(lcr.id, game.port(lcr, true, "ic2distilledwater"))), water.getLinks());
 
-        // FF's layout, scaled: the hydrogen drawer is leftmost and topmost, the card 180 FF px right of it.
+        // FF's layout, one to one: the hydrogen drawer is leftmost and topmost, the card 180 FF px right of it.
         assertEquals(FfConverter.MARGIN, hydrogen.getX());
         assertEquals(FfConverter.MARGIN, hydrogen.getY());
-        assertEquals(FfConverter.MARGIN + 150, lcr.x);
-        assertEquals(FfConverter.MARGIN + 10, lcr.y);
+        assertEquals(FfConverter.MARGIN + 180, lcr.x);
+        assertEquals(FfConverter.MARGIN + 20, lcr.y);
 
         assertTrue(
             r.report()
@@ -124,26 +125,32 @@ class FfConverterTest {
     }
 
     @Test
-    void aBufferDrawerBecomesDirectWires() {
+    void aBufferDrawerWiredToCardsComesOverAsABuffer() {
         final FfConverter.Result r = fixture("pa-cell-loop-plan.json");
         final Graph g = r.graph();
         assertEquals(6, g.nodes.size());
-        assertEquals(11, g.edges.size(), "7 wires between cards, and 2 feeders x 2 takers through the cell buffer");
-        assertEquals(3, g.drawers.size(), "water, hydrogen and oxygen; the cell buffer is gone");
-        assertTrue(has(r.report(), Kind.CONVERTED, "4 direct wires"));
-        assertEquals(null, drawer(g, "item:ic2:itemcellempty:0"));
+        assertEquals(7, g.edges.size(), "7 wires between cards; the cell buffer keeps its own");
+        assertEquals(4, g.drawers.size(), "water, hydrogen, oxygen and the cell buffer");
+        final Drawer cells = drawer(g, "item:ic2:itemcellempty:0");
+        assertNotNull(cells);
+        assertEquals(Drawer.Kind.BUFFER, cells.getKind());
+        assertEquals(
+            2,
+            cells.getLinks()
+                .size(),
+            "the two canners that empty cells feed it");
+        assertEquals(
+            2,
+            cells.getTakers()
+                .size(),
+            "the electrolyzer and the acid canner draw from it");
+        assertEquals(Drawer.Rule.ANY, cells.getRule(), "no older board enforced a buffer's rule");
 
         final FakeGame game = new FakeGame();
         final Node electrolyzer = node(g, "Electrolyzer");
-        assertEquals(
-            2,
-            edgesInto(g, electrolyzer, game.port(electrolyzer, false, "ic2:itemcellempty")).size(),
-            "both canners that empty cells feed the electrolyzer's cell input");
-        final Node acid = nodes(g, "Canner").stream()
-            .filter(n -> game.port(n, false, "phosphoricacid_gt5u") >= 0)
-            .findFirst()
-            .orElseThrow();
-        assertEquals(2, edgesInto(g, acid, game.port(acid, false, "ic2:itemcellempty")).size());
+        assertTrue(
+            cells.holds(electrolyzer.id, game.port(electrolyzer, false, "ic2:itemcellempty"), true),
+            "the electrolyzer's cell input draws from the buffer");
         for (final Edge e : g.getEdges()) {
             assertTrue(g.nodes.containsKey(e.sourceNodeId) && g.nodes.containsKey(e.targetNodeId));
         }
@@ -154,9 +161,16 @@ class FfConverterTest {
         final FfConverter.Result r = fixture("titanium-line-chembath.slim.json");
         final Graph g = r.graph();
         assertEquals(10, g.nodes.size());
-        assertEquals(15, g.edges.size());
-        assertEquals(13, g.drawers.size(), "14 drawers less the magnesium buffer");
-        assertTrue(has(r.report(), Kind.CONVERTED, "1 direct wire"));
+        assertEquals(14, g.edges.size());
+        assertEquals(14, g.drawers.size(), "14 drawers, the magnesium buffer one of them");
+        assertEquals(
+            Drawer.Kind.BUFFER,
+            g.getDrawers()
+                .stream()
+                .filter(Drawer::isBuffer)
+                .findFirst()
+                .orElseThrow()
+                .getKind());
 
         final Node ebf = node(g, "Blast Furnace");
         assertEquals("kanthal", ebf.machineConfig.settings.get("coil"));
@@ -173,16 +187,20 @@ class FfConverterTest {
                 .size(),
             "fed by the electrolyzer, the centrifuge and the macerator");
         for (final Drawer d : g.getDrawers()) {
-            for (final Drawer.Link l : d.getLinks()) {
-                final Node n = g.nodes.get(l.nodeId());
+            for (final Drawer.Held h : d.held()) {
+                final Node n = g.nodes.get(
+                    h.link()
+                        .nodeId());
                 assertNotNull(n);
-                final var ports = d.getKind()
-                    .linksInputs() ? n.inputs : n.outputs;
+                final var ports = h.input() ? n.inputs : n.outputs;
                 assertEquals(
                     d.getResourceKey(),
-                    new FakeGame().describe(ports.get(l.portIndex()))
+                    new FakeGame().describe(
+                        ports.get(
+                            h.link()
+                                .portIndex()))
                         .key(),
-                    "a drawer links its own resource");
+                    "a drawer links its own resource, on both sides of a buffer");
             }
         }
         assertTrue(
@@ -472,6 +490,31 @@ class FfConverterTest {
     }
 
     @Test
+    void aPinnedWebsiteTankIsNotPinnedHere() {
+        // FF's Build plans pin every card at its count, tanks too: a count of 1 was 20 cells a second forced through
+        // the plan, on a card that shows no count to clear.
+        final FakeGame game = new FakeGame();
+        game.cells.put("a:ocell", new String[] { "oxygen", "1000", "a:cell" });
+        final String tank = """
+            ,{"id": "t", "recipeId": "tank", "machineCount": 1, "solvePin": 1, "parallel": 1, "overclockTier": "NONE",
+              "enabled": true, "position": {"x": 400, "y": 0}}""";
+        final Graph g = convert(CELLS.formatted(tank, ""), game).graph();
+        final Node t = g.nodes.values()
+            .stream()
+            .filter(n -> com.gtnhplanner.power.FluidTank.ID.equals(n.powerSource))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("no fluid tank on the board"));
+        assertFalse(t.isMachineCountFixed(), "its pin is dropped");
+        // Nor does a pin set on one (an older save) hold it.
+        t.setMachineCountFixed(true);
+        assertFalse(t.isMachineCountFixed());
+        assertTrue(
+            com.gtnhplanner.data.flowchart.balancer.Unanchored.of(g)
+                .contains(t.id),
+            "with nothing else set, nothing sets it");
+    }
+
+    @Test
     void aLooseCellWireGetsAFluidTankBetween() {
         // FF wires the mixer's cells straight into the dryer's oxygen; its solver slips a free tank between.
         final FakeGame game = new FakeGame();
@@ -558,8 +601,20 @@ class FfConverterTest {
             "position": {"x": 0, "y": 0}, "size": {"width": 240, "height": 80}, "fontSize": 20},
            {"id": "t2", "kind": "text", "text": "small", "position": {"x": 760, "y": 400},
             "size": {"width": 100, "height": 40}},
-           {"id": "b1", "kind": "box", "position": {"x": -400, "y": -400}, "size": {"width": 800, "height": 800}}]}
+           {"id": "b1", "kind": "box", "colorTag": "azure", "position": {"x": 200, "y": 100}, "size": {"width": 800, "height": 800},
+            "style": {"border": "dashed", "fill": "dots", "borderColor": "white"}},
+           {"id": "z1", "kind": "zone", "position": {"x": 100, "y": 100}, "size": {"width": 400, "height": 200},
+            "points": [{"x": 0, "y": 0}, {"x": 400, "y": 0}, {"x": 400, "y": 200}], "style": {"fill": "paper"}},
+           {"id": "a1", "kind": "arrow", "arrowDirection": "up-left", "colorTag": "scarlet", "position": {"x": 300, "y": 300},
+            "size": {"width": 200, "height": 100}},
+           {"id": "i1", "kind": "image", "text": "Hello", "imageUrl": "https://example.com/p.png",
+            "position": {"x": 500, "y": 300}, "size": {"width": 360, "height": 280}}]}
         """;
+
+    private static Note drawing(final Graph g, final String kind) {
+        for (final Note n : g.getNotes()) if (kind.equals(n.kind())) return n;
+        throw new AssertionError("no " + kind);
+    }
 
     private static Note note(final Graph g, final String firstLine) {
         for (final Note n : g.getNotes()) if (!n.getText()
@@ -571,36 +626,85 @@ class FfConverterTest {
     }
 
     @Test
+    void portRatesBecomeTheCardsRates() {
+        // Plan mode's pins by handle: the mud it makes and the dust it takes, a second.
+        final String plan = NOTES.replaceFirst(
+            "\"enabled\": true,\\s*\"position\": \\{\"x\": 400",
+            "\"enabled\": true, \"portRates\": {\"output:fluid:mud\": 2.5, \"input:item:a%3Adust\": 4,"
+                + " \"output:item:nothing\": 9}, \"position\": {\"x\": 400");
+        assertTrue(plan.contains("portRates"), "the fixture took the rates");
+        final FfConverter.Result r = convert(plan, new FakeGame());
+        final Node mixer = node(r.graph(), "Mixer");
+        assertEquals(java.util.Map.of(0, 2.5), mixer.targetOutputRates);
+        assertEquals(java.util.Map.of(0, 4.0), mixer.targetInputRates);
+        assertTrue(
+            r.report()
+                .entries(Kind.WIRE)
+                .stream()
+                .anyMatch(
+                    e -> e.toString()
+                        .contains("nothing")),
+            "a rate on a port it lacks is reported");
+    }
+
+    @Test
     void textNotesBecomeBoardNotes() {
         final FfConverter.Result r = convert(NOTES, new FakeGame());
         final Graph g = r.graph();
-        assertEquals(2, g.notes.size());
+        assertEquals(6, g.notes.size());
 
         // The first note is the plan's top-left corner, so it sits at the margin and the mixer moves out from it.
         final Note big = note(g, "Mud line");
         assertEquals(List.of("Mud line", "feeds the dryer"), big.getText());
         assertEquals(FfConverter.MARGIN, big.getX());
         assertEquals(FfConverter.MARGIN, big.getY());
-        assertEquals(202, big.getWidth(), "240 FF px at 320/380");
-        assertEquals(48, big.getHeight(), "80 FF px at 0.6");
+        assertEquals(240, big.getWidth(), "240 FF px, one to one");
+        assertEquals(80, big.getHeight());
         assertEquals("light_blue", big.getColor());
         assertEquals(20, big.getFontSize());
 
         final Node mixer = node(g, "Mixer");
-        assertEquals(FfConverter.MARGIN + 340, mixer.x);
-        assertEquals(FfConverter.MARGIN + 120, mixer.y);
+        assertEquals(FfConverter.MARGIN + 400, mixer.x);
+        assertEquals(FfConverter.MARGIN + 200, mixer.y);
 
         final Note small = note(g, "small");
-        assertEquals(FfConverter.MARGIN + 640, small.getX());
-        assertEquals(FfConverter.MARGIN + 240, small.getY());
+        assertEquals(FfConverter.MARGIN + 760, small.getX());
+        assertEquals(FfConverter.MARGIN + 400, small.getY());
         assertEquals(Note.MIN_W, small.getWidth(), "never smaller than a note gets");
         assertEquals(Note.MIN_H, small.getHeight());
         assertEquals(Note.DEFAULT_COLOR, small.colorTag(), "no colour is FF's yellow");
         assertEquals(Note.DEFAULT_FONT, small.fontSizeOrDefault());
 
-        assertTrue(has(r.report(), Kind.NOTE, "1 box on the board left out"));
+        // The drawings come over as notes of a kind, placed and sized as on the website.
+        final Note box = drawing(g, Note.BOX);
+        assertEquals(FfConverter.MARGIN + 200, box.getX());
+        assertEquals(800, box.getWidth());
+        assertEquals(800, box.getHeight());
+        assertEquals("azure", box.colorTag());
+        assertEquals("dashed", box.borderStyle());
+        assertEquals("white", box.getBorderColor());
+        assertEquals("tint", box.fillStyle(), "a mark in the fill is a tint wearing it");
+        assertEquals("dots", box.marksStyle());
+        final Note zone = drawing(g, Note.ZONE);
+        assertEquals("solid", zone.fillStyle(), "paper is solid");
         assertEquals(
-            "1 card, 0 wires, 0 drawers, 2 notes",
+            3,
+            zone.getPoints()
+                .size());
+        assertArrayEquals(
+            new int[] { 400, 200 },
+            zone.getPoints()
+                .get(2));
+        assertEquals("", zone.getColor(), "no tag stays none");
+        final Note arrow = drawing(g, Note.ARROW);
+        assertEquals("up-left", arrow.getArrowDirection());
+        assertEquals("scarlet", arrow.colorTag());
+        final Note image = drawing(g, Note.IMAGE);
+        assertEquals("https://example.com/p.png", image.getImageUrl());
+        assertEquals(List.of("Hello"), image.getText());
+
+        assertEquals(
+            "1 card, 0 wires, 0 drawers, 6 notes",
             r.report()
                 .summary());
     }
@@ -642,8 +746,38 @@ class FfConverterTest {
             .toString();
         final Graph back = convert(posted, game).graph();
 
-        assertEquals(2, back.notes.size());
+        assertEquals(6, back.notes.size());
         for (final Note was : first.getNotes()) {
+            if (was.isDrawing()) {
+                final Note now = drawing(back, was.kind());
+                assertEquals(was.getX(), now.getX(), was.kind() + " comes back where it went");
+                assertEquals(was.getY(), now.getY());
+                assertEquals(was.getWidth(), now.getWidth());
+                assertEquals(was.getHeight(), now.getHeight());
+                assertEquals(was.getColor(), now.getColor());
+                assertEquals(was.getBorder(), now.getBorder());
+                assertEquals(was.getFill(), now.getFill());
+                assertEquals(was.getMarks(), now.getMarks());
+                assertEquals(was.getBorderColor(), now.getBorderColor());
+                assertEquals(was.getArrowDirection(), now.getArrowDirection());
+                assertEquals(was.getImageUrl(), now.getImageUrl());
+                assertEquals(was.getText(), now.getText());
+                if (was.getPoints() != null) {
+                    assertEquals(
+                        was.getPoints()
+                            .size(),
+                        now.getPoints()
+                            .size());
+                    for (int i = 0; i < was.getPoints()
+                        .size(); i++)
+                        assertArrayEquals(
+                            was.getPoints()
+                                .get(i),
+                            now.getPoints()
+                                .get(i));
+                }
+                continue;
+            }
             final Note now = note(
                 back,
                 was.getText()
@@ -655,8 +789,8 @@ class FfConverterTest {
             assertEquals(was.getY(), now.getY());
         }
         final Note big = note(back, "Mud line");
-        assertEquals(202, big.getWidth(), "a size in whole FF cells comes back as it went");
-        assertEquals(48, big.getHeight());
+        assertEquals(240, big.getWidth(), "a size in whole FF cells comes back as it went");
+        assertEquals(80, big.getHeight());
         final Node mixer = node(back, "Mixer");
         assertEquals(node(first, "Mixer").x, mixer.x);
         assertEquals(node(first, "Mixer").y, mixer.y);

@@ -47,16 +47,22 @@ public class Drawer extends GraphData {
          */
         BYPRODUCT,
         /** Voids what arrives. Links take output ports. */
-        TRASH;
+        TRASH,
+        /**
+         * A drawer inside a resource network: its links are the output ports that feed it, its
+         * {@link Drawer#getTakers()
+         * takers} the input ports it feeds. Nothing it carries leaves the plan; its rule holds what passes through.
+         */
+        BUFFER;
 
         /** True when this kind's links are node INPUT ports (only {@link #SOURCE}). */
         public boolean linksInputs() {
             return this == SOURCE;
         }
 
-        /** True when the solver honours this kind's rule (sources and products). */
+        /** True when the solver honours this kind's rule (sources, products and buffers). */
         public boolean hasRule() {
-            return this == SOURCE || this == PRODUCT;
+            return this == SOURCE || this == PRODUCT || this == BUFFER;
         }
 
         /**
@@ -66,6 +72,7 @@ public class Drawer extends GraphData {
         public Kind next() {
             return switch (this) {
                 case SOURCE -> SOURCE;
+                case BUFFER -> BUFFER;
                 case PRODUCT, BYPRODUCT -> TRASH;
                 case TRASH -> PRODUCT;
             };
@@ -129,10 +136,15 @@ public class Drawer extends GraphData {
     /** Units per second (items/s, or L/s for fluids). Meaningless under {@link Rule#ANY}. */
     private double rate;
     private List<Link> links = new ArrayList<>();
+    /** A buffer's users: the input ports it feeds. Empty for every other kind. */
+    private List<Link> takers = new ArrayList<>();
     /** Opaque resource identity the client writes and resolves; never parsed by the engine. */
     private String resourceKey = "";
     /** The resource's display name as last resolved by the client, for when it cannot resolve. */
     private String label = "";
+    /** The board group it is in ({@link BoardGroup}), or null. */
+    @org.jetbrains.annotations.Nullable
+    private UUID group;
 
     /** A product drawer with no resource, no links and no rule; also Gson's constructor. */
     public Drawer() {
@@ -171,8 +183,61 @@ public class Drawer extends GraphData {
     public void setKind(final Kind kind) {
         Objects.requireNonNull(kind, "kind");
         if (kind.linksInputs() != this.kind.linksInputs()) links.clear();
+        if (kind != Kind.BUFFER) takers.clear();
         this.kind = kind;
         byproductToProduct();
+    }
+
+    /** A buffer's users, read-only: the input ports it feeds. */
+    public List<Link> getTakers() {
+        return Collections.unmodifiableList(takers);
+    }
+
+    /**
+     * Links a port on the side it is: an output feeds the drawer, an input draws from it. A product given an input, or
+     * a
+     * source given an output, becomes a buffer (a source's links, which are inputs, become its takers); trash takes no
+     * input. True when it was added.
+     */
+    public boolean addPort(final Link link, final boolean input) {
+        Objects.requireNonNull(link, "link");
+        if (kind == Kind.BUFFER) {
+            final List<Link> side = input ? takers : links;
+            if (side.contains(link)) return false;
+            side.add(link);
+            return true;
+        }
+        if (kind.linksInputs() == input) return addLink(link);
+        if (kind == Kind.TRASH) return false;
+        if (kind == Kind.SOURCE) {
+            takers = new ArrayList<>(links);
+            links = new ArrayList<>();
+        }
+        kind = Kind.BUFFER;
+        (input ? takers : links).add(link);
+        return true;
+    }
+
+    /**
+     * Unlinks a port on its side. A buffer left with no users is a product again, with no makers a source again (its
+     * takers its links); the rule stays. True when it was linked.
+     */
+    public boolean removePort(final Link link, final boolean input) {
+        if (kind != Kind.BUFFER) return kind.linksInputs() == input && links.remove(link);
+        final boolean removed = (input ? takers : links).remove(link);
+        if (removed) settleBuffer();
+        return removed;
+    }
+
+    /** A buffer missing a side becomes the end it still is: no users, a product; no makers, a source. */
+    private void settleBuffer() {
+        if (kind != Kind.BUFFER) return;
+        if (takers.isEmpty()) kind = Kind.PRODUCT;
+        else if (links.isEmpty()) {
+            kind = Kind.SOURCE;
+            links = takers;
+            takers = new ArrayList<>();
+        }
     }
 
     /** A byproduct (an older save's, a plan's) is a product with no rule. */
@@ -222,11 +287,16 @@ public class Drawer extends GraphData {
         return links.remove(link);
     }
 
-    /** Drops every link to {@code nodeId}; true when any went. */
+    /** Drops every link (and every taker) to {@code nodeId}; true when any went. */
     public boolean removeLinksTo(final UUID nodeId) {
-        return links.removeIf(
+        final boolean any = links.removeIf(
             l -> l.nodeId()
-                .equals(nodeId));
+                .equals(nodeId))
+            | takers.removeIf(
+                l -> l.nodeId()
+                    .equals(nodeId));
+        if (any) settleBuffer();
+        return any;
     }
 
     public boolean isLinked(final UUID nodeId, final int portIndex) {
@@ -239,6 +309,15 @@ public class Drawer extends GraphData {
 
     public void setResourceKey(final String resourceKey) {
         this.resourceKey = Objects.requireNonNull(resourceKey, "resourceKey");
+    }
+
+    @org.jetbrains.annotations.Nullable
+    public UUID getGroup() {
+        return group;
+    }
+
+    public void setGroup(@org.jetbrains.annotations.Nullable final UUID group) {
+        this.group = group;
     }
 
     public String getLabel() {
@@ -281,10 +360,59 @@ public class Drawer extends GraphData {
             }
         }
         links = clean;
+        final List<Link> cleanTakers = new ArrayList<>();
+        if (takers != null && kind == Kind.BUFFER) {
+            for (final Link link : takers) {
+                if (link != null && link.nodeId != null && !cleanTakers.contains(link)) cleanTakers.add(link);
+            }
+        }
+        takers = cleanTakers;
+        if (kind == Kind.BUFFER && links.isEmpty() && takers.isEmpty()) kind = Kind.PRODUCT;
+        else settleBuffer();
     }
 
     /** Whether this drawer holds the port, given its own direction. */
     public boolean holds(final UUID nodeId, final int portIndex, final boolean input) {
+        if (kind == Kind.BUFFER && input) return takers.contains(new Link(nodeId, portIndex));
         return kind.linksInputs() == input && isLinked(nodeId, portIndex);
+    }
+
+    /** One port a drawer holds, and on which side of its card: an input it supplies, or an output it takes. */
+    public record Held(Link link, boolean input) {}
+
+    /**
+     * Every port the drawer holds with its side: its links on its kind's side, then a buffer's takers (inputs). Read
+     * this, not {@link #getLinks()}, wherever both sides of a buffer count.
+     */
+    public List<Held> held() {
+        final boolean input = kind.linksInputs();
+        final List<Held> out = new ArrayList<>(links.size() + takers.size());
+        for (final Link l : links) out.add(new Held(l, input));
+        for (final Link l : takers) out.add(new Held(l, true));
+        return out;
+    }
+
+    /** Whether a link is one of a buffer's users (an input it feeds) rather than on its kind's side. */
+    public boolean isTaker(final Link link) {
+        return takers.contains(link);
+    }
+
+    /** The side of the card a held link is on: true for an input (a source's links, a buffer's takers). */
+    public boolean sideOf(final Link link) {
+        return kind.linksInputs() || isTaker(link);
+    }
+
+    /**
+     * Whether a port could be linked here on its side: its own side always; the other side by a product or a source,
+     * which it makes a buffer ({@link #addPort}); never an input on trash.
+     */
+    public boolean takesSide(final boolean input) {
+        if (kind == Kind.BUFFER || kind.linksInputs() == input) return true;
+        return kind != Kind.TRASH;
+    }
+
+    /** Whether this is a buffer: a drawer inside the plan, not one of its ends. */
+    public boolean isBuffer() {
+        return kind == Kind.BUFFER;
     }
 }

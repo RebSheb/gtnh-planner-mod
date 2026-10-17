@@ -190,13 +190,17 @@ public final class SolveContext {
 
     /**
      * A drawer's total at a point: its unwired links' machine rates plus, where this model binds
-     * them, its wired links' externals.
+     * them, its wired links' externals; a buffer's, the flow on its edges.
      */
-    public double drawerTotal(final int drawer, final double[] extents, final double[] externals) {
+    public double drawerTotal(final int drawer, final double[] extents, final double[] flows,
+        final double[] externals) {
         final ModelData.DrawerRow row = model.drawers.get(drawer);
         double total = 0;
         for (int i = 0; i < row.extentMachines().length; i++) {
             total += extents[row.extentMachines()[i]] * row.extentQty()[i];
+        }
+        for (final int e : row.flowEdges()) {
+            total += flows[e];
         }
         if (bindsExternals) {
             for (final int p : row.externalPorts()) {
@@ -227,6 +231,13 @@ public final class SolveContext {
             if (!asksForFlow) continue;
             for (final int m : row.extentMachines()) {
                 out.add(m);
+            }
+            for (final int e : row.flowEdges()) {
+                out.add(
+                    model.connectedPorts.get(
+                        model.edges.get(e)
+                            .srcPort())
+                        .machine());
             }
             if (bindsExternals) {
                 for (final int p : row.externalPorts()) {

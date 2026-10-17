@@ -77,6 +77,15 @@ public final class PlannerSettings {
         set("tour.offered", offered);
     }
 
+    /** How a task board shows on this computer, by its plan id: "chain" for its chains, else its columns. */
+    public static String taskView(final String planId) {
+        return load().getProperty("tasks.view." + planId, "board");
+    }
+
+    public static void setTaskView(final String planId, final String view) {
+        set("tasks.view." + planId, view);
+    }
+
     /** The newest release the player was told of (and answered), so it is said once; "" for none. */
     public static String updateOffered() {
         return load().getProperty("update.offered", "");
@@ -268,6 +277,53 @@ public final class PlannerSettings {
 
     public static int arRange() {
         return AR_RANGES[arRangeIndex()];
+    }
+
+    // endregion
+
+    // region Task locations in the world
+
+    /** What shows of a task's locations without Show being pressed: all, those within the distance, or none. */
+    public static final String[] TASK_SHOW_NAMES = { "Always", "When near", "Never" };
+
+    public static final int TASK_ALWAYS = 0, TASK_NEAR = 1, TASK_NEVER = 2;
+    /** How near is near, in blocks. */
+    public static final int[] TASK_DISTANCES = { 16, 32, 64, 128 };
+
+    public static int taskShow() {
+        return clamp(integer("world.taskShow", TASK_NEAR), TASK_SHOW_NAMES.length);
+    }
+
+    public static void setTaskShow(final int i) {
+        set("world.taskShow", clamp(i, TASK_SHOW_NAMES.length));
+    }
+
+    public static int taskDistanceIndex() {
+        return clamp(integer("world.taskNear", 1), TASK_DISTANCES.length);
+    }
+
+    public static void setTaskDistanceIndex(final int i) {
+        set("world.taskNear", clamp(i, TASK_DISTANCES.length));
+    }
+
+    public static int taskDistance() {
+        return TASK_DISTANCES[taskDistanceIndex()];
+    }
+
+    public static boolean taskBeam() {
+        return bool("world.taskBeam", true);
+    }
+
+    public static void setTaskBeam(final boolean on) {
+        set("world.taskBeam", on);
+    }
+
+    public static boolean taskLabel() {
+        return bool("world.taskLabel", true);
+    }
+
+    public static void setTaskLabel(final boolean on) {
+        set("world.taskLabel", on);
     }
 
     // endregion

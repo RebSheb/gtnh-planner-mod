@@ -23,7 +23,21 @@ import com.gtnhplanner.ui.card.StructureArt;
  * @param pinList      the cards on the plan's pin list, in the order they were pinned
  */
 public record PlanSnapshot(Graph graph, String planName, long graphVersion, List<Card> cards, List<Box> drawers,
-    List<Line> wires, float viewX, float viewY, com.gtnhplanner.ui.theme.Fmt.RateUnit rateUnit, List<UUID> pinList) {
+    List<Line> wires, float viewX, float viewY, com.gtnhplanner.ui.theme.Fmt.RateUnit rateUnit, List<UUID> pinList,
+    List<GroupBox> groups) {
+
+    /** A plan with no groups. */
+    public PlanSnapshot(final Graph graph, final String planName, final long graphVersion, final List<Card> cards,
+        final List<Box> drawers, final List<Line> wires, final float viewX, final float viewY,
+        final com.gtnhplanner.ui.theme.Fmt.RateUnit rateUnit, final List<UUID> pinList) {
+        this(graph, planName, graphVersion, cards, drawers, wires, viewX, viewY, rateUnit, pinList, List.of());
+    }
+
+    /**
+     * A group on show (docs/design/groups.md): an open one's frame, or a collapsed one's summary card, in its colour;
+     * outer groups first.
+     */
+    public record GroupBox(UUID id, float x, float y, float w, float h, int color, boolean collapsed) {}
 
     /** What flows through a port or drawer, per second. */
     public record Flow(String name, @Nullable ItemStack item, @Nullable FluidStack fluid, boolean power,
@@ -96,6 +110,26 @@ public record PlanSnapshot(Graph graph, String planName, long graphVersion, List
 
     public static void publish(final PlanSnapshot snapshot) {
         latest = snapshot;
+    }
+
+    /**
+     * A plan's slot took a new graph (a shared plan read again): the last snapshot, if it was of the old one, is of the
+     * new one now, so what the world edits goes to the plan; it shows the old drawing until the board draws again.
+     */
+    public static void regraph(final Graph old, final Graph next) {
+        final PlanSnapshot s = latest;
+        if (s == null || s.graph() != old) return;
+        latest = new PlanSnapshot(
+            next,
+            s.planName(),
+            s.graphVersion(),
+            s.cards(),
+            s.drawers(),
+            s.wires(),
+            s.viewX(),
+            s.viewY(),
+            s.rateUnit(),
+            s.pinList());
     }
 
     @Nullable

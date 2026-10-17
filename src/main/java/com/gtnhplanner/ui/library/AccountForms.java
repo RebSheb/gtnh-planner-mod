@@ -25,7 +25,6 @@ import com.gtnhplanner.library.Account;
 import com.gtnhplanner.library.CommunityApi;
 import com.gtnhplanner.library.Posting;
 import com.gtnhplanner.ui.BoardSession;
-import com.gtnhplanner.ui.PlannerScale;
 import com.gtnhplanner.ui.Resources;
 import com.gtnhplanner.ui.popup.PickList;
 import com.gtnhplanner.ui.popup.Popup;
@@ -62,36 +61,57 @@ public final class AccountForms {
      * post with the plan as it is now. Signs in first when needed.
      */
     public static void post(final ModularPanel parent, final BoardSession session, final Graph plan) {
-        post(parent, session, plan, null, null);
+        post(parent, session, plan, false, null, null);
     }
 
     /**
-     * As above, filled in with {@code draft} (what was typed before a sign-in ran out) rather than from the plan;
-     * {@code why} is said on the sign-in form when one comes first.
+     * As above; {@code asNew} posts a new one even for a plan already posted (Save as new post). Filled in with
+     * {@code draft} (what was typed before a sign-in ran out) rather than from the plan; {@code why} is said on the
+     * sign-in form when one comes first.
      */
     private static void post(final ModularPanel parent, final BoardSession session, final Graph plan,
-        @Nullable final Posting.Face draft, @Nullable final String why) {
+        final boolean asNew, @Nullable final Posting.Face draft, @Nullable final String why) {
         if (!Account.signedIn()) {
-            signIn(parent, () -> post(parent, session, plan, draft, null), why);
+            signIn(parent, () -> post(parent, session, plan, asNew, draft, null), why);
             return;
         }
         final Popup popup = new Popup("gtnhplanner_post", W, 158);
-        popup.child(new Post(popup, parent, session, plan, draft).size(W, 158));
+        popup.child(new Post(popup, parent, session, plan, asNew, draft).size(W, 158));
         open(parent, popup, 158);
     }
 
     /**
-     * The menu row that shares a plan to the library, or updates what it shared: the Share key's, a tab's, a tile's.
+     * The menu rows that publish a plan to the library, the Share key's, a tab's and a tile's: a plan not posted yet
+     * has Publish to library; one posted has Update in library (its post, votes kept) and Publish as new post. Posts
+     * are copies for everyone, never the plan itself: nothing follows the plan by itself.
      */
-    public static PickList.Entry shareRow(final ModularPanel parent, final BoardSession session, final Graph plan) {
-        final boolean shared = plan.getPostId() != null;
-        return new PickList.Entry(
-            null,
-            shared ? "Update in library..." : "Share to library...",
-            shared ? "with the plan as it is" : "for other players",
-            Hyb.INK,
-            false,
-            () -> post(parent, session, plan));
+    public static List<PickList.Entry> shareRows(final ModularPanel parent, final BoardSession session,
+        final Graph plan) {
+        // A task board is never posted.
+        if (com.gtnhplanner.data.flowchart.Tasks.TASKS.equals(plan.getPrimaryView())) return List.of();
+        if (plan.getPostId() == null) return List.of(
+            new PickList.Entry(
+                null,
+                "Post a copy to Community...",
+                "for other players",
+                Hyb.INK,
+                false,
+                () -> post(parent, session, plan, false, null, null)));
+        return List.of(
+            new PickList.Entry(
+                null,
+                "Update my post...",
+                "with the plan as it is",
+                Hyb.INK,
+                false,
+                () -> post(parent, session, plan, false, null, null)),
+            new PickList.Entry(
+                null,
+                "Post a new copy...",
+                "a post of its own",
+                Hyb.INK,
+                false,
+                () -> post(parent, session, plan, true, null, null)));
     }
 
     /**
@@ -157,9 +177,9 @@ public final class AccountForms {
             .trim();
     }
 
-    /** In the middle of the screen. */
+    /** In the middle of the planner, a little above it. */
     private static void open(final ModularPanel parent, final Popup popup, final int h) {
-        Popup.open(parent, popup, (PlannerScale.width() - W) / 2, (PlannerScale.height() - h) / 2 - 20);
+        Popup.openCentred(parent, popup, 0.4f);
     }
 
     /** What both forms share: the title and subtitle, labels over fields, the error, the button and the link. */
@@ -311,7 +331,7 @@ public final class AccountForms {
 
         @Override
         String title() {
-            return create ? "Create a library account" : "Sign in to the library";
+            return create ? "Create an account" : "Sign in";
         }
 
         @Override
@@ -502,9 +522,11 @@ public final class AccountForms {
         /** Whether this updates the plan's post rather than making a new one. */
         private boolean update;
         private boolean posted, wasUpdate;
+        /** Asked as Save as new post: a sign-in running out comes back to the same question. */
+        private final boolean asNew;
 
         Post(final Popup popup, final ModularPanel parent, final BoardSession session, final Graph plan,
-            @Nullable final Posting.Face draft) {
+            final boolean asNew, @Nullable final Posting.Face draft) {
             super(
                 popup,
                 draft != null ? draft.title() : plan.getName(),
@@ -513,7 +535,8 @@ public final class AccountForms {
             this.parent = parent;
             this.session = session;
             this.plan = plan;
-            update = plan.getPostId() != null;
+            this.asNew = asNew;
+            update = !asNew && plan.getPostId() != null;
         }
 
         @Override
@@ -523,13 +546,13 @@ public final class AccountForms {
 
         @Override
         String title() {
-            if (posted) return wasUpdate ? "Updated!" : "Shared!";
-            return update ? "Update your post" : "Share to the public library";
+            if (posted) return wasUpdate ? "Updated!" : "Published!";
+            return update ? "Update your post" : "Post to Community";
         }
 
         @Override
         String subtitle() {
-            if (posted) return "Everyone can find it in Public setups";
+            if (posted) return "Everyone can find it in Community";
             return update ? "With the plan as it is now; its votes stay"
                 : "As " + Account.username() + ", for everyone to find";
         }
@@ -553,19 +576,19 @@ public final class AccountForms {
         @Override
         String button() {
             if (posted) return "Done";
-            return update ? "Update post" : "Share";
+            return update ? "Update post" : "Publish";
         }
 
         @Override
         String busyButton() {
-            return update ? "Updating..." : "Sharing...";
+            return update ? "Updating..." : "Publishing...";
         }
 
         @Override
         @Nullable
         String link() {
             if (posted) return null;
-            return update ? "Share it as a new one instead" : "Not " + Account.username() + "? Sign out";
+            return update ? "Publish it as a new one instead" : "Not " + Account.username() + "? Sign out";
         }
 
         @Override
@@ -594,7 +617,7 @@ public final class AccountForms {
             }
             if (plan.getNodes()
                 .isEmpty()) {
-                error = "Add a recipe first: the library takes no empty plans";
+                error = "Add a recipe first: Community takes no empty plans";
                 return;
             }
             busy = true;
@@ -615,7 +638,7 @@ public final class AccountForms {
                 // The sign-in ran out: sign in again, then back here with what was typed.
                 if (!Account.signedIn()) {
                     popup.closeIfOpen();
-                    post(parent, session, plan, f, why);
+                    post(parent, session, plan, asNew, f, why);
                 }
             });
         }

@@ -77,11 +77,13 @@ class DangoteDistillusTest {
         assertEquals(40, MachineEffects.structuralParallels(e, MapRecipes.node("dangote-distillus", "IV", Map.of())));
         final RecipeRules.TierControl height = height(e, Map.of());
         assertEquals("12", height.current().key);
-        assertEquals(3, height.numeric().min);
-        assertEquals(12, height.numeric().max);
-        // Out of the structure's range: clamped, as the game's channel is.
-        assertEquals("3", height(e, Map.of(DangoteDistillus.HEIGHT, "1")).current().key);
-        assertEquals("12", height(e, Map.of(DangoteDistillus.HEIGHT, "20")).current().key);
+        // The website's ladder (its countControl): 3 to 12 layers, the lowest the minimum.
+        assertEquals("3", height.minimum().key);
+        assertEquals(
+            List.of("3", "4", "5", "6", "7", "8", "9", "10", "11", "12"),
+            DangoteDistillus.HEIGHT_CONTROL.tiers.stream()
+                .map(t -> t.key)
+                .toList());
     }
 
     @Test

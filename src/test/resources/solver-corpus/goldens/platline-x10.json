@@ -17227,7 +17227,8 @@
         "ff181688-ed45-35f0-82a1-8735aaf10ff7": 640000.0
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

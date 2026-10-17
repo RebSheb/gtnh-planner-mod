@@ -31,6 +31,13 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   slots, solve hookup, notices, totals), `canvas/` (board, wires, port drags, arrange), `card/` (recipe card),
   `drawer/`, `popup/` (menus, number and text boxes; recipes are looked up in NEI itself). Known gaps and next
   steps are at the top of `docs/design/build-prompt.md`.
+- Everything must fit GTNH's defaults (1080p, GUI scale 4, the pack's NEI panel): a planner 440 board px wide at the
+  gear's Normal Size and 330 at Large (`call 'window?w=1920&h=1080&scale=4&size=3'`; the dev game at scale 2 hides
+  it). The top bar gives way as the website's does (`ui/TopBar`): keys closer, the bolt and arrange's progress short,
+  faces folded to two and a count (`PlanTabs.end`), then the keys on rows under the tabs, the open tab and + always
+  kept. Popups open inside the planner's own panel, never under NEI's list (`Popup.room`, `openCentred`); a box taller
+  than it scrolls inside (`TaskPanel`'s page), the task board scrolls sideways past four 112 px columns, notices wrap.
+  Text gives way by shortening, never by cutting a word.
 - `docs/design/card-redesign.md` is the clean card now on the board, the minimap and the world (`CardLayout`,
   `CardPaint`, `CardChips`, `RecipeCard`, `CleanCardView`): what is settled, where every control and setting went,
   and what is left to design (`call cards` pages through a plan's cards).
@@ -50,16 +57,24 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   the NEI and GregTech side. The "+" plan tab pastes one from the clipboard; `call 'importff?file=<path>'` does it
   from the harness. Fixtures are in `src/test/resources/factory-flow/`. A card's machine is found by the website's
   handler id among the blocks `handlers.json` lists for it (`WebCards.handlerItems`; names alone never match a GT
-  single block, named per tier), a single block at the card's tier (the nearest it comes in, reported). Our cards are
-  sized differently, so the board pulls an imported plan's overlapping cards apart once it has solved
-  (`layout/Unstack`). Real plans to try it on: `POST /api/community/plans/<id>/download` gives a post's plan.
+  single block, named per tier), a single block at the card's tier (the nearest it comes in, reported). The website's
+  board px are ours one to one (the owner's backport, 2026-10-15: its board draws our 320 card and 116x48 drawers),
+  for the importer, the posting export and shared plans alike; a card still sized a little differently is pulled
+  apart once the board has solved (`layout/Unstack`). Port rates go both ways as plan mode's `portRates` (by the
+  website's row handle), a source drawer's rule as a negative `targetPerSecond`, trash as `drainMode: "trash"`, and
+  posts say `planMode` with `solveMode`. Real plans to try it on: `POST /api/community/plans/<id>/download` gives a post's plan.
 - Shared machines (one card, several recipes time-sharing one machine; `docs/design/ff-shared-machine-spec.md`) are
   `MachineGroup`s with ordered `sections`: each recipe stays a node with its own ports and wires, the group draws as
   one card, its machine settings are copied to every recipe, and a pinned count is an exact solver pool.
+- Buffer drawers (`docs/design/buffer-drawers.md`): `Drawer.Kind.BUFFER`, its `links` the outputs feeding it and its
+  `takers` the inputs it feeds (`Drawer.held()` gives both with their side). An input dropped on a product, or an output
+  on a source, makes one. The solver draws an edge from each maker to each user (`ModelData.buildBuffers`) and holds
+  its rule on their flows; the same in the website's port, checked by the `buffer-drawers` corpus case. Features that
+  must land in the mod and the website: `docs/design/cross-repo-features.md`.
 - Saves are backed up to `backups/` beside the save (`gtnhplanner/plans.dat`), once per session and before any save
   that drops a plan.
 - Non-recipe machines (the top bar's Non-recipe key, `ui/power/PowerPicker`) are the website's power sources, ported
-  to `power/` from its `src/lib/power` (57 sources; the workbook tables, resource map and machine icons are copied
+  to `power/` from its `src/lib/power` (59 sources; the workbook tables, resource map and machine icons are copied
   JSON in `assets/gtnhplanner/power/`, never hand-edited; parity with the website is tested per source). A power card
   is a `Node` with `powerSource` and `powerSettings` instead of an NEI recipe: `power/game/PowerPorts` rebuilds its
   ports from the model at exact per-second rates (`Port.exactAmount`, a craft a second), EU first. EU is a resource
@@ -69,7 +84,9 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
 - The picker's first column, Other (`PowerGroup.OTHER`, `PowerRegistry.others()`, never in the generator catalog), holds
   the planning cards: the custom rate card and the fluid tank. Both are holders (`power/Holders`): empty, they show two
   sockets; a port dropped on one, or a socket dragged to a port, makes it take that resource (`BoardSession.holdAndWire`),
-  and every edit lets a holder with nothing wired go of it (`releaseHolders`).
+  and every edit lets a holder with nothing wired go of it (`releaseHolders`). After them comes the Railcraft Water Tank,
+  an ordinary source in group `other` (`power/sources/Railcraft`, the website's railcraft.ts, with the Railcraft Boiler
+  after GT's large boilers), both worked from Railcraft's own code at GTNH 2.9's version and pinned by `RailcraftTest`.
 - The custom rate card (`power/CustomRate`, the website's custom-rate.ts) is a power card with source `custom-rate`: a
   dial (Supply or Request, a rate a second, EU/t for EU) and one port. Pinned at one when placed, so the dial is the
   rate. The overview counts it as the plan's edge (what it supplies is an input), never a machine. It posts and imports
@@ -105,12 +122,101 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   `call 'nei?item=<key>&planner=0&tab=<name>'` opens a recipe page from the inventory.
 - Plans work as on the website: a tab is an open plan (`Graph.open`); closing one keeps it, in the Library's My
   plans, where every plan is listed, most recently open first (`Plan.byRecency`, `lastOpen`). Deleting asks first.
+- Groups (`docs/design/groups.md`, the website's boards/pockets): `data/flowchart/BoardGroup` in `Graph.boardGroups`, membership on
+  `Node.group`, `Drawer.group`, `Note.group`, rules in `Groups`; `ui/group/` draws them (`GroupCard`: open frame or the
+  collapsed summary from the solve; bodies under the wires) and edits them (`GroupEdits`). Made with the selection bar's
+  Group key or Ctrl+G; a carried card joins the group it is aimed at (`BoardCanvas.aim`, lit while carried) and leaves the
+  same way; wires to a collapsed group dock on its summary (`WireLayer.groupBox`); Arrange moves a group as one block.
+  They take no part in the solve, and travel as the website's `pockets` both ways (`FfConverter.placeBoards`,
+  `PlanExport.pocket`, and in shared plans `cloud/map`: members placed from their pocket's frame). Every menu is a `PickList` with the website's rows and words (a right click on a card or drawer
+  opens its key's menu).
 - Sticky notes (`ui/note/NoteCard`, a `Note` in `graph.notes`): right-click empty board to add one; drag anywhere
   to move (even while writing), drag the folded corner or an edge to resize, click to write, right-click for colour,
   text size and delete; hovering or writing shows keys (delete top left, text size top right) at a fixed size on
   screen whenever they fit on the note. A selection outline shows only when several things are selected.
+- Task boards (`ui/task/`; the model is `data/flowchart/Tasks`, docs/design/cloud-live.md) are their own kind of plan
+  (`primaryView` "tasks", `BoardSession.showsTasks`; the + tab menu's New task board, or "Add to a task" on cards): the
+  plan always shows its tasks (`TaskBoardView`, its own header in the place of the toolbar: title, count, New task; no
+  overview) and a normal plan never does. Four columns, Blocked, To do, Doing, Done, of task cards (title, faces, things done of all "3/5", comments,
+  its first screenshot across the top), carried by the board's rules, ordered by fractional keys
+  (`data/flowchart/OrderKeys`, the website's base-62 midpoint scheme, never throwing on a key it did not write; both
+  sides run `order-key-vectors.json`; every edit is in `TaskEdits`, pure and tested). A click opens `TaskPanel`, laid
+  out as Jira's issue view (the owner, 2026-10-15): a main column (the title big and written in place, a `TextArea` at
+  a scale of whole screen pixels; notes; the things; the comment thread; the comment box at the foot, growing to four
+  lines) and a side column on a panel of its own, about a third of the box (150 to 184 px), in three groups split by
+  hairlines with quiet capital labels: Status, Priority, People; Waiting on (the tasks it waits on, one line each, an
+  Add key that refuses a loop and says why) and Unblocks (the reverse, read only); then Board, Made and Time as quiet
+  facts. Delete task is at its foot. Below 400 px the side column goes under the title (Status and Priority beside
+  People, Waiting on beside Unblocks, then the board and who made it with Delete task). A task's `blockedBy` (ids on
+  the same board, never a loop: `TaskEdits.addBlocker`, `wouldLoop`; deleting a task takes it out of every list) is a
+  description, whatever its column. The header's Board / Chain switches to the chain view (`TaskChainView`, the
+  quest book's way; per board on this computer, `PlannerSettings.taskView`): a list of the tasks chain by chain
+  (folded to a strip below 560 px) and a map that pans (drag) and zooms (wheel), laid out by `TaskChain` (layers left
+  to right, a task waiting on nothing just before the first task it unblocks, the unlinked in a row at the end, a loop
+  drawn broken), each node plain (title, priority, faces, its column's colour; done dimmed) with arrows to what it
+  unblocks; a click opens the task, a row in the list centres the map on it, Fit shows everything. Everything between the bar and the foot is one page that scrolls (`Page`, an
+  `IViewport` only for its clip: its boxes are moved, not transformed, so their mouse maths stays the screen's). A task
+  is a title, status, people, notes, a list of **things** (`taskItems`, each with its own checkbox, drag to reorder,
+  right-click for its menu) and comments. Things (`TaskThings` shows them): a **machine** (`Tasks.MACHINE`, a `link`:
+  icon, "4× Electric Blast Furnace (HV)", its plan, where it is placed in this world; a click shows it on its plan, its
+  pin button in the world), a **location** (`Tasks.Place`: block, dimension, world key `GameCloud.worldKey`, label; "Add
+  where I stand" adds the block under the player and asks for a name; its Show key closes the planner and stands a
+  beam on it, `WorldView.show(Place)`; its line says how far and which way, `TaskEdits.howFar`), a **screenshot**
+  (`Tasks.Picture`, game only: "Add a screenshot" closes the planner, hides the GUI, reads the frame at a render tick's
+  end, saves the full PNG in `screenshots/` and puts a 320 px JPEG data URL under 40 KB on the task, then reopens the
+  planner on the task, `TaskPictures`; a click shows it big, `PictureView`), and a **quest** (`Tasks.Quest`,
+  game only, with BetterQuesting loaded: "Add a quest" opens the real quest book in a pick mode, `ui/quest/QuestBook`, a
+  banner over it; the quest clicked, locked ones too, goes on the task and the box comes back; Esc goes back without one.
+  It keeps the quest's UUID, name, icon item key and line, `TaskQuests` reads the rest live; it ticks itself once the
+  player has done the quest, `TaskEdits.questsToTick`, unless they unticked it after; a click opens it in the book;
+  the website keeps it as it came, kind "quest"; `PLANNH_GTNH=1 PLANNH_QUESTS=1 tools/dev/mc.sh start` adds the book and
+  the pack's quests to the dev game). Older checklist lines (no kind) show as
+  words, or as a machine when they point at a card, and a task's older `links` no thing names show as machines too.
+  Every change is `BoardSession.editTasks` (undoable and saved, never solved). A link is `Tasks.Link {plan, node}`: the
+  plan's id (`Graph.planId()`: its cloud doc key, else its saved local id; `isPlan` takes either) and the card's id as
+  that plan spells it (`BoardSession.linkOf`, `PlanIds.uuid` back); older saves' `nodeIds`/`nodeId` read as links with
+  no plan (the holder's own) and are written with its id. A click on one is `BoardSession.openLink`: opens that plan and
+  centres the card, or says "That plan is gone". "Add to a task" (a card's pin button, `RecipeCard.openPlaceMenu`, also on
+  the overview's machine lines; a card's actions; a right click on the board with cards selected) asks which task board,
+  then which task with its status dot, or New task (`TaskActions.addMenu`), adds one machine thing per card with how
+  many to build, and says so with an Open key (`BoardSession.openTask`, `TaskPanel.openWhenShown`). A card shows the dot
+  of its most pressing task from every task board loaded (`BoardSession.taskStatus`; machine things count). People are
+  account ids: assigning and comments use the signed-in account (`Account.userId`); signed out a comment is by "You"
+  (`local`). `call tasks` reports the view and the parts' rects (`open=<id>` opens a task, `scroll=<y>` scrolls its
+  page; `newboard=<name>`, `add=<title>&status=`, `task=<id>&comment=<text>&by=<id>&name=<name>&ago=<minutes>`,
+  `assign=<id>` and `block=<id>`/`unblock=<id>` set a board up to look at; `view=board|chain` and `select=<id>` drive
+  the chain view).
+- The top bar (`ui/TopBar`) holds account things only: tabs and +, live status and faces, Library, Share, the account
+  key (Sign in, or the account's face with a menu of the username and Sign out), feedback, settings, help. What edits or
+  views the board is `ui/BoardToolbar`, a strip along the top of the board in the middle column (Non-recipe, undo, redo,
+  Arrange, Fit, the rate unit, EU/t, Avg; wraps like the top bar). Signed in, every plan is in the account from the
+  moment it exists (`CloudSession.makeable`); being added to a plan arrives as `shared` (a board notice with Open, or a
+  chat line with a clickable [Open], `client/OpenPlanCommand`) and the Library's Shared with me shelf lists them.
+- Cloud plans and live co-editing (the owner, 2026-10-14; `docs/design/cloud-live.md` is the contract with the
+  website, whose side is on its branch `cloud-live`, worktree `C:\Users\jack\ff-cloud`): signed in, the planner's
+  plans are the account's (own and shared), saved as every edit is made, the same on every device; signed out,
+  nothing changes. Cloud mode starts only once the site's live service answers (`/live/health`), so before the
+  rollout signed-in players keep their world plans. The layers: `cloud/net` (`LiveSocket` on Minecraft's netty, ws
+  and wss; `LiveClient`, the protocol; `CloudApi`, the REST routes), `cloud/store` (`CloudCache`, this device's copy
+  and pending batches; `Migration`, a world's plans uploaded once, local save kept), `cloud/sync` (`LiveOps`,
+  `LiveState`: the op engine both sides share, checked on the website's `live-vectors.json`), `cloud/map`
+  (`CloudPlans`: the board to and from the website's plan, each thing carrying the game's own data under
+  `gtnhplanner`, read back exactly while the website left it alone; groups are its pockets, each thing placed from its
+  pocket's frame; every drawing an annotation; a buffer its storage with wires both ways; port rates, setting pins
+  and leftover splits the plan's own fields in the website's words, `PlanPins`; docs/design/cloud-live.md has the
+  whole mapping), `cloud/session` (`CloudSession` per account,
+  `LiveDoc` per open plan, wired through `CloudHooks`). Every save sends the board's changes as a batch (kept on disk
+  first); others' batches are read in once a tick while the board is at rest; undo on a cloud plan takes back only
+  the player's own edits. Presence is `ui/live/` (`PresenceOut` sends cursor, selection and view at most 10 a
+  second; `Peers` draws others' cursors and selection rings, and their faces in the tab strip). Share with people is
+  the Share menu's dialog (the people in this game first, from `/live/nearby` with the tab list's names, then an
+  account search); "Publish to library" is the old Share to library. `call cloud` reports the state (`fake=N` adds
+  stand-in people); `PLANNH_LIBRARY_URL=http://localhost:3000 tools/dev/mc.sh start` keeps a dev game off the real
+  site. End to end: the website's `npm run dev:local` (site :3000, live ws://localhost:3001/live, local Postgres),
+  `tools/dev/mock-live.mjs` without the website. Nothing of this reaches players before the owner's rollout
+  (staging at new.gtnhplanner.com, then a one-line Caddy switch; the website's `docs/live-rollout.md`).
 - On the board a left press on anything (a card's keys and chips too, a drawer's, a note's) is a click when let go
-  within 3 GUI pixels (`BoardCanvas.DRAG_SLOP`) and acts then; moved further, it carries the thing. Carried things
+  within 6 GUI pixels (`BoardCanvas.DRAG_SLOP`; tabs and task cards too) and acts then; moved further, it carries the thing. Carried things
   glide (about 120 ms) between 10 px grid spots and never land on another card or drawer: each frame they go to the
   clear spot nearest the mouse (`BoardCanvas.nearestClear`, the website's ring search), so they hug what is in the way
   and come out its far side past its middle; notes pass over. Hovering a port, drawer or wire lights only it, its
@@ -141,7 +247,8 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   carry. It is part of the port, so dragging it makes a drawer, which takes the flow, and the row goes.
   They are Factory Flow's text annotations (`kind: "text"`, its colour tags and font sizes), so they come in with an
   imported plan and go out with a posted one; they take no part in the solve, the wiring or Arrange.
-- The tour (`ui/tutorial/`, `docs/design/tutorial.md`): the "?" key's Take the tour, or the first-run offer (`TourOffer`:
+- Board drawings (`docs/design/annotations.md`, shared with the website): the website's box, zone and arrow annotations are a `Note` with a `kind` (null is a sticky note), so selection, moving, undo, copy, saves and Arrange-blindness are the notes'. Made and edited from the right-click menu (the owner, 2026-10-14): empty board offers Add sticky note, Add box, Add arrow (`BoardCanvas.openBoardMenu`, `BoardSession.addDrawing`); a drawing's own menu (`NoteCard.openMenu`) offers Colour, Fill, Border, Marks (box) or Thickness, Heads (arrow) and Delete. `ui/note/DrawingPaint` draws them (flat, 2 px line, square) and `DrawingGrips` (pure, tested) says what is held where: a box moves by its border and resizes by its corners and, just outside the line, its edges, an arrow moves by its line and is reshaped by its two end handles (it may run level, a head at one end or both: `Note.arrowHeads`, `arrowWidth`); a drawing's widget reaches 8 px outside it for that. Zones are shown but not offered in the Add menu. Pictures are no longer supported: kept in the plan as a hidden `Note` (`Note.isHidden`, no widget, skipped by select-all and marquee) so a plan goes back out whole. They import and export as the website's own annotations (`FfPlanParser.drawing`, `FfConverter.placeNotes`, `PlanExport.note`).
+- The tour (`ui/tutorial/, `docs/design/tutorial.md`): the "?" key's Take the tour, or the first-run offer (`TourOffer`:
   a note over the dimmed board the first time the planner opens, asked once). Thirty-seven steps, on the planner from NEI to the world: each acts something out on the real UI, then a
   note (`Callout`) beside what it did says what it is (gold words between asterisks in `Script`) and waits for next; no
   autoplay, no chapters. It drives the UI with
@@ -176,8 +283,24 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   cards Detailed or Simple (the zoomed-out glance view, with room for the names), an optional footer as the website's
   export bar (a title row: icon, name, machines and EU/t; Inputs and Outputs as tinted panels in even columns, from the
   overview's totals) and a small "GTNH Planner" mark; previewed in a box nearly the screen's size, then saved as a PNG
-  in `screenshots/` or copied. "Share
-  to library..." (`AccountForms.shareRow`, also in a tab's or a plan tile's menu) sends the plan as Factory Flow
+  in `screenshots/` or copied. The Share menu has the website's rows (the owner, 2026-10-14: a post is a copy, like an
+  uploaded file, and nothing follows the plan by itself), after the cloud's Share with people: Publish to library, or
+  Update in library and Publish as new post for a plan posted (`AccountForms.shareRows`, also in a tab's and a plan
+  tile's menu),
+  Copy plan link (the website's `#p=` link, `FfPlanCode.encode`, from the plan as `Posting.write` sends it), Copy
+  plan code (our own), Export plan file (that JSON in `gtnhplanner/exports/`), Open in website (`client/Browser`:
+  the system browser at `<site>/#p=<code>`, the code in the fragment so it never reaches a server; links over 2,000
+  characters go through a small redirect page in the temp folder, as Windows cuts long command lines; over a
+  million it says to export instead), Share in chat and Screenshot.... The other way, the website's "Open in the
+  mod" POSTs a plan code to `client/WebsiteListener` on 127.0.0.1, the first free port of 25640-25649, started by
+  the client proxy only (never on a server) and gone with the game: it answers CORS and Private Network Access
+  preflights for the website's origins only (gtnhplanner.com, www., `CommunityApi.site()`, http://localhost or
+  127.0.0.1 on any port), refuses any other Origin or a Host not naming the loopback, JSON only, 4 MB at most, a code
+  that decodes to a JSON object; `GET /ping` gives the mod's version. Nothing opens unasked: `WebsiteInbox` keeps the
+  newest plan and asks, over the board (`ui/popup/IncomingOffer`) or in chat with Open and Not now
+  (`/gtnhplanner_website`, keyed to that plan), and again when the planner opens; Open imports it as a new plan.
+  `call website` reports the port and the plan waiting (`answer=open`, `link=1`). "Publish
+  to library..." sends the plan as Factory Flow
   project JSON (`library/PlanExport`, checked against the website's own schema) with a title, a description and an
   icon (picked from the plan's items; `library/Posting` looks up the website's picture of it by name in its item list,
   as the site draws an item from nothing else). A plan remembers its post (`Graph.postId`, `description`, `icon`, saved
@@ -189,6 +312,8 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
 - Players never see the website (the owner, 2026-10-09): no links or keys to it, and no text naming gtnhplanner.com or
   Factory Flow in the UI, its messages, the config files it writes or `mcmod.info`. The library is "the library";
   pasted plans are "a plan link or code". Code comments and docs may still name the website as the design's source.
+  The exceptions (the owner, 2026-10-14): the Share menu's Open in website, the prompt about a plan the website sent,
+  and the library.
 - Feedback (the top bar's red bug key, `ui/popup/FeedbackPanel`): three mood faces, Bug / Idea / Help chips, one text
   box (`ui/popup/TextArea`, our own: MUI2's multi-line editor crashed the game), a line naming what goes with it (the
   open plan by name, the game log, a crash report if there is one) and Send. `library/Reports` sends it, with a Simple
@@ -225,7 +350,7 @@ solved in the background (`data/flowchart/balancer/`, `SolveService`), auto-layo
   from the world with sneak held (`PlacementKeys`: R turn, G pick up and move, Del remove, U Focus: cards only where you
   look, Y hides the whole overlay). World code never loads the plans (`Plan.loaded()`). The pin list (`PinList`, issue 5) lists
   the plan's pinned cards in a corner while playing (machine, tier tags, how many; clear of the minimap and the keys
-  strip): a card's pin key, or the one right of each overview machine line's EU/t, opens Place in the world / Pin to
+  strip): a card's pin button, or the one right of each overview machine line's EU/t, opens Place in the world / Pin to
   the screen (`RecipeCard.openPlaceMenu`); right-click unpins both (`clearPins`). Pins are `Graph.pinList` (card ids,
   saved with the plan); show and corner are in the gear's Pin list section, and a key (unbound) shows or hides it. The earlier lens of every machine's live
   state is shelved on `shelf/ar-machine-lens`. Settings are the top bar's gear (`PlannerSettings`).

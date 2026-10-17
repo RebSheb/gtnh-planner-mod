@@ -172,11 +172,6 @@ class MachineGoldensTest {
         if (!expected.has("controls")) return;
         final List<RecipeRules.TierControl> controls = new ArrayList<>(
             RecipeRules.configTierControls(effective, node.machineConfigTiers));
-        // The port's own settings, which the website does not have: the Dangote Distillus's height, whose default is
-        // the website's assumption (its numbers are checked above all the same).
-        controls.removeIf(
-            c -> c.id()
-                .equals(DangoteDistillus.HEIGHT));
         final RecipeRules.TierControl coil = RecipeRules.coilTierControl(effective, node.coilTier);
         if (coil != null) controls.add(coil);
         final JsonArray want = expected.getAsJsonArray("controls");

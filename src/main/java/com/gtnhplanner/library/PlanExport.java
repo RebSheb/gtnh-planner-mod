@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.gtnhplanner.data.flowchart.BoardGroup;
 import com.gtnhplanner.data.flowchart.Drawer;
 import com.gtnhplanner.data.flowchart.Edge;
 import com.gtnhplanner.data.flowchart.Graph;
@@ -99,6 +100,14 @@ public final class PlanExport {
             return null;
         }
 
+        /**
+         * The name a card's setting pins are kept under on the board ({@code SettingPins.machine}): its machine's, a
+         * bee card's species', a crop card's harvester's.
+         */
+        default String pinName(final Node node) {
+            return machine(node);
+        }
+
         /** A bee card's species; null on any other card. */
         @Nullable
         default com.gtnhplanner.machines.Bees.Species bee(final Node node) {
@@ -109,10 +118,11 @@ public final class PlanExport {
     /** A CropsNH crop: its id ({@code cropsnh:sugarBeet}) and the facts the website models it from. */
     public record Crop(String id, com.gtnhplanner.machines.CropsNh.Stats stats) {}
 
-    /** Factory Flow's cards are 380 wide to our 320, and taller (as the importer scales them the other way). */
-    private static final double SCALE_X = 380.0 / 320.0, SCALE_Y = 1 / 0.6;
-    /** Factory Flow's board cell: it grows every drawing's size to whole cells when it loads a plan. */
-    private static final int CELL = 20;
+    /**
+     * The site's board px for ours: one to one. Its cards are ours since its one-mode board (320 wide, rows of two
+     * cells, drawers 116 by 48), and it places every plan, old ones too, where its positions say.
+     */
+    private static final double SCALE_X = 1, SCALE_Y = 1;
     /** The colour tags the site's schema takes (its factoryNodeColorTagSchema); a note in any other goes untagged. */
     private static final Set<String> COLOR_TAGS = Set.of(
         "white",
@@ -150,20 +160,47 @@ public final class PlanExport {
         return o;
     }
 
+    /**
+     * One card as the site keeps it: its recipe (written out in full under {@code recipeId}), the node, and each port's
+     * resource as the recipe names it (for the wires).
+     */
+    public record Card(JsonObject recipe, JsonObject node, Map<Port<?>, Res> ports) {}
+
+    /**
+     * A card at a machine count: {@code machines} is how many machines the plan runs it at (a fluid tank's crafts a
+     * second, which the site counts a tick a craft).
+     */
+    public static Card card(final Node n, final String recipeId, final World world, final double machines) {
+        final Map<Port<?>, Res> res = new HashMap<>();
+        // The card's picks among the items a slot takes, by the recipe's input index: the site's overrides.
+        final JsonObject picks = new JsonObject();
+        final JsonObject recipe = recipe(n, recipeId, world, res, picks);
+        final JsonObject node = node(n, recipeId, world, machines);
+        if (picks.entrySet()
+            .size() > 0) node.add("recipeInputOverrides", picks);
+        final JsonObject rates = portRates(n, res);
+        if (rates.entrySet()
+            .size() > 0) node.add("portRates", rates);
+        return new Card(recipe, node, res);
+    }
+
+    /** A drawer's resource as the site names it: EU, else what the game calls its resource key; null if nothing. */
+    @Nullable
+    public static Res resource(final Drawer d, final World world) {
+        return Energy.KEY.equals(d.getResourceKey()) ? EU : world.resource(d.getResourceKey());
+    }
+
     public static JsonObject project(final Graph g, final String name, final World world) {
         final JsonArray recipes = new JsonArray(), nodes = new JsonArray(), storages = new JsonArray(),
             edges = new JsonArray();
         // Each port's resource, once: edges and drawers name them as the recipes do.
         final Map<Port<?>, Res> res = new HashMap<>();
         for (final Node n : g.getNodes()) {
-            final String recipeId = "gtnhplanner:" + n.id;
-            // The card's picks among the items a slot takes, by the recipe's input index: the site's overrides.
-            final JsonObject picks = new JsonObject();
-            recipes.add(recipe(n, recipeId, world, res, picks));
-            final JsonObject node = node(n, recipeId, world);
-            if (picks.entrySet()
-                .size() > 0) node.add("recipeInputOverrides", picks);
-            nodes.add(node);
+            final Card card = card(n, "gtnhplanner:" + n.id, world, world.machines(n));
+            res.putAll(card.ports());
+            recipes.add(card.recipe());
+            inGroup(g, card.node(), n.group, n.x, n.y);
+            nodes.add(card.node());
         }
         for (final Edge e : g.getEdges()) {
             final Node from = g.nodes.get(e.sourceNodeId), to = g.nodes.get(e.targetNodeId);
@@ -173,11 +210,13 @@ public final class PlanExport {
             edges.add(edge(e.id.toString(), from.id.toString(), to.id.toString(), r));
         }
         for (final Drawer d : g.getDrawers()) {
-            final Res r = Energy.KEY.equals(d.getResourceKey()) ? EU : world.resource(d.getResourceKey());
+            final Res r = resource(d, world);
             if (r == null) continue;
             final boolean source = d.getKind()
                 .linksInputs();
-            storages.add(storage(d, r));
+            final JsonObject storage = storage(d, r);
+            inGroup(g, storage, d.getGroup(), d.getX(), d.getY());
+            storages.add(storage);
             for (final Drawer.Link link : d.getLinks()) {
                 final Node n = g.nodes.get(link.nodeId());
                 if (n == null) continue;
@@ -196,9 +235,27 @@ public final class PlanExport {
                                 .toString(),
                             r));
             }
+            // A buffer's users: a wire from it to each, so the site reads it as fed and drawn from (a buffer).
+            for (final Drawer.Link link : d.getTakers()) {
+                final Node n = g.nodes.get(link.nodeId());
+                if (n == null) continue;
+                edges.add(
+                    edge(
+                        d.getId() + ":" + link.nodeId() + ":in:" + link.portIndex(),
+                        d.getId()
+                            .toString(),
+                        n.id.toString(),
+                        r));
+            }
         }
         final JsonArray annotations = new JsonArray();
-        for (final Note n : g.getNotes()) annotations.add(note(n));
+        for (final Note n : g.getNotes()) {
+            final JsonObject note = note(n);
+            inGroup(g, note, n.getGroup(), n.getX(), n.getY());
+            annotations.add(note);
+        }
+        final JsonArray pockets = new JsonArray();
+        for (final BoardGroup b : g.boardGroups.values()) pockets.add(pocket(g, b));
         final JsonObject p = new JsonObject();
         p.addProperty("schemaVersion", 1);
         p.addProperty(
@@ -212,11 +269,13 @@ public final class PlanExport {
         final Res face = g.getIcon() == null ? null : world.resource(g.getIcon());
         if (face != null) p.add("icon", icon(face));
         p.addProperty("solveMode", true);
+        // The one-mode board's plan: the site reads a buffer's rule as live only there.
+        p.addProperty("planMode", true);
         p.add("recipes", recipes);
         p.add("nodes", nodes);
         p.add("storages", storages);
         p.add("annotations", annotations);
-        p.add("pockets", new JsonArray());
+        p.add("pockets", pockets);
         p.add("edges", edges);
         p.add("fuelProfiles", new JsonArray());
         final JsonObject meta = new JsonObject();
@@ -647,12 +706,37 @@ public final class PlanExport {
         return out;
     }
 
-    private static JsonObject node(final Node n, final String recipeId, final World world) {
+    /**
+     * A card's port rates as plan mode's pins ({@code portRates}): each port set to a rate, by the handle the site
+     * names its row by ({@code output:item:<id>}, an input by the item it is set to), the rate a second. A port the
+     * site has no row for (none the export names, or a second port of one resource) is left out.
+     */
+    static JsonObject portRates(final Node n, final Map<Port<?>, Res> res) {
+        final JsonObject o = new JsonObject();
+        rates(o, n.targetOutputRates, n.outputs, "output", res);
+        rates(o, n.targetInputRates, n.inputs, "input", res);
+        return o;
+    }
+
+    private static void rates(final JsonObject o, final Map<Integer, Double> rates, final List<Port<?>> ports,
+        final String side, final Map<Port<?>, Res> res) {
+        for (final Map.Entry<Integer, Double> e : rates.entrySet()) {
+            final Double rate = e.getValue();
+            if (rate == null || !(rate > 0) || !Double.isFinite(rate) || e.getKey() < 0 || e.getKey() >= ports.size())
+                continue;
+            final Res r = res.get(ports.get(e.getKey()));
+            if (r == null) continue;
+            final String handle = side + ":" + r.kind() + ":" + enc(r.id());
+            if (!o.has(handle)) o.addProperty(handle, rate);
+        }
+    }
+
+    private static JsonObject node(final Node n, final String recipeId, final World world, final double machines) {
         final JsonObject o = new JsonObject();
         o.addProperty("id", n.id.toString());
         o.addProperty("recipeId", recipeId);
         // A fluid tank runs a craft a second here, a tick there (its Tank map): the count is in its crafts.
-        final double count = Math.max(0, world.machines(n)) / (com.gtnhplanner.power.FluidTank.is(n) ? 20.0 : 1.0);
+        final double count = Math.max(0, machines) / (com.gtnhplanner.power.FluidTank.is(n) ? 20.0 : 1.0);
         o.addProperty("machineCount", count);
         o.addProperty("parallel", 1);
         o.addProperty("overclockTier", CustomRate.is(n) || com.gtnhplanner.power.FluidTank.is(n) ? "NONE" : n.isPower() ? "LV" : world.tier(n));
@@ -686,11 +770,7 @@ public final class PlanExport {
             // A crop's harvester and a bee's housing are the website's machine for them; our settings.
             final boolean crop = world.crop(n) != null;
             final com.gtnhplanner.machines.Bees.Species bee = crop ? null : world.bee(n);
-            final String handler = crop ? cfg.get(com.gtnhplanner.machines.CropsNh.HARVESTER) instanceof final String h
-                && !h.isEmpty() ? h : com.gtnhplanner.machines.CropsNh.MANAGER
-                : bee != null ? com.gtnhplanner.machines.Bees.setup(cfg, bee)
-                    .housing()
-                    .key() : world.handlerId(n);
+            final String handler = siteHandler(world, n);
             if (handler != null) o.addProperty("machineHandlerId", handler);
             // A bee's housing has no voltage to pick: the Industrial Apiary's own tier, else none.
             if (bee != null) o.addProperty(
@@ -725,7 +805,8 @@ public final class PlanExport {
         return o;
     }
 
-    private static JsonObject storage(final Drawer d, final Res r) {
+    /** A drawer as the site's storage of resource {@code r}: a source, a product or trash, with its rule. */
+    public static JsonObject storage(final Drawer d, final Res r) {
         final JsonObject o = new JsonObject();
         o.addProperty(
             "id",
@@ -734,52 +815,121 @@ public final class PlanExport {
         o.addProperty("kind", r.kind());
         o.addProperty("resourceId", r.id());
         o.addProperty("displayName", r.name());
+        // A drain says what it is (trash voids what it takes); a buffer's role is its wires' (fed and drawn from), its
+        // rule a product's, on what passes through.
         if (!d.getKind()
-            .linksInputs()) {
-            o.addProperty("drainMode", "product");
-            final String mode = switch (d.getRule()) {
-                case AT_LEAST -> "at-least";
-                case AT_MOST -> "at-most";
-                case EXACTLY -> "exact";
-                case ANY -> null;
-            };
-            if (mode != null && d.getRate() > 0) {
-                o.addProperty("targetPerSecond", d.getRate());
-                o.addProperty("targetMode", mode);
-            }
+            .linksInputs() && !d.isBuffer())
+            o.addProperty("drainMode", d.getKind() == Drawer.Kind.TRASH ? "trash" : "product");
+        final String mode = switch (d.getRule()) {
+            case AT_LEAST -> "at-least";
+            case AT_MOST -> "at-most";
+            case EXACTLY -> "exact";
+            case ANY -> null;
+        };
+        // A source's rule on what it supplies, which the site writes as a negative rate.
+        if (mode != null && d.getRate() > 0) {
+            o.addProperty(
+                "targetPerSecond",
+                d.getKind()
+                    .linksInputs() ? -d.getRate() : d.getRate());
+            o.addProperty("targetMode", mode);
         }
         o.add("position", position(d.getX(), d.getY()));
         return o;
     }
 
     /**
-     * A note as the site's text annotation, placed as a card is. Its size is rounded to whole cells: the site grows a
-     * size to the next cell when it loads, so a size a pixel over one could gain a whole cell on a trip there and back.
+     * A note as the site's text annotation, placed and sized as a card is, to the pixel: the website's board draws a
+     * shared plan's sizes as they are (a plan it loads from a file or a post grows each to whole cells, which only adds
+     * room).
      */
-    private static JsonObject note(final Note n) {
+    public static JsonObject note(final Note n) {
         final JsonObject o = new JsonObject();
         o.addProperty(
             "id",
             n.getId()
                 .toString());
-        o.addProperty("kind", "text");
-        if (COLOR_TAGS.contains(n.colorTag())) o.addProperty("colorTag", n.colorTag());
-        o.addProperty("text", n.joined());
+        o.addProperty("kind", n.kind());
+        final boolean drawing = n.isDrawing();
+        if (COLOR_TAGS.contains(n.colorTag()) && (!drawing || n.getColor() != null && !n.getColor()
+            .isEmpty())) o.addProperty("colorTag", n.colorTag());
+        if (!drawing || !n.joined()
+            .isEmpty()) o.addProperty("text", n.joined());
         o.add("position", position(n.getX(), n.getY()));
         final JsonObject size = new JsonObject();
-        size.addProperty("width", cells(Math.max(Note.MIN_W, n.getWidth()) * SCALE_X));
-        size.addProperty("height", cells(Math.max(Note.MIN_H, n.getHeight()) * SCALE_Y));
+        final boolean arrow = Note.ARROW.equals(n.kind());
+        final int minW = arrow ? 0 : drawing ? Note.DRAWING_MIN : Note.MIN_W,
+            minH = arrow ? 0 : drawing ? Note.DRAWING_MIN : Note.MIN_H;
+        // An arrow may run level: an axis of 0 stays 0.
+        size.addProperty("width", arrow ? axis(n.getWidth() * SCALE_X) : cells(Math.max(minW, n.getWidth()) * SCALE_X));
+        size.addProperty(
+            "height",
+            arrow ? axis(n.getHeight() * SCALE_Y) : cells(Math.max(minH, n.getHeight()) * SCALE_Y));
         o.add("size", size);
-        o.addProperty("fontSize", n.fontSizeOrDefault());
+        if (!drawing) {
+            o.addProperty("fontSize", n.fontSizeOrDefault());
+            return o;
+        }
+        if (Note.ARROW.equals(n.kind()) && n.getArrowDirection() != null)
+            o.addProperty("arrowDirection", n.getArrowDirection());
+        if (Note.ARROW.equals(n.kind()) && n.getArrowHeads() != null) o.addProperty("arrowHeads", n.getArrowHeads());
+        if (Note.ARROW.equals(n.kind()) && n.getArrowWidth() > 0)
+            o.addProperty("arrowWidth", Math.min(8, n.getArrowWidth()));
+        if (Note.IMAGE.equals(n.kind()) && n.getImageUrl() != null) o.addProperty("imageUrl", n.getImageUrl());
+        if (Note.ZONE.equals(n.kind()) && n.getPoints() != null) {
+            final JsonArray points = new JsonArray();
+            for (final int[] p : n.getPoints()) {
+                final JsonObject pt = new JsonObject();
+                pt.addProperty("x", Math.round(p[0] * SCALE_X));
+                pt.addProperty("y", Math.round(p[1] * SCALE_Y));
+                points.add(pt);
+            }
+            o.add("points", points);
+        }
+        final JsonObject style = new JsonObject();
+        if (n.getBorder() != null) style.addProperty("border", n.getBorder());
+        if (n.getBorderColor() != null && COLOR_TAGS.contains(n.getBorderColor()))
+            style.addProperty("borderColor", n.getBorderColor());
+        if (n.getFillColor() != null && COLOR_TAGS.contains(n.getFillColor()))
+            style.addProperty("fillColor", n.getFillColor());
+        if (n.getFill() != null) style.addProperty("fill", n.getFill());
+        if (n.getMarks() != null) style.addProperty("marks", n.getMarks());
+        if (!style.entrySet()
+            .isEmpty()) o.add("style", style);
         return o;
     }
 
-    /** A length to the nearest whole number of the site's cells, at least one. */
-    private static int cells(final double length) {
-        return Math.max(CELL, (int) Math.round(length / CELL) * CELL);
+    /**
+     * The website's machine for a card: a crop's harvester and a bee's housing (our settings), else the handler the
+     * card's recipe map gives it; null for none.
+     */
+    @Nullable
+    public static String siteHandler(final World world, final Node n) {
+        if (n.machineConfig != null) {
+            final Map<String, Object> cfg = n.machineConfig.settings;
+            if (world.crop(n) != null)
+                return cfg.get(com.gtnhplanner.machines.CropsNh.HARVESTER) instanceof final String h && !h.isEmpty() ? h
+                    : com.gtnhplanner.machines.CropsNh.MANAGER;
+            final com.gtnhplanner.machines.Bees.Species bee = world.bee(n);
+            if (bee != null) return com.gtnhplanner.machines.Bees.setup(cfg, bee)
+                .housing()
+                .key();
+        }
+        return world.handlerId(n);
     }
 
-    private static JsonObject edge(final String id, final String source, final String target, final Res r) {
+    /** A length to the pixel, possibly none (a level arrow). */
+    private static int axis(final double length) {
+        return (int) Math.round(length);
+    }
+
+    /** A length to the pixel, at least one. */
+    private static int cells(final double length) {
+        return Math.max(1, (int) Math.round(length));
+    }
+
+    /** A wire of resource {@code r} between two things the site knows by these ids. */
+    public static JsonObject edge(final String id, final String source, final String target, final Res r) {
         final JsonObject o = new JsonObject();
         o.addProperty("id", id);
         o.addProperty("source", source);
@@ -805,11 +955,66 @@ public final class PlanExport {
         return o;
     }
 
-    private static JsonObject position(final int x, final int y) {
+    /**
+     * A member of a group, as the website keeps one (docs/design/groups.md): {@code pocketId} its board's id, its
+     * position measured from the board's frame corner.
+     */
+    private static void inGroup(final Graph g, final JsonObject o, @Nullable final UUID group, final int x,
+        final int y) {
+        final BoardGroup b = group == null ? null : g.boardGroups.get(group);
+        if (b == null) return;
+        o.addProperty("pocketId", b.webId());
+        o.add("position", position(x - b.getX(), y - b.getY()));
+    }
+
+    /**
+     * A group as the website's board ({@code FactoryPocket}): its frame (corner from its parent's, size to the pixel,
+     * as the website now fits a group's frame too), open or not, its colour and the paper it came with.
+     */
+    public static JsonObject pocket(final Graph g, final BoardGroup b) {
+        final JsonObject o = new JsonObject();
+        o.addProperty("id", b.webId());
+        // The site's boards always have a name.
+        o.addProperty(
+            "name",
+            b.getName() == null || b.getName()
+                .isBlank() ? "Group" : b.getName());
+        if (b.getColor() != null && COLOR_TAGS.contains(b.getColor())) o.addProperty("colorTag", b.getColor());
+        final BoardGroup parent = b.getParent() == null ? null : g.boardGroups.get(b.getParent());
+        if (parent != null) o.addProperty("parentPocketId", parent.webId());
+        o.add(
+            "position",
+            parent == null ? position(b.getX(), b.getY())
+                : position(b.getX() - parent.getX(), b.getY() - parent.getY()));
+        o.addProperty("expanded", !b.isCollapsed());
+        final JsonObject size = new JsonObject();
+        size.addProperty("width", cells(b.getWidth() * SCALE_X));
+        size.addProperty("height", cells(b.getHeight() * SCALE_Y));
+        o.add("size", size);
+        if (b.getTheme() != null) o.addProperty("theme", b.getTheme());
+        if (b.getPattern() != null) o.addProperty("pattern", b.getPattern());
+        return o;
+    }
+
+    /** A place on the board at the site's scale; {@link #gameX} and {@link #gameY} turn it back exactly. */
+    public static JsonObject position(final int x, final int y) {
         final JsonObject o = new JsonObject();
         o.addProperty("x", Math.round(x * SCALE_X));
         o.addProperty("y", Math.round(y * SCALE_Y));
         return o;
+    }
+
+    /**
+     * The board's x for the site's: the inverse of {@link #position}, exact for every board place; a site place between
+     * two of the board's pixels reads as the nearest.
+     */
+    public static int gameX(final double siteX) {
+        return (int) Math.round(siteX / SCALE_X);
+    }
+
+    /** The board's y for the site's; see {@link #gameX}. */
+    public static int gameY(final double siteY) {
+        return (int) Math.round(siteY / SCALE_Y);
     }
 
     private static int intProperty(final Node n, final String key) {

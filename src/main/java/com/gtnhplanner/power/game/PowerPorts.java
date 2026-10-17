@@ -161,7 +161,15 @@ public final class PowerPorts {
                     return MISSING;
                 }
             }
-            final Object item = Item.itemRegistry.getObject(name);
+            Object item = Item.itemRegistry.getObject(name);
+            // The website writes mod ids lower case ("railcraft:"); the registry keeps the mod's own ("Railcraft:").
+            if (!(item instanceof Item)) for (final Object key : Item.itemRegistry.getKeys()) {
+                if (String.valueOf(key)
+                    .equalsIgnoreCase(name)) {
+                    item = Item.itemRegistry.getObject(key);
+                    break;
+                }
+            }
             return item instanceof final Item registered ? new ItemStack(registered, 1, meta) : MISSING;
         });
         return found instanceof final ItemStack stack ? stack.copy() : null;

@@ -15,12 +15,45 @@ import javax.annotation.Nullable;
  * turned into trash drawers. Built by {@link FfPlanParser}. Ids keep FF's spelling (item ids are lowercase registry
  * names with {@code @meta} when the meta is not 0).
  *
- * @param textNotes FF's text annotations, which become the board's notes
+ * @param planMode  the one-mode board's plan (the site's {@code planMode}, and every plan the game posts): a buffer
+ *                  drawer's rule is live there, where no older board enforced one
+ * @param textNotes FF's annotations (text notes, boxes, zones, arrows, images), which become the board's notes
  * @param notes     what the parser saw and left out (boards, other annotations, pool scopes), for the import report
+ * @param boards    FF's boards (pockets), which become the board's groups
+ * @param boardOf   which board each card, storage and annotation is in, by FF id
  */
-public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRecipe> recipes, List<FfNode> nodes,
-    List<FfEdge> edges, List<FfStorage> storages, List<FfNote> textNotes, @Nullable FfTarget targetRate,
-    List<String> notes) {
+public record FfPlan(String name, boolean solveMode, boolean poolMode, boolean planMode, List<FfRecipe> recipes,
+    List<FfNode> nodes, List<FfEdge> edges, List<FfStorage> storages, List<FfNote> textNotes,
+    @Nullable FfTarget targetRate, List<String> notes, List<FfBoard> boards, Map<String, String> boardOf) {
+
+    /** A plan without boards. */
+    public FfPlan(final String name, final boolean solveMode, final boolean poolMode, final boolean planMode,
+        final List<FfRecipe> recipes, final List<FfNode> nodes, final List<FfEdge> edges,
+        final List<FfStorage> storages, final List<FfNote> textNotes, @Nullable final FfTarget targetRate,
+        final List<String> notes) {
+        this(
+            name,
+            solveMode,
+            poolMode,
+            planMode,
+            recipes,
+            nodes,
+            edges,
+            storages,
+            textNotes,
+            targetRate,
+            notes,
+            List.of(),
+            Map.of());
+    }
+
+    /**
+     * One of FF's boards ({@code FactoryPocket}): its frame's corner in FF's absolute board px (members' positions are
+     * flattened the same way), its size (null when it never had one), and the rest kept as it came.
+     */
+    public record FfBoard(String id, String name, @Nullable String colorTag, @Nullable String parent, double x,
+        double y, @Nullable Double width, @Nullable Double height, boolean expanded, @Nullable String theme,
+        @Nullable String pattern) {}
 
     /** FF's synthetic "dial a rate" card; see FF's custom-rate.ts. */
     public static final String CUSTOM_RATE_MACHINE = "Custom Rate";
@@ -274,7 +307,46 @@ public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRe
         @Nullable String machineHandlerId, @Nullable String coilTier, Map<String, String> machineConfigTiers,
         Map<Integer, FfSlot> overrides, List<FfSection> extraRecipes, @Nullable Double solvePin,
         @Nullable FfTarget targetOutput, boolean enabled, double x, double y, @Nullable Double customRatePerSecond,
-        @Nullable String customRateMode, List<String> hatchSupplies) {}
+        @Nullable String customRateMode, List<String> hatchSupplies, Map<String, Double> portRates) {
+
+        /** A card with no port rates. */
+        public FfNode(final String id, final String recipeId, final double machineCount, final int parallel,
+            final String overclockTier, final int energyHatches, @Nullable final String energyHatchType,
+            @Nullable final Double powerEuT, @Nullable final String hatchVoltageTier, @Nullable final Double hatchAmps,
+            @Nullable final String powerInputMode, @Nullable final String machineHandlerId,
+            @Nullable final String coilTier, final Map<String, String> machineConfigTiers,
+            final Map<Integer, FfSlot> overrides, final List<FfSection> extraRecipes, @Nullable final Double solvePin,
+            @Nullable final FfTarget targetOutput, final boolean enabled, final double x, final double y,
+            @Nullable final Double customRatePerSecond, @Nullable final String customRateMode,
+            final List<String> hatchSupplies) {
+            this(
+                id,
+                recipeId,
+                machineCount,
+                parallel,
+                overclockTier,
+                energyHatches,
+                energyHatchType,
+                powerEuT,
+                hatchVoltageTier,
+                hatchAmps,
+                powerInputMode,
+                machineHandlerId,
+                coilTier,
+                machineConfigTiers,
+                overrides,
+                extraRecipes,
+                solvePin,
+                targetOutput,
+                enabled,
+                x,
+                y,
+                customRatePerSecond,
+                customRateMode,
+                hatchSupplies,
+                Map.of());
+        }
+    }
 
     /**
      * A wire. Handles look like {@code output:fluid:hydrogen} or
@@ -298,7 +370,35 @@ public record FfPlan(String name, boolean solveMode, boolean poolMode, List<FfRe
      * @param colorTag FF's colour tag; null when the note has none (FF draws it yellow)
      * @param text     the text, lines separated by newlines
      * @param fontSize the text size in FF pixels; null when the note has none (FF's 14)
+     * @param drawing  null for a text note; for a box, zone, arrow or image, what it is drawn as
      */
     public record FfNote(String id, double x, double y, double width, double height, @Nullable String colorTag,
-        String text, @Nullable Integer fontSize) {}
+        String text, @Nullable Integer fontSize, @Nullable FfDrawing drawing) {
+
+        /** A text note. */
+        public FfNote(final String id, final double x, final double y, final double width, final double height,
+            @Nullable final String colorTag, final String text, @Nullable final Integer fontSize) {
+            this(id, x, y, width, height, colorTag, text, fontSize, null);
+        }
+    }
+
+    /**
+     * What a box, zone, arrow or image annotation is drawn as (see docs/design/annotations.md). {@code fill} and
+     * {@code marks} are resolved from FF's legacy spellings; the others are as FF writes them.
+     *
+     * @param kind           box, zone, arrow or image
+     * @param arrowDirection an arrow's corners, tail to head; null is down-right
+     * @param points         a zone's outline, relative to its position, in FF pixels
+     */
+    public record FfDrawing(String kind, @Nullable String arrowDirection, @Nullable List<double[]> points,
+        @Nullable String imageUrl, @Nullable String border, @Nullable String borderColor, @Nullable String fillColor,
+        @Nullable String fill, @Nullable String marks, @Nullable String arrowHeads, int arrowWidth) {
+
+        public FfDrawing(final String kind, @Nullable final String arrowDirection,
+            @Nullable final List<double[]> points, @Nullable final String imageUrl, @Nullable final String border,
+            @Nullable final String borderColor, @Nullable final String fillColor, @Nullable final String fill,
+            @Nullable final String marks) {
+            this(kind, arrowDirection, points, imageUrl, border, borderColor, fillColor, fill, marks, null, 0);
+        }
+    }
 }

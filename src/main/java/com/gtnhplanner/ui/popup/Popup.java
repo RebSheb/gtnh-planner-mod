@@ -32,18 +32,59 @@ public class Popup extends ModularPanel {
     }
 
     /**
-     * Opens {@code popup} over {@code parent} with its top-left at the given screen point, nudged onto the screen. It
-     * opens on the next tick: opened inside a click handler, the click that opened it would reach it as a click
-     * outside and close it again. With no parent (a board not built yet) nothing opens.
+     * The room a popup has, {x, y, w, h} in the board's pixels: the planner's own panel, left of NEI's item list (which
+     * draws over anything past it) and above its search box. The whole screen off the planner.
+     */
+    public static int[] room(@org.jetbrains.annotations.Nullable final ModularPanel parent) {
+        com.cleanroommc.modularui.widget.sizer.Area a = null;
+        try {
+            final com.cleanroommc.modularui.screen.ModularScreen screen = parent == null
+                ? com.cleanroommc.modularui.screen.ModularScreen.getCurrent()
+                : parent.getScreen();
+            final ModularPanel main = screen == null ? null : screen.getMainPanel();
+            if (main != null) a = main.getArea();
+        } catch (final RuntimeException ignored) {
+            // A panel not on a screen yet: the screen it will open on.
+        }
+        if (a == null || a.width <= 0 || a.height <= 0)
+            return new int[] { 0, 0, PlannerScale.width(), PlannerScale.height() };
+        return new int[] { a.x, a.y, a.width, a.height };
+    }
+
+    /** The top-left that centres a box {@code w} by {@code h} in the room, {@code down} of the way down (a half). */
+    public static int[] centred(final ModularPanel parent, final int w, final int h, final float down) {
+        final int[] r = room(parent);
+        return new int[] { r[0] + (r[2] - w) / 2, r[1] + Math.round((r[3] - h) * down) };
+    }
+
+    /**
+     * Opens {@code popup} over {@code parent} with its top-left at the given screen point, nudged into the planner's
+     * room ({@link #room}). It opens on the next tick: opened inside a click handler, the click that opened it would
+     * reach it as a click outside and close it again. With no parent (a board not built yet) nothing opens.
      */
     public static void open(final ModularPanel parent, final Popup popup, final int screenX, final int screenY) {
+        open(parent, popup, () -> new int[] { screenX, screenY });
+    }
+
+    /**
+     * Opens {@code popup} centred in the planner's room, {@code down} of the way down (a half centres it). The room is
+     * measured as it opens: a box offered as the planner opens finds the planner laid out by then.
+     */
+    public static void openCentred(final ModularPanel parent, final Popup popup, final float down) {
+        open(parent, popup, () -> centred(parent, popup.popupW, popup.popupH, down));
+    }
+
+    private static void open(final ModularPanel parent, final Popup popup,
+        final java.util.function.Supplier<int[]> at) {
         if (parent == null) return;
-        final int w = popup.popupW, h = popup.popupH;
-        final int x = Math.max(2, Math.min(screenX, PlannerScale.width() - w - 2));
-        final int y = Math.max(2, Math.min(screenY, PlannerScale.height() - h - 2));
-        popup.pos(x, y);
         PENDING.add(() -> {
             if (!parent.isOpen()) return;
+            final int w = popup.popupW, h = popup.popupH;
+            final int[] r = room(parent), want = at.get();
+            popup.pos(
+                Math.max(r[0] + 2, Math.min(want[0], r[0] + r[2] - w - 2)),
+                Math.max(r[1] + 2, Math.min(want[1], r[1] + r[3] - h - 2)));
+            popup.shown = true;
             IPanelHandler.simple(parent, (p, player) -> popup, true)
                 .openPanel();
             com.gtnhplanner.ui.sound.Sfx.OPEN.play();
@@ -51,6 +92,40 @@ public class Popup extends ModularPanel {
     }
 
     private static final List<Runnable> PENDING = new ArrayList<>();
+
+    /** Boxes opened from a key that toggles, by key name: that key again closes the box, and it never opens twice. */
+    private static final java.util.Map<String, Popup> TOGGLED = new java.util.HashMap<>();
+    private static final java.util.Map<String, Long> CLICKED_OFF = new java.util.HashMap<>();
+    private String toggleKey;
+    private boolean shown;
+
+    /** Marks this box as the one {@code key} opens (see {@link #toggled}). */
+    public <P extends Popup> P toggledBy(final String key) {
+        toggleKey = key;
+        TOGGLED.put(key, this);
+        @SuppressWarnings("unchecked")
+        final P self = (P) this;
+        return self;
+    }
+
+    /**
+     * Whether the key's press only closes (or waits on) its box: it is open, it is about to open, or the press that
+     * landed just now was the click off it that closed it. False means open it.
+     */
+    public static boolean toggled(final String key) {
+        final Long off = CLICKED_OFF.remove(key);
+        if (off != null && System.currentTimeMillis() - off < 250) return true;
+        final Popup p = TOGGLED.get(key);
+        if (p == null) return false;
+        if (!p.shown) return true;
+        if (p.isOpen()) {
+            p.closeIfOpen();
+            com.gtnhplanner.ui.sound.Sfx.CLOSE.play();
+            return true;
+        }
+        TOGGLED.remove(key);
+        return false;
+    }
 
     /** Opens the popups asked for since the last tick. The board calls this every tick. */
     public static void openPending() {
@@ -63,6 +138,7 @@ public class Popup extends ModularPanel {
     /** A click off the popup dismisses it, with the fold-away sound (picking a row sounds as what it does). */
     @Override
     public boolean closeOnOutOfBoundsClick() {
+        if (toggleKey != null) CLICKED_OFF.put(toggleKey, System.currentTimeMillis());
         com.gtnhplanner.ui.sound.Sfx.CLOSE.play();
         return true;
     }

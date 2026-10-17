@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 
 import com.gtnhplanner.power.sources.Endgame;
 import com.gtnhplanner.power.sources.Engines;
+import com.gtnhplanner.power.sources.Railcraft;
 import com.gtnhplanner.power.sources.Reactors;
 import com.gtnhplanner.power.sources.Singleblocks;
 import com.gtnhplanner.power.sources.Sofc;
@@ -36,6 +37,8 @@ public final class PowerRegistry {
             all.addAll(Reactors.reactorSources());
             all.addAll(Reactors.passiveSources());
             all.addAll(Endgame.sources());
+            // The Other column's one source, after its planning cards.
+            all.addAll(Railcraft.otherSources());
             final Map<String, PowerSource> index = new LinkedHashMap<>();
             for (final PowerSource source : all) index.put(source.id(), source);
             sources = Collections.unmodifiableList(all);
@@ -53,14 +56,17 @@ public final class PowerRegistry {
         return byId.get(sourceId);
     }
 
-    /** The planning cards, the picker's Other column: never in {@link #sources()}, the generator catalog. */
+    /**
+     * The planning cards, first in the picker's Other column: never in {@link #sources()}, the generator catalog. The
+     * column's sources (the Railcraft Water Tank) follow them ({@link #inGroup}).
+     */
     public static List<PowerSource> others() {
         return List.of(CustomRate.SOURCE, FluidTank.SOURCE);
     }
 
     public static List<PowerSource> inGroup(final PowerGroup group) {
-        if (group == PowerGroup.OTHER) return others();
         final List<PowerSource> out = new ArrayList<>();
+        if (group == PowerGroup.OTHER) out.addAll(others());
         for (final PowerSource source : sources()) {
             if (source.group() == group) out.add(source);
         }

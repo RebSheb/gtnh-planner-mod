@@ -157,13 +157,30 @@ public record SolveInput(BalanceMode mode, @Nullable ChoiceKey choice, List<Mach
 
     /**
      * One drawer. {@code rule} is what the solver applies ({@link Drawer#effectiveRule()}), and
-     * {@code label} the name its notes use: the drawer's label, else its resource key.
+     * {@code label} the name its notes use: the drawer's label, else its resource key. A buffer's {@code links} are the
+     * output ports feeding it and its {@code takers} the input ports it feeds; {@code takers} is empty for every other
+     * kind.
      */
     public record DrawerIn(UUID id, String label, Drawer.Kind kind, Drawer.Rule rule, double rate,
-        List<Drawer.Link> links) {
+        List<Drawer.Link> links, List<Drawer.Link> takers) {
 
         public DrawerIn {
             links = List.copyOf(links);
+            takers = List.copyOf(takers);
+        }
+
+        /** A drawer with no takers: every kind but a buffer. */
+        public DrawerIn(final UUID id, final String label, final Drawer.Kind kind, final Drawer.Rule rule,
+            final double rate, final List<Drawer.Link> links) {
+            this(id, label, kind, rule, rate, links, List.of());
+        }
+
+        /** Every port the drawer is linked to, makers' and users' alike (for joining islands). */
+        public List<Drawer.Link> allLinks() {
+            if (takers.isEmpty()) return links;
+            final List<Drawer.Link> all = new ArrayList<>(links);
+            all.addAll(takers);
+            return all;
         }
     }
 
@@ -217,7 +234,8 @@ public record SolveInput(BalanceMode mode, @Nullable ChoiceKey choice, List<Mach
                     drawer.getKind(),
                     drawer.effectiveRule(),
                     drawer.getRate(),
-                    drawer.getLinks()));
+                    drawer.getLinks(),
+                    drawer.getTakers()));
         }
         return new SolveInput(mode, choice, machines, edges, pools, drawers, extentPins, graph.spareShares);
     }

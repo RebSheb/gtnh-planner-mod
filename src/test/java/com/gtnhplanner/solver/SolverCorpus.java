@@ -45,7 +45,7 @@ final class SolverCorpus {
     /** The plans written from the game, under {@code /solver-corpus/}. */
     static final String[] PLANS = { "alumina-line-shared-reactor", "benzene", "full-platline", "glass", "hv-diesel",
         "mega-iv-nitrobenzene-power-plant", "mv", "oxygen-silicon-loop", "pa-cell-loop", "platline", "single-card-v2",
-        "sulfuric-acid", "titanium-line-chembath", "titanium-line-tour" };
+        "sulfuric-acid", "titanium-line-chembath", "titanium-line-tour", "buffer-drawers" };
 
     /** Every case: the plans, the gtnh-flow charts, and Platline tiled {@code tiles} times for each listed. */
     static List<Case> cases(final int... tiles) {
@@ -156,6 +156,10 @@ final class SolverCorpus {
                     d.rule(),
                     d.rate(),
                     d.links()
+                        .stream()
+                        .map(l -> new Drawer.Link(id.apply(l.nodeId()), l.portIndex()))
+                        .toList(),
+                    d.takers()
                         .stream()
                         .map(l -> new Drawer.Link(id.apply(l.nodeId()), l.portIndex()))
                         .toList()));

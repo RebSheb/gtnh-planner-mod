@@ -55,6 +55,8 @@ final class Script {
         plans(out);
         note(out);
         world(out);
+        tasks(out);
+        end(out);
         return out;
     }
 
@@ -845,14 +847,26 @@ final class Script {
 
     // endregion
 
-    // region Plans and the Library
+    // region Plans and Community
 
     private static void plans(final List<Beat> out) {
         beat(out).opens(Targets.boardPart("tab:+"))
             .note(Targets.around(Targets.topKey("tabs"), Targets.popup()), "Here's how you make a *new plan*.");
 
         beat(out).escIf(Script::popupOpen)
-            .click(Targets.topKey("library"))
+            .rest()
+            .note(
+                Targets.topKey("invite"),
+                "Sign in and your plans save as you edit, on any computer. *Invite* someone and you build the plan together, live.");
+
+        beat(out).click(Targets.topKey("plans"))
+            .until(Script::libraryOpen, 2000)
+            .pause(400)
+            .rest()
+            .note(Targets.topKey("plans"), "*Plans* has all your plans, and the ones people shared with you.");
+
+        beat(out).escIf(Script::popupOpen)
+            .click(Targets.topKey("community"))
             .until(
                 () -> Targets.board() != null && Targets.board()
                     .libraryOpen(),
@@ -870,7 +884,7 @@ final class Script {
             .rest()
             .note(
                 Targets.boardPart("library:all"),
-                "The *Library* is where people upload plans. You can browse them here.");
+                "*Community* is where people post plans. You can browse them here.");
     }
 
     private static boolean libraryOpen() {
@@ -894,14 +908,14 @@ final class Script {
         final Target grip = Targets.note(null, NoteCard.Part.RESIZE);
         final Target bigger = Targets.note(null, NoteCard.Part.BIGGER);
         // The whole plan in view first, so there is empty board to write on.
-        beat(out).when(Script::libraryOpen, Steps.click(Targets.topKey("library")))
+        beat(out).when(Script::libraryOpen, Steps.click(Targets.topKey("community")))
             .until(() -> !libraryOpen(), 2000)
             .click(Targets.topKey("fit"))
             .pause(400)
             .wheel(empty, 3)
             .pause(150)
             .opensMenu(empty)
-            .click(Targets.popupRow("Add a sticky note"))
+            .click(Targets.popupRow("Add sticky note"))
             .until(() -> note.rect() != null, 2000)
             .until(Script::writingNote, 1500)
             .when(Script::writingNote, Steps.keys("Hydrogen comes from the electrolyzers by the door."))
@@ -1014,9 +1028,47 @@ final class Script {
             .pause(200)
             .run(Minimap.INSTANCE::recentre);
 
-        // Back on the board, at the Feedback key.
+    }
+
+    // endregion
+
+    // region Task boards
+
+    private static void tasks(final List<Beat> out) {
+        // Back on the board: the reactor goes on a task, on a new task board.
+        final Target open = Targets.boardPart("notice:Open");
         beat(out).run(com.gtnhplanner.ui.Planner::open)
             .until(() -> Targets.board() != null, 3000)
+            .escIf(Script::popupOpen)
+            .opens(card(ACID, RecipeCard.Part.ACTIONS))
+            .click(Targets.popupRow("Add to a task"))
+            .until(
+                () -> Targets.popupRow("New task board")
+                    .rect() != null,
+                2000)
+            .click(Targets.popupRow("New task board"))
+            .until(() -> open.rect() != null, 3000)
+            .rest()
+            .note(
+                Targets.boardPart("notices"),
+                "*Add to a task* puts machines on a task board, with how many to build.");
+
+        beat(out).click(open)
+            .until(Script::popupOpen, 3000)
+            .pause(300)
+            .rest()
+            .note(
+                Targets.popup(),
+                "A *task* holds notes, a checklist, comments and who is on it. Drag it across the columns as the work goes.");
+    }
+
+    // endregion
+
+    // region The end
+
+    private static void end(final List<Beat> out) {
+        // At the Feedback key, the task's box put away.
+        beat(out).escIf(Script::popupOpen)
             .rest()
             .note(
                 Targets.topKey("feedback"),

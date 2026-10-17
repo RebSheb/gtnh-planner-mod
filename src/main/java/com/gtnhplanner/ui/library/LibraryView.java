@@ -96,7 +96,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         SHELF,
         MY_TILE,
         NEW_TILE,
-        ACCOUNT,
+        MY_POSTS,
         MINE_CLEAR,
         EDIT,
         DELETE
@@ -129,8 +129,9 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
     }
 
     /**
-     * The GUI rectangle {x, y, w, h} of a part, for the tour: "search" its search field, "shelf:public" or "shelf:mine"
-     * a shelf's key, "tile:N" the Nth setup tile in view (from 0), "all" the whole view; null when not showing.
+     * The GUI rectangle {x, y, w, h} of a part, for the tour: "search" its search field, "shelf:public", "shelf:shared"
+     * or "shelf:mine" a shelf's key, "tile:N" the Nth setup tile in view (from 0), "all" the whole view; null when not
+     * showing.
      */
     public int[] partRect(final String id) {
         final com.cleanroommc.modularui.widget.sizer.Area a = getArea();
@@ -140,9 +141,9 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             return new int[] { f.x, f.y, f.width, f.height };
         }
         if (id.startsWith("shelf:")) {
-            final boolean wantMine = id.endsWith("mine");
-            for (final Hit h : lastHits) if (h.kind() == Kind.SHELF && Boolean.valueOf(wantMine)
-                .equals(h.data())) return new int[] { a.x + h.x0(), a.y + h.y0(), h.x1() - h.x0(), h.y1() - h.y0() };
+            final Shelf want = id.endsWith("mine") ? Shelf.MINE : id.endsWith("shared") ? Shelf.SHARED : Shelf.PUBLIC;
+            for (final Hit h : lastHits) if (h.kind() == Kind.SHELF && want == h.data())
+                return new int[] { a.x + h.x0(), a.y + h.y0(), h.x1() - h.x0(), h.y1() - h.y0() };
             return null;
         }
         if (id.startsWith("tile:")) {
@@ -171,21 +172,49 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         if (!mine && !feed.started()) feed.restart();
     }
 
-    /** Opens on My plans: every plan kept, open in a tab or not. */
+    /** Opens on My plans: the plans that are yours (signed in, the account's list is asked again). */
     public void showMine() {
-        shelf(true);
+        shelf(Shelf.MINE);
+        final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession.current();
+        if (cloud != null) cloud.refreshList();
+    }
+
+    /** Opens on Shared with me: the plans other people shared with the account (the list is asked again). */
+    public void showShared() {
+        shelf(Shelf.SHARED);
+        final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession.current();
+        if (cloud != null) cloud.refreshList();
     }
 
     /** Opens on the public setups. */
-    public void showPublic() {
-        shelf(false);
+    /** Whether the plans shelf (My plans) is the one showing. */
+    public boolean onMine() {
+        return shelf == Shelf.MINE;
     }
 
-    /** Which shelf shows: My plans, or the public setups. Each keeps its own search. */
+    /** Whether the Community shelf is the one showing. */
+    public boolean onPublic() {
+        return shelf == Shelf.PUBLIC;
+    }
+
+    public void showPublic() {
+        shelf(Shelf.PUBLIC);
+    }
+
+    /** The library's shelves: your plans, the plans shared with you (signed in), and the public setups. */
+    enum Shelf {
+        MINE,
+        SHARED,
+        PUBLIC
+    }
+
+    private Shelf shelf = Shelf.MINE;
+    /** Whether the shelf shows plans of the player's own account (My plans or Shared with me), not public setups. */
     boolean mine = true;
     private String mineSearch = "", publicSearch = "";
 
-    private void shelf(final boolean toMine) {
+    private void shelf(final Shelf to) {
+        final boolean toMine = to != Shelf.PUBLIC;
         if (toMine != mine) {
             if (mine) mineSearch = searchText;
             else publicSearch = searchText;
@@ -195,12 +224,19 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             searchField.hintText(mine ? "Find a plan" : "Search setups (#tag, @name)");
             scroll = 0;
         }
+        if (shelf != to) scroll = 0;
+        shelf = to;
         if (!mine && !feed.started()) feed.restart();
+    }
+
+    /** Whether the Shared with me shelf shows: while signed in. */
+    private static boolean hasShared() {
+        return com.gtnhplanner.library.Account.signedIn();
     }
 
     /** Shows the setups that make a resource ({@code kind:id}, as Factory Flow writes them). */
     public void showMaking(final String ffKey, final String label) {
-        shelf(false);
+        shelf(Shelf.PUBLIC);
         searchText = "";
         searchField.setText("");
         feed.set(
@@ -301,21 +337,33 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         Hyb.rect(0, 0, w, HEAD_H, 0xFF2A2D33);
         Hyb.rect(0, HEAD_H - 1, w, 1, Hyb.RING);
         int x = PAD;
-        final int plans = Plan.getInstance()
+        final int shared = sharedCount(), own = Plan.getInstance()
             .getGraphs()
-            .size();
-        x = shelfTab(x, "MY PLANS", Integer.toString(plans), true, hover) + 6;
-        x = shelfTab(x, "PUBLIC SETUPS", feed.total() < 0 ? "..." : Fmt.compact(feed.total()), false, hover) + 12;
+            .size() - shared;
+        final String publicCount = feed.total() < 0 ? "..." : Fmt.compact(feed.total());
+        // The long names when the header has room for them and a search box; else the short ones.
+        final boolean roomy = PAD + shelfW("MY PLANS", Integer.toString(own))
+            + 6
+            + (hasShared() ? shelfW("SHARED WITH ME", Integer.toString(shared)) + 6 : 0)
+            + shelfW("COMMUNITY", publicCount)
+            + 12
+            + 100
+            + 30 <= w;
+        x = shelfTab(x, "MY PLANS", Integer.toString(own), Shelf.MINE, hover) + 6;
+        if (hasShared())
+            x = shelfTab(x, roomy ? "SHARED WITH ME" : "SHARED", Integer.toString(shared), Shelf.SHARED, hover) + 6;
+        x = shelfTab(x, "COMMUNITY", publicCount, Shelf.PUBLIC, hover) + 12;
         // Right to left: close, then the public list's version, tier and sort.
         int right = w - PAD;
         right = closeKey(right, 4, Kind.CLOSE, hover) - 8;
-        right = accountKey(right, hover) - 10;
         if (mine) {
             searchField.pos(x, 5)
                 .size(Math.max(80, Math.min(240, right - x)), 14);
             return;
         }
         final CommunityApi.Query q = feed.query();
+        if (com.gtnhplanner.library.Account.signedIn() && right - x > 260)
+            right = myPostsKey(right, q.mine(), hover) - 4;
         right = key(
             right,
             q.gameVersion()
@@ -352,55 +400,15 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             }
     }
 
-    /**
-     * Who is signed in to gtnhplanner.com, as a key: their name with a dot (a menu: their posts, signing out), or
-     * "Sign in". Returns its left edge.
-     */
-    private int accountKey(final int right, final Hit hover) {
-        final String who = com.gtnhplanner.library.Account.username();
-        final String label = who == null ? "Sign in" : who;
-        final int kw = Hyb.width(label) + (who == null ? 12 : 22), x = right - kw;
-        final boolean hot = hover != null && hover.kind() == Kind.ACCOUNT;
+    /** The player's own posts to the library, as a filter: a key on the public shelf while signed in. */
+    private int myPostsKey(final int right, final boolean on, final Hit hover) {
+        final String label = "My posts";
+        final int kw = Hyb.width(label) + 12, x = right - kw;
+        final boolean hot = hover != null && hover.kind() == Kind.MY_POSTS;
         Hyb.bevel(x, 4, kw, 16, hot ? Hyb.KEY_HOVER : Hyb.KEY, Hyb.KEY_HI, Hyb.KEY_LO, 0, 1);
-        if (who == null) Hyb.text(label, x + 6, 8, CYAN);
-        else {
-            // Signed in: a green dot, the name, a chevron.
-            Hyb.rect(x + 5, 10, 3, 3, 0xFF5EE9B5);
-            Hyb.text(label, x + 11, 8, Hyb.INK);
-            final int cx = x + kw - 8;
-            Hyb.rect(cx, 11, 5, 1, Hyb.MUTED);
-            Hyb.rect(cx + 1, 12, 3, 1, Hyb.MUTED);
-            Hyb.rect(cx + 2, 13, 1, 1, Hyb.MUTED);
-        }
-        hits.add(new Hit(Kind.ACCOUNT, x, 4, right, 20, null));
+        Hyb.text(label, x + 6, 8, on ? CYAN : Hyb.INK);
+        hits.add(new Hit(Kind.MY_POSTS, x, 4, right, 20, null));
         return x;
-    }
-
-    private void accountMenu(final Hit hit) {
-        if (!com.gtnhplanner.library.Account.signedIn()) {
-            AccountForms.signIn(getPanel(), () -> {});
-            return;
-        }
-        final List<PickList.Entry> rows = new ArrayList<>();
-        rows.add(PickList.Entry.of("My posts", () -> {
-            shelf(false);
-            refilter(
-                feed.query()
-                    .withMine(true));
-        }));
-        rows.add(
-            new PickList.Entry(
-                null,
-                "Sign out",
-                "",
-                Hyb.INK,
-                false,
-                () -> AccountForms.signOut(text -> session.flash(Severity.INFO, text))));
-        Popup.open(
-            getPanel(),
-            PickList.popup("gtnhplanner_account", "Your account", rows, false, hit.x1() - hit.x0()),
-            getArea().x + hit.x0(),
-            getArea().y + hit.y1() + 2);
     }
 
     private static String sortLabel(final String sort) {
@@ -437,7 +445,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         final int cols = columns(), tw = tileW();
         int y = top + PAD - scroll;
         if (setups.isEmpty()) {
-            final String msg = feed.error() != null ? "Couldn't reach the library: " + feed.error()
+            final String msg = feed.error() != null ? "Couldn't reach Community: " + feed.error()
                 : feed.loading() || !feed.started() ? "Loading shared plans..." : "No setups match.";
             final float cx = (PAD + gridRight()) / 2f, cy = top + (h - top) / 2f - 10;
             Hyb.textCentered(msg, cx, cy, feed.error() != null ? Hyb.AMBER_INK : Hyb.MUTED);
@@ -567,10 +575,24 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
 
     // region My plans
 
-    /** One of the header's two shelves: its name and count, underlined in cyan when it is the one shown. */
-    private int shelfTab(final int x, final String label, final String count, final boolean isMine, final Hit hover) {
-        final boolean on = isMine == mine;
-        final boolean hot = hover != null && hover.kind() == Kind.SHELF && hover.data() == (Boolean) isMine;
+    /** How many of the player's plans were shared by someone else. */
+    private int sharedCount() {
+        final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession.current();
+        if (cloud == null) return 0;
+        int n = 0;
+        for (final Graph g : Plan.getInstance()
+            .getGraphs()) if (cloud.shared(g)) n++;
+        return n;
+    }
+
+    private static int shelfW(final String label, final String count) {
+        return Hyb.width(label) + 5 + Hyb.width(count) + 6;
+    }
+
+    /** One of the header's shelves: its name and count, underlined in cyan when it is the one shown. */
+    private int shelfTab(final int x, final String label, final String count, final Shelf which, final Hit hover) {
+        final boolean on = which == shelf;
+        final boolean hot = hover != null && hover.kind() == Kind.SHELF && hover.data() == which;
         Hyb.text(label, x, 8, on ? Hyb.INK : hot ? 0xFFD0D2D8 : Hyb.MUTED);
         int end = x + Hyb.width(label) + 5;
         final int cw = Hyb.width(count) + 6;
@@ -578,18 +600,25 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         Hyb.text(count, end + 3, 8, 0xFFA3A3A3);
         end += cw;
         if (on) Hyb.rect(x, HEAD_H - 3, end - x, 2, CYAN);
-        hits.add(new Hit(Kind.SHELF, x - 2, 0, end + 2, HEAD_H, isMine));
+        hits.add(new Hit(Kind.SHELF, x - 2, 0, end + 2, HEAD_H, which));
         return end;
     }
 
-    /** Every plan kept, the most recently open first, after a tile for a new one. */
+    /**
+     * The player's own plans, or the ones shared with them, the most recently open first; My plans starts with a tile
+     * for a new one.
+     */
     private void drawMine(final int top, final int h, final float z, final Hit hover) {
         final Plan plan = Plan.getInstance();
         final List<Graph> graphs = plan.getGraphs();
+        final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession.current();
+        final boolean sharedShelf = shelf == Shelf.SHARED;
         final String f = searchText.trim()
             .toLowerCase(Locale.ROOT);
         final List<Integer> shown = new ArrayList<>();
         for (final int i : plan.byRecency()) {
+            final boolean theirs = cloud != null && cloud.shared(graphs.get(i));
+            if (theirs != sharedShelf) continue;
             if (f.isEmpty() || graphs.get(i)
                 .getName()
                 .toLowerCase(Locale.ROOT)
@@ -597,7 +626,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         }
         final int cols = columns(), tw = tileW(), y0 = top + PAD - scroll;
         int n = 0;
-        if (f.isEmpty()) {
+        if (f.isEmpty() && !sharedShelf) {
             newTile(PAD, y0, tw, hover);
             n = 1;
         }
@@ -606,8 +635,11 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             if (ty + TILE_H >= top && ty <= h) planTile(slot, graphs.get(slot), tx, ty, tw, z, hover);
             n++;
         }
-        if (n == 0)
-            Hyb.textCentered("No plan by that name.", (PAD + gridRight()) / 2f, top + (h - top) / 2f, Hyb.MUTED);
+        if (n == 0) Hyb.textCentered(
+            sharedShelf && f.isEmpty() ? "Nothing shared with you yet" : "No plan by that name.",
+            (PAD + gridRight()) / 2f,
+            top + (h - top) / 2f,
+            Hyb.MUTED);
         contentH = (n + cols - 1) / cols * (TILE_H + GAP) + PAD;
         final int visible = h - top, max = Math.max(0, contentH - visible);
         if (scroll > max) scroll = max;
@@ -635,7 +667,10 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         if (face instanceof final ItemStack item) Hyb.icon(item, null, x + 5, y + 5, 24, z);
         else if (face instanceof final FluidStack fluid) Hyb.icon(null, fluid, x + 5, y + 5, 24, z);
         else face(null, x + 5, y + 5, 24, z);
-        final int nameX = x + 34;
+        final boolean tasks = com.gtnhplanner.data.flowchart.Tasks.TASKS.equals(g.getPrimaryView());
+        if (tasks) Hyb.rect(x + 1, y + 1, w - 2, TILE_H - 2, com.gtnhplanner.ui.task.TaskLook.TINT_FAINT);
+        final int nameX = x + 34 + (tasks ? com.gtnhplanner.ui.task.TaskLook.ICON_W + 3 : 0);
+        if (tasks) com.gtnhplanner.ui.task.TaskLook.checklist(x + 34, y + 6, com.gtnhplanner.ui.task.TaskLook.TINT);
         int nameRight = x + w - 6;
         if (g.isOpen()) {
             final String chip = current ? "SHOWING" : "OPEN";
@@ -648,11 +683,21 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         final int cards = g.getNodes()
             .size(), drawers = g.getDrawers()
                 .size();
-        final String size = cards + (cards == 1 ? " card" : " cards") + " · " + drawers + (drawers == 1 ? " drawer" : " drawers");
-        Hyb.text(Hyb.fit(size, x + w - 6 - nameX), nameX, y + 17, 0xFF8A8C94);
+        final int count = g.tasks.size();
+        final String size = tasks ? count + (count == 1 ? " task" : " tasks")
+            : cards + (cards == 1 ? " card" : " cards") + " · " + drawers + (drawers == 1 ? " drawer" : " drawers");
+        Hyb.text(Hyb.fit(size, x + w - 6 - (x + 34)), x + 34, y + 17, 0xFF8A8C94);
         final String when = g.getLastOpen() > 0 ? "last open " + agoMs(g.getLastOpen()) : "not opened yet";
         Hyb.text(when, x + 6, y + TILE_H - 13, Hyb.MUTED);
-        if (g.getPostId() != null) Hyb.textRight("posted", x + w - 6, y + TILE_H - 13, 0xFF9FD9E6);
+        // A plan someone shared with the player says whose it is.
+        final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession.current();
+        final String by = cloud == null ? null : cloud.sharedBy(g);
+        if (by != null) Hyb.textRight(
+            Hyb.fit("shared by " + by, w / 2),
+            x + w - 6,
+            y + TILE_H - 13,
+            0xFF9FD9E6);
+        else if (g.getPostId() != null) Hyb.textRight("posted", x + w - 6, y + TILE_H - 13, 0xFF9FD9E6);
         hits.add(new Hit(Kind.MY_TILE, x, y, x + w, y + TILE_H, slot));
     }
 
@@ -699,11 +744,15 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
                 Hyb.INK,
                 false,
                 () -> session.copyPlan(slot)));
-        rows.add(AccountForms.shareRow(getPanel(), session, g));
+        rows.add(PickList.Entry.of("Make a copy", () -> {
+            session.copySlot(slot);
+            close.run();
+        }));
+        rows.addAll(AccountForms.shareRows(getPanel(), session, g));
         rows.add(
             new PickList.Entry(
                 null,
-                "Delete plan",
+                session.shared(g) ? "Leave plan" : "Delete plan",
                 "",
                 Hyb.RED_INK,
                 false,
@@ -886,8 +935,15 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
         final CommunityApi.Query q = feed.query();
         switch (hit.kind()) {
             case CLOSE -> close.run();
-            case SHELF -> shelf((Boolean) hit.data());
-            case ACCOUNT -> accountMenu(hit);
+            case SHELF -> {
+                shelf((Shelf) hit.data());
+                if (hit.data() != Shelf.PUBLIC) {
+                    final com.gtnhplanner.cloud.session.CloudSession cloud = com.gtnhplanner.cloud.session.CloudSession
+                        .current();
+                    if (cloud != null) cloud.refreshList();
+                }
+            }
+            case MY_POSTS -> refilter(q.withMine(!q.mine()));
             case MINE_CLEAR -> refilter(q.withMine(false));
             case MY_TILE -> openPlan((Integer) hit.data());
             case NEW_TILE -> {
@@ -1022,7 +1078,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             getPanel(),
             PickList.popup(
                 "gtnhplanner_delete_post",
-                "Take '" + Hyb.fit(s.name(), 150) + "' out of the library?",
+                "Take '" + Hyb.fit(s.name(), 150) + "' out of Community?",
                 rows,
                 false,
                 150),
@@ -1040,7 +1096,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             feed.remove(s.id());
             if (picked != null && picked.id()
                 .equals(s.id())) pick(null);
-            session.flash(Severity.INFO, "Took '" + s.name() + "' out of the library");
+            session.flash(Severity.INFO, "Took '" + s.name() + "' out of Community");
         }, why -> {
             deleting = null;
             openError = "Couldn't delete it: " + why;
@@ -1118,7 +1174,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
                     missing == 0 ? Severity.INFO : Severity.WARN,
                     "Opened '" + r.graph()
                         .getName()
-                        + "' from the library: "
+                        + "' from Community: "
                         + r.report()
                             .summary());
             } catch (final RuntimeException e) {
@@ -1160,7 +1216,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             }
             case OPEN -> List.of("Open as a new plan");
             case EDIT -> List.of("Change its title, description and icon");
-            case DELETE -> List.of("Take it out of the library for good");
+            case DELETE -> List.of("Take it out of Community for good");
             case TAG -> List.of("Show plans tagged #" + hit.data());
             case AUTHOR -> List.of("Show plans by " + hit.data());
             case TIER_BADGE -> List.of("Show plans up to this tier");
@@ -1169,8 +1225,9 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
             case TIER -> List.of("Filter by highest tier");
             case VERSION -> List.of("Filter by pack version");
             case MAKES_CLEAR -> List.of("Clear this filter");
-            case SHELF -> (Boolean) hit.data() ? List.of("My plans: every plan you have, open or closed")
-                : List.of("Plans other players shared");
+            case SHELF -> hit.data() == Shelf.MINE ? List.of("My plans: every plan of yours, open or closed")
+                : hit.data() == Shelf.SHARED ? List.of("Shared with me: plans other players shared with your account")
+                    : List.of("Setups other players posted to Community");
             case MY_TILE -> List.of(
                 Plan.getInstance()
                     .getGraphs()
@@ -1178,8 +1235,7 @@ public final class LibraryView extends ParentWidget<LibraryView> implements Inte
                     .getName(),
                 "§7Right-click to rename, copy, post or delete");
             case NEW_TILE -> List.of("New plan");
-            case ACCOUNT -> com.gtnhplanner.library.Account.signedIn() ? List.of("Your library account")
-                : List.of("Sign in to share plans");
+            case MY_POSTS -> List.of("Show only the setups you posted");
             case MINE_CLEAR -> List.of("Clear this filter");
             default -> List.of();
         };

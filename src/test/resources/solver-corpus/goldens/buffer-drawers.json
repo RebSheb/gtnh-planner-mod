@@ -1,0 +1,314 @@
+{
+  "solution": {
+    "extentsPerSecond": {
+      "0182b10e-bed2-3a0f-b0da-1744743b1579": 1.0,
+      "0f17f33b-6c35-35f3-8453-868721d0e909": 3.66666666666667,
+      "128f4108-cc04-334d-b219-584351753e96": 4.0,
+      "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5": 1.0,
+      "36d2f472-0d41-309b-b7c7-f61a541c5c8d": 1.5,
+      "6ca507a9-3620-3cbd-9988-d481b3049ca1": 2.5,
+      "d24c3564-d71a-3acb-8014-063a62072b61": 1.0,
+      "e2155a0c-11be-3383-b813-9cdbb421d8d6": 1.0,
+      "fdcb9341-649c-30c7-b794-8fa081054003": 5.5
+    },
+    "machineCounts": {
+      "0182b10e-bed2-3a0f-b0da-1744743b1579": 1.0,
+      "0f17f33b-6c35-35f3-8453-868721d0e909": 3.66666666666667,
+      "128f4108-cc04-334d-b219-584351753e96": 4.0,
+      "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5": 1.0,
+      "36d2f472-0d41-309b-b7c7-f61a541c5c8d": 1.5,
+      "6ca507a9-3620-3cbd-9988-d481b3049ca1": 2.5,
+      "d24c3564-d71a-3acb-8014-063a62072b61": 1.0,
+      "e2155a0c-11be-3383-b813-9cdbb421d8d6": 1.0,
+      "fdcb9341-649c-30c7-b794-8fa081054003": 5.5
+    },
+    "edgeFlowsPerSecond": {
+      "c5ca697d-e8b7-3f48-8d0c-3a87db090955": 4.0
+    },
+    "gatedSources": [],
+    "gatedSinks": [
+      {
+        "port": {
+          "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 3.0
+      }
+    ],
+    "terminalInputs": [
+      {
+        "port": {
+          "nodeId": "d24c3564-d71a-3acb-8014-063a62072b61",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 1.0
+      },
+      {
+        "port": {
+          "nodeId": "fdcb9341-649c-30c7-b794-8fa081054003",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 5.5
+      },
+      {
+        "port": {
+          "nodeId": "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5",
+          "portIndex": 0.0,
+          "input": true
+        },
+        "ratePerSecond": 1.0
+      }
+    ],
+    "terminalOutputs": [
+      {
+        "port": {
+          "nodeId": "0182b10e-bed2-3a0f-b0da-1744743b1579",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 1.0
+      },
+      {
+        "port": {
+          "nodeId": "0f17f33b-6c35-35f3-8453-868721d0e909",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 3.66666666666667
+      },
+      {
+        "port": {
+          "nodeId": "128f4108-cc04-334d-b219-584351753e96",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 4.0
+      },
+      {
+        "port": {
+          "nodeId": "36d2f472-0d41-309b-b7c7-f61a541c5c8d",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "ratePerSecond": 1.5
+      }
+    ],
+    "unneeded": [],
+    "openGates": 1.0,
+    "externalQuantity": 3.0,
+    "totalInternalFlow": 29.0,
+    "notes": [
+      {
+        "message": "DRAWER_UNMET",
+        "args": [
+          "Steam",
+          {
+            "message": "RULE_AT_LEAST",
+            "args": []
+          },
+          20.0,
+          10.0
+        ]
+      },
+      {
+        "message": "DRAWER_LIMITED_BY",
+        "args": [
+          "Steam",
+          {
+            "message": "LIMIT_PIN",
+            "args": [
+              "Boiler",
+              {
+                "message": "PIN_COUNT",
+                "args": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "key": {
+      "gateAnchors": [
+        {
+          "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "portIndex": 0.0,
+          "input": false
+        }
+      ]
+    },
+    "drawers": {
+      "rates": {
+        "7685e52b-8546-32d8-8526-612429bd8e76": 10.0,
+        "ad7bbb2a-cb05-3404-bc5a-a7baabbd2e1a": 12.0,
+        "d2ee5fb6-ce5c-39c9-a554-e7255638f201": 3.0
+      },
+      "unmet": [
+        "7685e52b-8546-32d8-8526-612429bd8e76"
+      ],
+      "shortfalls": [
+        {
+          "drawer": "7685e52b-8546-32d8-8526-612429bd8e76",
+          "rule": "AT_LEAST",
+          "target": 20.0,
+          "reachable": 10.0,
+          "limitingNodes": [
+            "d24c3564-d71a-3acb-8014-063a62072b61"
+          ],
+          "limitingDrawers": [],
+          "limitingGroups": 0.0
+        }
+      ],
+      "ports": {
+        "7685e52b-8546-32d8-8526-612429bd8e76": [
+          {
+            "port": {
+              "nodeId": "d24c3564-d71a-3acb-8014-063a62072b61",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "ratePerSecond": 10.0
+          },
+          {
+            "port": {
+              "nodeId": "6ca507a9-3620-3cbd-9988-d481b3049ca1",
+              "portIndex": 0.0,
+              "input": true
+            },
+            "ratePerSecond": 10.0
+          }
+        ],
+        "ad7bbb2a-cb05-3404-bc5a-a7baabbd2e1a": [
+          {
+            "port": {
+              "nodeId": "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "ratePerSecond": 1.0
+          },
+          {
+            "port": {
+              "nodeId": "fdcb9341-649c-30c7-b794-8fa081054003",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "ratePerSecond": 11.0
+          },
+          {
+            "port": {
+              "nodeId": "0f17f33b-6c35-35f3-8453-868721d0e909",
+              "portIndex": 0.0,
+              "input": true
+            },
+            "ratePerSecond": 11.0
+          },
+          {
+            "port": {
+              "nodeId": "0182b10e-bed2-3a0f-b0da-1744743b1579",
+              "portIndex": 0.0,
+              "input": true
+            },
+            "ratePerSecond": 1.0
+          }
+        ],
+        "d2ee5fb6-ce5c-39c9-a554-e7255638f201": [
+          {
+            "port": {
+              "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "ratePerSecond": 3.0
+          },
+          {
+            "port": {
+              "nodeId": "36d2f472-0d41-309b-b7c7-f61a541c5c8d",
+              "portIndex": 0.0,
+              "input": true
+            },
+            "ratePerSecond": 3.0
+          }
+        ]
+      }
+    },
+    "spares": [
+      {
+        "key": "e2155a0c-11be-3383-b813-9cdbb421d8d6:o:0",
+        "importing": false,
+        "bearers": [
+          {
+            "anchor": {
+              "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "flows": [
+              {
+                "port": {
+                  "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+                  "portIndex": 0.0,
+                  "input": false
+                },
+                "ratePerSecond": 3.0
+              }
+            ],
+            "max": 3.0,
+            "share": 1.0,
+            "solverPick": true
+          }
+        ],
+        "custom": false
+      }
+    ]
+  },
+  "alternatives": {
+    "chosen": {
+      "gateAnchors": [
+        {
+          "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "portIndex": 0.0,
+          "input": false
+        }
+      ]
+    },
+    "options": [
+      {
+        "key": {
+          "gateAnchors": [
+            {
+              "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+              "portIndex": 0.0,
+              "input": false
+            }
+          ]
+        },
+        "replaces": {
+          "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "opens": {
+          "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "portIndex": 0.0,
+          "input": false
+        },
+        "externals": [
+          {
+            "port": {
+              "nodeId": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+              "portIndex": 0.0,
+              "input": false
+            },
+            "ratePerSecond": 3.0
+          }
+        ],
+        "rank": "DEFAULT"
+      }
+    ],
+    "complete": true,
+    "notes": []
+  }
+}

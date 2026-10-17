@@ -1,0 +1,345 @@
+{
+  "mode": "AUTO",
+  "machines": [
+    {
+      "id": "d24c3564-d71a-3acb-8014-063a62072b61",
+      "name": "Boiler",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 4,
+          "name": "Water",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Steam",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+      "name": "Pump",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [],
+      "outputs": [
+        {
+          "amount": 10.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Coolant",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "fdcb9341-649c-30c7-b794-8fa081054003",
+      "name": "Washer B",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Ore",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Dust",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0182b10e-bed2-3a0f-b0da-1744743b1579",
+      "name": "Press",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 3,
+          "name": "Plate",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "0f17f33b-6c35-35f3-8453-868721d0e909",
+      "name": "Mixer",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 3.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Dust",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 2,
+          "name": "Mix",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "128f4108-cc04-334d-b219-584351753e96",
+      "name": "Filler",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Coolant",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 7,
+          "name": "Cell",
+          "free": false
+        }
+      ],
+      "countFixed": true,
+      "machineCount": 4,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5",
+      "name": "Washer A",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 0,
+          "name": "Ore",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 1,
+          "name": "Dust",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "36d2f472-0d41-309b-b7c7-f61a541c5c8d",
+      "name": "Cooler",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 2.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 6,
+          "name": "Coolant",
+          "free": false
+        }
+      ],
+      "outputs": [
+        {
+          "amount": 1.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 8,
+          "name": "Ice",
+          "free": false
+        }
+      ],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    },
+    {
+      "id": "6ca507a9-3620-3cbd-9988-d481b3049ca1",
+      "name": "Turbine",
+      "durationTicks": 20.0,
+      "energyPerTick": 30.0,
+      "throughputFactor": 1,
+      "inputs": [
+        {
+          "amount": 4.0,
+          "chance": 1.0,
+          "multiplier": 1.0,
+          "resource": 5,
+          "name": "Steam",
+          "free": false
+        }
+      ],
+      "outputs": [],
+      "countFixed": false,
+      "machineCount": 1,
+      "targetOutputRates": {},
+      "targetInputRates": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "c5ca697d-e8b7-3f48-8d0c-3a87db090955",
+      "source": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+      "sourceOutput": 0,
+      "target": "128f4108-cc04-334d-b219-584351753e96",
+      "targetInput": 0
+    }
+  ],
+  "pools": [],
+  "drawers": [
+    {
+      "id": "ad7bbb2a-cb05-3404-bc5a-a7baabbd2e1a",
+      "label": "Dust",
+      "kind": "BUFFER",
+      "rule": "EXACTLY",
+      "rate": 12.0,
+      "links": [
+        {
+          "node": "2f0049d1-ee76-3a8f-9b75-b5ab553ee2d5",
+          "port": 0
+        },
+        {
+          "node": "fdcb9341-649c-30c7-b794-8fa081054003",
+          "port": 0
+        }
+      ],
+      "takers": [
+        {
+          "node": "0f17f33b-6c35-35f3-8453-868721d0e909",
+          "port": 0
+        },
+        {
+          "node": "0182b10e-bed2-3a0f-b0da-1744743b1579",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "d2ee5fb6-ce5c-39c9-a554-e7255638f201",
+      "label": "Coolant",
+      "kind": "BUFFER",
+      "rule": "AT_MOST",
+      "rate": 3.0,
+      "links": [
+        {
+          "node": "e2155a0c-11be-3383-b813-9cdbb421d8d6",
+          "port": 0
+        }
+      ],
+      "takers": [
+        {
+          "node": "36d2f472-0d41-309b-b7c7-f61a541c5c8d",
+          "port": 0
+        }
+      ]
+    },
+    {
+      "id": "7685e52b-8546-32d8-8526-612429bd8e76",
+      "label": "Steam",
+      "kind": "BUFFER",
+      "rule": "AT_LEAST",
+      "rate": 20.0,
+      "links": [
+        {
+          "node": "d24c3564-d71a-3acb-8014-063a62072b61",
+          "port": 0
+        }
+      ],
+      "takers": [
+        {
+          "node": "6ca507a9-3620-3cbd-9988-d481b3049ca1",
+          "port": 0
+        }
+      ]
+    }
+  ],
+  "extentPins": {},
+  "spares": {}
+}

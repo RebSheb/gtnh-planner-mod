@@ -233,6 +233,7 @@ key.gtnhplanner.minimapRecentre=Minimap: back to the board's view
 key.gtnhplanner.ar=Show or hide the plan over the world
 key.gtnhplanner.link=Place a plan card on the block you look at
 key.gtnhplanner.pinList=Show or hide the pin list
+key.gtnhplanner.taskShow=Change when task locations show
 key.gtnhplanner.rotate=Turn a machine (with sneak; alone while placing)
 key.gtnhplanner.pickUp=Pick up a placed machine (with sneak)
 key.gtnhplanner.remove=Remove a placed machine (with sneak)

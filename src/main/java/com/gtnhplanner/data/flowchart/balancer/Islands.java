@@ -50,7 +50,7 @@ final class Islands {
         }
         for (final SolveInput.DrawerIn drawer : input.drawers()) {
             Integer first = null;
-            for (final Drawer.Link link : drawer.links()) {
+            for (final Drawer.Link link : drawer.allLinks()) {
                 final Integer m = index.get(link.nodeId());
                 if (m == null) continue;
                 if (first == null) first = m;
@@ -97,7 +97,7 @@ final class Islands {
         }
         for (final SolveInput.DrawerIn drawer : input.drawers()) {
             final List<UUID> linked = new ArrayList<>();
-            for (final Drawer.Link link : drawer.links()) linked.add(link.nodeId());
+            for (final Drawer.Link link : drawer.allLinks()) linked.add(link.nodeId());
             final int at = islandOf(linked, index, island);
             ds.get(at < 0 ? 0 : at)
                 .add(drawer);

@@ -664,7 +664,8 @@
         "e847382f-dc17-4d01-9598-74581f99a86f": 2.309464E8
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

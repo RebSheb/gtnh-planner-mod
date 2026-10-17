@@ -155,7 +155,7 @@ Plans, the Library and notes:
 
 In the world:
 
-35. A card's pin key: Place in the world, and Pin to the screen.
+35. A card's pin button: Place in the world, and Pin to the screen.
 36. Pinned to the screen; the minimap set up large, square, top right, the pin list bottom right; over the world, the
     minimap moved and zoomed with its keys.
 37. Back on the board at the Feedback key: that's everything.

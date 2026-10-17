@@ -335,7 +335,8 @@
         "e77db09c-fb02-4de9-856e-fe6ea2d84524": 0.0
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

@@ -19,7 +19,7 @@ public final class FfDrawers {
 
     /**
      * FF's storage roles. A drawer's role comes from its wires: fed only, it is a drain (its drain mode says product,
-     * byproduct or trash); drawn from only, a source; both, a buffer, which GTNH Planner has no drawer for.
+     * byproduct or trash); drawn from only, a source; both, a buffer ({@code docs/design/buffer-drawers.md}).
      */
     public enum Role {
         SOURCE,
@@ -83,7 +83,7 @@ public final class FfDrawers {
         return Role.PRODUCT;
     }
 
-    /** The GTNH Planner drawer for a role; null for a buffer or an unwired drawer, which have none. */
+    /** The GTNH Planner drawer for a role; null for an unwired drawer, which has none. */
     @Nullable
     public static Drawer.Kind kindOf(final Role role) {
         return switch (role) {
@@ -92,8 +92,28 @@ public final class FfDrawers {
             // A byproduct is a product with no rule (its target is none).
             case BYPRODUCT -> Drawer.Kind.PRODUCT;
             case TRASH -> Drawer.Kind.TRASH;
-            case BUFFER, IDLE -> null;
+            case BUFFER -> Drawer.Kind.BUFFER;
+            case IDLE -> null;
         };
+    }
+
+    /**
+     * Whether a buffer comes over as a buffer drawer: every wire on it runs to a card (none to another drawer) and none
+     * is a loose cell wire. The site's {@code keepsBuffer}; any other buffer is joined into the wires it stands for.
+     */
+    public static boolean keepsBuffer(final String storageId, final java.util.Collection<FfEdge> edges,
+        final Set<String> storageIds) {
+        for (final FfEdge e : edges) {
+            if (!e.source()
+                .equals(storageId)
+                && !e.target()
+                    .equals(storageId))
+                continue;
+            final String other = e.source()
+                .equals(storageId) ? e.target() : e.source();
+            if (other.equals(storageId) || storageIds.contains(other) || e.crossForm()) return false;
+        }
+        return true;
     }
 
     /** FF's storageTargetMode: "at-least", "at-most", "exact" or "ignore". */
@@ -112,12 +132,14 @@ public final class FfDrawers {
 
     /**
      * The rule a drawer carries over. FF enforces drawer rates only in Solve and Pool plans, and only on sources and
-     * products (FF's hasStorageTarget); a negative rate is FF's way of writing an input, so the size is what counts.
+     * products (FF's hasStorageTarget); a negative rate is FF's way of writing an input, so the size is what counts. A
+     * buffer's rule (a product's, on what passes through) is live only in a one-mode plan: no older board enforced it,
+     * so {@code solveRules} is the plan's {@code planMode} for a buffer.
      */
     public static Target target(final FfStorage s, final Role role, final boolean solveRules) {
-        if (!solveRules || (role != Role.SOURCE && role != Role.PRODUCT)) return Target.NONE;
+        if (!solveRules || (role != Role.SOURCE && role != Role.PRODUCT && role != Role.BUFFER)) return Target.NONE;
         final Double rate = s.targetPerSecond();
-        final String mode = targetMode(s, role);
+        final String mode = targetMode(s, role == Role.BUFFER ? Role.PRODUCT : role);
         if ("ignore".equals(mode) || rate == null || !Double.isFinite(rate)) return Target.NONE;
         if (rate == 0 && !"exact".equals(mode) && !"at-most".equals(mode)) return Target.NONE;
         final Drawer.Rule rule = switch (mode) {

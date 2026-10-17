@@ -17,6 +17,7 @@
 #      PLANNH_DEV_GUI_SCALE (2), PLANNH_DEV_SOUND (master volume, 0.0 = muted),
 #      PLANNH_GTNH=1 (load GregTech and the pack's recipes; slow first start),
 #      PLANNH_BEES=1 with it (Forestry and NEI Addons too, for bee cards).
+#      PLANNH_QUESTS=1 with it (the quest book, BetterQuesting, with the full pack's quests when its Prism instance is here).
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -85,6 +86,19 @@ configure_client() {
     [ -f "$mui" ] && sed -i 's/B:guiDebugMode=true/B:guiDebugMode=false/' "$mui"
 }
 
+# The full pack's quest database for the dev game's quest book, copied once from the RC-2 Prism instance (or from
+# PLANNH_QUESTS_FROM, a pack's config/betterquesting folder). Without it the book opens empty.
+copy_quests() {
+    local to="$ROOT/run/client/config/betterquesting"
+    [ -d "$to/DefaultQuests" ] && return 0
+    local from="${PLANNH_QUESTS_FROM:-${APPDATA:-}/PrismLauncher/instances/GTNH_2.9.0-RC-2_planner/.minecraft/config/betterquesting}"
+    if [ -d "$from/DefaultQuests" ]; then
+        mkdir -p "$to" && cp -r "$from/." "$to/" && echo "quests: copied the pack's quest book from $from"
+    else
+        echo "quests: no pack quest book at $from (set PLANNH_QUESTS_FROM); the book will be empty" >&2
+    fi
+}
+
 start() {
     local timeout="${1:-600}"
     is_up && die "a client is already answering on port $PORT (run: $0 stop)"
@@ -97,7 +111,11 @@ start() {
     local run_args=(downgradeMainClasses "$TASK" --console=plain)
     # The GTNH core mod pulls in GregTech and the pack's recipes: ~180 dependencies, a much slower start.
     # Its own world too: a world saved with GregTech asks about missing blocks when opened without it.
-    if [ "$GTNH" = 1 ] && [ "${PLANNH_BEES:-0}" = 1 ]; then
+    if [ "$GTNH" = 1 ] && [ "${PLANNH_QUESTS:-0}" = 1 ]; then
+        # The quest book beside GregTech, for quests on tasks; its world loads the pack's quests (copied in once).
+        copy_quests
+        run_args=(-PgtnhRecipes -PquestsDev "${run_args[@]}" "--mcJvmArgs=-Dgtnhplanner.dev.world=plannh-dev-quests")
+    elif [ "$GTNH" = 1 ] && [ "${PLANNH_BEES:-0}" = 1 ]; then
         # Forestry and NEI Addons beside GregTech, for bee cards; a world of its own, as GregTech's has.
         run_args=(-PgtnhRecipes -PbeesDev "${run_args[@]}" "--mcJvmArgs=-Dgtnhplanner.dev.world=plannh-dev-bees")
     elif [ "$GTNH" = 1 ]; then
@@ -105,6 +123,9 @@ start() {
     fi
     # The harness listens where this script calls it (another game, the full pack's, may hold the default port).
     [ "$PORT" != 25599 ] && run_args+=("--mcJvmArgs=-Dgtnhplanner.dev.port=$PORT")
+    # A local site from the first moment (the website's dev:local, or the mock): a signed-in game restarted with no
+    # URL would ask the real site before `call library?url=` could point it elsewhere.
+    [ -n "${PLANNH_LIBRARY_URL:-}" ] && run_args+=("--mcJvmArgs=-Dgtnhplanner.library.url=$PLANNH_LIBRARY_URL")
     # JetBrains Runtime + HotswapAgent + a JDWP port so `mc.sh swap` can push recompiled classes into the game.
     [ "$HOTSWAP" = 1 ] && run_args+=(--hotswap
         "--mcJvmArgs=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:$JDWP_PORT")

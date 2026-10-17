@@ -260,6 +260,41 @@ class LibraryRoundTripTest {
         assertSameBoard(g, first, open(posted.toString(), other).graph(), other);
     }
 
+    @Test
+    void aBufferAndItsRuleGoToTheLibraryAndComeBack() {
+        final FakeGame game = new FakeGame();
+        final Graph g = open(FakeGame.fixture("pa-cell-loop-plan.json"), game).graph();
+        final Drawer cells = bufferOf(g, "item:ic2:itemcellempty:0");
+        assertNotNull(cells);
+        cells.setTarget(Drawer.Rule.AT_MOST, 3);
+        final JsonObject posted = PlanExport.project(g, "Round trip", world(game, g));
+        assertTrue(
+            posted.get("planMode")
+                .getAsBoolean(),
+            "a posted plan is a one-mode plan");
+        final Graph back = open(posted.toString(), new FakeGame()).graph();
+        final Drawer again = bufferOf(back, "item:ic2:itemcellempty:0");
+        assertNotNull(again);
+        assertEquals(Drawer.Kind.BUFFER, again.getKind());
+        assertEquals(
+            2,
+            again.getLinks()
+                .size());
+        assertEquals(
+            2,
+            again.getTakers()
+                .size());
+        assertEquals(Drawer.Rule.AT_MOST, again.getRule(), "a one-mode plan's buffer rule is live");
+        assertEquals(3, again.getRate(), 1e-9);
+        assertEquals(g.edges.size(), back.edges.size());
+    }
+
+    private static Drawer bufferOf(final Graph g, final String key) {
+        for (final Drawer d : g.getDrawers()) if (d.getResourceKey()
+            .equals(key)) return d;
+        return null;
+    }
+
     // region The game's side of the export, over FakeGame's cards
 
     /**
@@ -267,7 +302,7 @@ class LibraryRoundTripTest {
      * card's recipe is on the website's map for its machine (machines/web/HandlerData, as WebCards builds it in game);
      * every card but a generator has NEI's id for its recipe; a crop card is the crop it makes.
      */
-    private static PlanExport.World world(final FakeGame game, final Graph g) {
+    static PlanExport.World world(final FakeGame game, final Graph g) {
         final Map<String, PlanExport.Res> byKey = new HashMap<>();
         for (final Node n : g.getNodes()) {
             final List<Port<?>> ports = new ArrayList<>(n.inputs);

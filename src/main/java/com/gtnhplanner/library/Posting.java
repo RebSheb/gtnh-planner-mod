@@ -223,6 +223,14 @@ public final class Posting {
         if (!plans.isEmpty()) PlanAPI.save();
     }
 
+    /**
+     * The game's side of the export: Factory Flow's ids for its items and fluids, its machines and recipes; each card's
+     * count from {@code machines}. A shared plan's mapping (cloud/map) writes through it too.
+     */
+    public static PlanExport.World world(final Function<UUID, Double> machines) {
+        return new GameWorld(machines);
+    }
+
     /** A post's face from something on the board, by its resource key; null when the site could not name it. */
     @Nullable
     public static CommunityApi.Resource face(@Nullable final String key) {

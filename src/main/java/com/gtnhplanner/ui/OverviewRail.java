@@ -169,6 +169,8 @@ final class OverviewRail extends ParentWidget<OverviewRail>
         filterField.setEnabled(open);
         width(currentWidth());
         if (getParent() != null) getParent().scheduleResize();
+        // What sits over the board (the toolbar, the notices) takes its place from the rail's width too.
+        if (getPanel() != null) getPanel().scheduleResize();
         scheduleResize();
     }
 
@@ -740,7 +742,8 @@ final class OverviewRail extends ParentWidget<OverviewRail>
         final Map<String, List<DrawerModel>> sourceDrawers = new HashMap<>(), productDrawers = new HashMap<>();
         for (final DrawerModel d : session.drawerModels()
             .values()) {
-            if (!d.kind.hasRule()) continue;
+            // A buffer is inside the plan: no input or output line carries it.
+            if (!d.kind.hasRule() || d.kind == Drawer.Kind.BUFFER) continue;
             (d.kind == Drawer.Kind.SOURCE ? sourceDrawers : productDrawers)
                 .computeIfAbsent(session.canonicalKey(d.drawer.getResourceKey()), k -> new ArrayList<>())
                 .add(d);
@@ -751,11 +754,13 @@ final class OverviewRail extends ParentWidget<OverviewRail>
             wired.add(portKey(e.targetNodeId, true, e.targetInputIndex));
             wired.add(portKey(e.sourceNodeId, false, e.sourceOutputIndex));
         }
-        for (final Drawer d : graph.getDrawers()) {
-            final boolean input = d.getKind()
-                .linksInputs();
-            for (final Drawer.Link l : d.getLinks()) held.add(portKey(l.nodeId(), input, l.portIndex()));
-        }
+        for (final Drawer d : graph.getDrawers()) for (final Drawer.Held h : d.held()) held.add(
+            portKey(
+                h.link()
+                    .nodeId(),
+                h.input(),
+                h.link()
+                    .portIndex()));
         final Map<String, List<PortPin>> inputPins = new HashMap<>(), outputPins = new HashMap<>();
         for (final com.gtnhplanner.data.flowchart.Node n : graph.getNodes()) {
             for (final boolean sources : new boolean[] { true, false }) {

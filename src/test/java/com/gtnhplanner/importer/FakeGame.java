@@ -31,7 +31,7 @@ import com.gtnhplanner.importer.RecipeIndex.GameStack;
  * nodes are built from plain data with one port per resource, as GTNH Planner builds them. Port names carry
  * {@code kind|id}, which {@link #describe} reads back.
  */
-final class FakeGame implements RecipeIndex, NodeMaker {
+public final class FakeGame implements RecipeIndex, NodeMaker {
 
     /** Recipe ids the game "does not have". */
     final Set<String> missing = new HashSet<>();
@@ -64,7 +64,7 @@ final class FakeGame implements RecipeIndex, NodeMaker {
         return node;
     }
 
-    FakeGame() {
+    public FakeGame() {
         GtnhFlowLoader.ensureDefaultMachineProfile();
     }
 
@@ -129,9 +129,9 @@ final class FakeGame implements RecipeIndex, NodeMaker {
     }
 
     /** The keys a GregTech card's numbers go under (GTProvider's), which the export reads. */
-    static final RecipeProperty<Integer> DURATION = RecipeProperty.<Integer>builder("duration_ticks", 0)
+    public static final RecipeProperty<Integer> DURATION = RecipeProperty.<Integer>builder("duration_ticks", 0)
         .build();
-    static final RecipeProperty<Long> EU_PER_TICK = RecipeProperty.<Long>builder("gt.eu_per_tick", 0L)
+    public static final RecipeProperty<Long> EU_PER_TICK = RecipeProperty.<Long>builder("gt.eu_per_tick", 0L)
         .build();
 
     @Override
@@ -196,7 +196,7 @@ final class FakeGame implements RecipeIndex, NodeMaker {
         return -1;
     }
 
-    static String fixture(final String name) {
+    public static String fixture(final String name) {
         try (InputStream in = FakeGame.class.getResourceAsStream("/factory-flow/" + name)) {
             Objects.requireNonNull(in, "missing factory-flow fixture: " + name);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);

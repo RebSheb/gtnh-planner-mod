@@ -1,5 +1,6 @@
 package com.gtnhplanner.data.flowchart.balancer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -122,22 +123,36 @@ public final class ModelData {
      * ({@link #externalPorts}): what crosses the boundary there, which is an output's surplus or an
      * input's import. Built for every drawer, rule or not, so the read-out covers byproducts too.
      *
-     * @param rule  the rule the solver applies ({@link Drawer#effectiveRule()}): ANY for byproducts
-     *              and trash whatever they store.
-     * @param links every linked port that made it into the row, wired or not, in link order.
+     * <p>
+     * A buffer has neither: its total is the flow on the edges {@link #buildBuffers} drew from each of its makers to
+     * each
+     * of its users ({@code flowEdges}), what passes through it.
+     *
+     * @param rule      the rule the solver applies ({@link Drawer#effectiveRule()}): ANY for byproducts
+     *                  and trash whatever they store.
+     * @param links     every linked port that made it into the row, wired or not, in link order (a buffer's makers,
+     *                  then its users).
+     * @param flowEdges a buffer's edges, whose flows are its total; empty for every other kind.
      */
     public record DrawerRow(UUID id, String label, Drawer.Kind kind, Drawer.Rule rule, double rate,
-        int[] extentMachines, double[] extentQty, int[] externalPorts, List<PortRef> links) {
+        int[] extentMachines, double[] extentQty, int[] externalPorts, List<PortRef> links, int[] flowEdges) {
 
         /** Whether anything at all can flow through the drawer in a model that binds externals or not. */
         public boolean hasTerms(final boolean bindsExternals) {
-            return extentMachines.length > 0 || bindsExternals && externalPorts.length > 0;
+            return extentMachines.length > 0 || flowEdges.length > 0 || bindsExternals && externalPorts.length > 0;
         }
     }
 
     public final List<Machine> machines = new ArrayList<>();
     public final Map<UUID, Integer> machineIndex = new HashMap<>();
     public final List<EdgeData> edges = new ArrayList<>();
+    /**
+     * How many of {@link #edges} are the plan's own wires; the rest, after them, are the buffers' edges
+     * ({@link #buildBuffers}), which the answer leaves out of its per-wire flows.
+     */
+    public int drawnEdges;
+    /** Per drawer of the input, in its order, the buffer edges it drew (empty for any other kind). */
+    private final List<int[]> bufferEdges = new ArrayList<>();
     public final List<ConnectedPort> connectedPorts = new ArrayList<>();
     public final Map<Long, Integer> portLookup = new HashMap<>();
     public final List<Gate> gates = new ArrayList<>();
@@ -183,7 +198,9 @@ public final class ModelData {
                 .edges()
                 .add(e);
         }
+        drawnEdges = edges.size();
 
+        buildBuffers(input);
         buildPools(input);
         buildDrawers(input);
         buildGates();
@@ -283,13 +300,106 @@ public final class ModelData {
     }
 
     /**
+     * A buffer is wiring: an edge from each of its makers (linked outputs) to each of its users (takers) of the same
+     * ingredient, after the drawn edges, in drawer, link and taker order. Their ports become connected ports like any
+     * wired port, so they share one network's gates; the buffer's rule is a row over these edges' flows. Links are
+     * checked as {@link #buildDrawers} checks them. Each edge's id comes from the buffer and its two ports, the same in
+     * every snapshot, so islands solved apart merge by it.
+     */
+    private void buildBuffers(final SolveInput in) {
+        for (final SolveInput.DrawerIn drawer : in.drawers()) {
+            if (drawer.kind() != Drawer.Kind.BUFFER) {
+                bufferEdges.add(new int[0]);
+                continue;
+            }
+            final List<Integer> made = new ArrayList<>();
+            for (final Drawer.Link from : drawer.links()) {
+                final Integer src = usable(from, false);
+                if (src == null) continue;
+                for (final Drawer.Link to : drawer.takers()) {
+                    final Integer dst = usable(to, true);
+                    if (dst == null) continue;
+                    if (machines.get(src)
+                        .port(from.portIndex(), false)
+                        .resource()
+                        != machines.get(dst)
+                            .port(to.portIndex(), true)
+                            .resource())
+                        continue;
+                    final int srcPort = internPort(src, from.portIndex(), false);
+                    final int dstPort = internPort(dst, to.portIndex(), true);
+                    final int e = edges.size();
+                    edges.add(new EdgeData(bufferEdgeId(drawer.id(), from, to), srcPort, dstPort));
+                    connectedPorts.get(srcPort)
+                        .edges()
+                        .add(e);
+                    connectedPorts.get(dstPort)
+                        .edges()
+                        .add(e);
+                    made.add(e);
+                }
+            }
+            bufferEdges.add(
+                made.stream()
+                    .mapToInt(Integer::intValue)
+                    .toArray());
+        }
+    }
+
+    /** The machine a buffer's link names, when the port is there and carries something; else null. */
+    @Nullable
+    private Integer usable(final Drawer.Link link, final boolean input) {
+        final Integer m = machineIndex.get(link.nodeId());
+        if (m == null) return null;
+        final Machine md = machines.get(m);
+        return md.hasPort(link.portIndex(), input) && md.qty(link.portIndex(), input) > 0 ? m : null;
+    }
+
+    /** A buffer edge's id, from the same text as the TypeScript port's {@code bufferEdgeId}. */
+    public static UUID bufferEdgeId(final UUID drawer, final Drawer.Link from, final Drawer.Link to) {
+        return UUID.nameUUIDFromBytes(
+            ("buffer:" + drawer
+                + ":"
+                + from.nodeId()
+                + "#"
+                + from.portIndex()
+                + ">"
+                + to.nodeId()
+                + "#"
+                + to.portIndex()).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
      * Every drawer as a {@link DrawerRow}. Links are checked the way edges are: a link to a node that
      * left the chart, to a port index past the node's ports, or to a port that carries nothing is
      * skipped, so a stale link costs that link and not the solve. Must run after the edges are
      * interned: whether a linked port is wired is whether it was interned.
      */
     private void buildDrawers(final SolveInput in) {
-        for (final SolveInput.DrawerIn drawer : in.drawers()) {
+        for (int at = 0; at < in.drawers()
+            .size(); at++) {
+            final SolveInput.DrawerIn drawer = in.drawers()
+                .get(at);
+            if (drawer.kind() == Drawer.Kind.BUFFER) {
+                final List<PortRef> refs = new ArrayList<>();
+                for (final Drawer.Link link : drawer.links())
+                    if (usable(link, false) != null) refs.add(new PortRef(link.nodeId(), link.portIndex(), false));
+                for (final Drawer.Link link : drawer.takers())
+                    if (usable(link, true) != null) refs.add(new PortRef(link.nodeId(), link.portIndex(), true));
+                drawers.add(
+                    new DrawerRow(
+                        drawer.id(),
+                        drawer.label(),
+                        drawer.kind(),
+                        drawer.rule(),
+                        drawer.rate(),
+                        new int[0],
+                        new double[0],
+                        new int[0],
+                        List.copyOf(refs),
+                        bufferEdges.get(at)));
+                continue;
+            }
             final boolean input = drawer.kind()
                 .linksInputs();
             final Map<Integer, Double> perMachine = new TreeMap<>();
@@ -330,7 +440,8 @@ public final class ModelData {
                     ports.stream()
                         .mapToInt(Integer::intValue)
                         .toArray(),
-                    List.copyOf(refs)));
+                    List.copyOf(refs),
+                    new int[0]));
         }
     }
 

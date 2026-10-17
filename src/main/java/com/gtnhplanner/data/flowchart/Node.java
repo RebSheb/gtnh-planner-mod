@@ -30,9 +30,17 @@ import lombok.Setter;
 
 public class Node {
 
-    public final UUID id;
+    /**
+     * Set only while the node is built, before any graph holds it: a reader that keeps a shared plan's ids
+     * (cloud/map) gives a card the importer made the id its plan knows it by.
+     */
+    public UUID id;
     public int x;
     public int y;
+
+    /** The board group it is in ({@link BoardGroup}), or null. Every recipe of a shared machine is in its card's. */
+    @Nullable
+    public UUID group;
 
     public final List<Port<?>> inputs = new ArrayList<>();
     public final List<Port<?>> outputs = new ArrayList<>();
@@ -45,9 +53,17 @@ public class Node {
     public final MachineConfig machineConfig;
     public final Map<RecipeProperty<?>, Object> properties = new HashMap<>();
 
-    @Getter
     @Setter
     private boolean machineCountFixed;
+
+    /**
+     * Whether the machine count is pinned. Never for a fluid tank: it has no count to show or clear (it keeps up with
+     * the plan), so a pin on it, from a website Build plan or an older save, would force cells through the plan with
+     * nothing shown as set.
+     */
+    public boolean isMachineCountFixed() {
+        return machineCountFixed && !com.gtnhplanner.power.FluidTank.ID.equals(powerSource);
+    }
 
     /**
      * Target production rates by output port index, in ingredient units per second. A target is
@@ -87,6 +103,12 @@ public class Node {
      * game, so the plan can point at its machines and they at it. Saved with the plan, never copied with the card.
      */
     public final List<int[]> worldLinks = new ArrayList<>();
+
+    /**
+     * A shared plan's placements in other worlds, by world ({@code cloud/map/game/GameCloud.world}): kept, never shown,
+     * so the plan carries them. {@link #worldLinks} are this world's. Never in a local save.
+     */
+    public final transient java.util.SortedMap<String, List<int[]>> elsewhere = new java.util.TreeMap<>();
 
     /** The recipe page this node was made from, for its first read (a page NEI cannot find again by id). */
     private transient RecipeHandlerRef madeFrom;

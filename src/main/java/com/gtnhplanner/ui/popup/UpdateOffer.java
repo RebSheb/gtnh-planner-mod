@@ -6,7 +6,6 @@ import com.cleanroommc.modularui.screen.viewport.ModularGuiContext;
 import com.cleanroommc.modularui.theme.WidgetThemeEntry;
 import com.cleanroommc.modularui.widget.Widget;
 import com.gtnhplanner.client.UpdateCheck;
-import com.gtnhplanner.ui.PlannerScale;
 import com.gtnhplanner.ui.PlannerSettings;
 import com.gtnhplanner.ui.card.CardPaint;
 import com.gtnhplanner.ui.sound.Sfx;
@@ -54,7 +53,7 @@ public final class UpdateOffer extends Widget<UpdateOffer> implements Interactab
             }
         };
         popup.child(new UpdateOffer(release).pos(0, 0));
-        Popup.open(board, popup, (PlannerScale.width() - W) / 2, (PlannerScale.height() - H) / 3);
+        Popup.openCentred(board, popup, 1 / 3f);
     }
 
     /** The dev harness: offer again this game. */

@@ -70,6 +70,9 @@ dependencies {
     // Multiblock pictures on recipe cards (ui/gt/MultiblockPictures): BlockRenderer6343's fake world builds the
     // structure. Optional at runtime; the pack's version. StructureLib comes with GregTech.
     compileOnly('com.github.GTNewHorizons:BlockRenderer6343:1.4.24:dev') { transitive = false }
+    // Quests on tasks (ui/quest/): the quest book. Optional at runtime, reached only when it is loaded; the pack's
+    // version (2.9.0-RC-2).
+    compileOnly('com.github.GTNewHorizons:BetterQuesting:3.8.89-GTNH:dev') { transitive = false }
 
     // runtimeOnlyNonPublishable('net.neoforged:render-nurse:0.0.14')
 
@@ -93,6 +96,10 @@ dependencies {
         if (project.hasProperty('beesDev')) {
             runtimeOnlyNonPublishable('com.github.GTNewHorizons:ForestryMC:4.11.39:dev')
             runtimeOnlyNonPublishable('com.github.GTNewHorizons:neiaddons:1.18.6:dev') { transitive = false }
+        }
+        // The quest book (`PLANNH_QUESTS=1 tools/dev/mc.sh start`), for quests on tasks.
+        if (project.hasProperty('questsDev')) {
+            runtimeOnlyNonPublishable('com.github.GTNewHorizons:BetterQuesting:3.8.89-GTNH:dev') { transitive = false }
         }
     }
 

@@ -316,6 +316,13 @@
    "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/biogas-e6c9141b3528.png",
    "dominantColor": "#a09249"
   },
+  "Biofuel": {
+   "kind": "fluid",
+   "id": "biofuel",
+   "displayName": "Biofuel",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/biofuel-c1632510ba15.png",
+   "dominantColor": "#23a5ae"
+  },
   "Biogas": {
    "kind": "fluid",
    "id": "ic2biogas",
@@ -350,6 +357,13 @@
    "displayName": "Blaze Rod",
    "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/blaze_rod-22b7aac2c61a.png",
    "dominantColor": "#953d01"
+  },
+  "Blazing Pyrotheum": {
+   "kind": "fluid",
+   "id": "pyrotheum",
+   "displayName": "Blazing Pyrotheum",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/blazing_pyrotheum-280fc7f3b887.png",
+   "dominantColor": "#ebc124"
   },
   "Block of Cactus Coke": {
    "kind": "item",
@@ -1233,6 +1247,13 @@
    "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/fiery_tears-f35ec5cb3e31.png",
    "dominantColor": "#5c2e2e"
   },
+  "Fire Water": {
+   "kind": "fluid",
+   "id": "fire_water",
+   "displayName": "Fire Water",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/fire_water-1c0bb7e01f52.png",
+   "dominantColor": "#4d2808"
+  },
   "Fish Oil": {
    "kind": "fluid",
    "id": "fishoil",
@@ -1589,6 +1610,13 @@
    "displayName": "Holmium Plasma",
    "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/holmium_plasma-da1cbc592bd7.png",
    "dominantColor": "#1408a2"
+  },
+  "Hootch": {
+   "kind": "fluid",
+   "id": "hootch",
+   "displayName": "Hootch",
+   "iconPath": "/datasets/gtnh/local-2.9.0-beta-2/textures/rendered/hootch-72650f7db4fd.png",
+   "dominantColor": "#8e8e8e"
   },
   "Hot Coolant": {
    "kind": "fluid",

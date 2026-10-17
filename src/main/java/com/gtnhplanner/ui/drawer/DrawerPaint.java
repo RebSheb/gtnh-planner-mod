@@ -30,7 +30,10 @@ public final class DrawerPaint {
     public static final int GRAB = BAR + 5;
 
     // The shapes, in board pixels: the tank's corners, the crate's, the shield's cut and how far the bin narrows.
-    private static final float TANK = 9, CRATE = 3, BIN = 6;
+    private static final float TANK = 9, CRATE = 3, BIN = 6, CUT = 7;
+
+    /** A buffer's colour: teal, the one drawer inside the plan (the website's {@code --cd-buffer}). */
+    public static final int BUFFER_INK = 0xFF2E9C8F;
 
     /** A rate at nothing, and what trash takes (always grey, as on the website). */
     public static final int IDLE_INK = 0xFFA8AFBB, TRASH_INK = 0xFFB9C0CD;
@@ -45,6 +48,7 @@ public final class DrawerPaint {
             case SOURCE -> Hyb.SOURCE_INK;
             case PRODUCT, BYPRODUCT -> Hyb.PRODUCT_INK;
             case TRASH -> 0xFF8A93A6;
+            case BUFFER -> BUFFER_INK;
         };
     }
 
@@ -70,12 +74,13 @@ public final class DrawerPaint {
             case SOURCE -> Hyb.SOURCE_INK;
             case PRODUCT, BYPRODUCT -> Hyb.PRODUCT_INK;
             case TRASH -> TRASH_INK;
+            case BUFFER -> BUFFER_INK;
         };
     }
 
-    /** A rate's sign: taken from a source, put into the rest. */
+    /** A rate's sign: taken from a source, put into a product or trash; none through a buffer. */
     public static String sign(final Drawer.Kind kind, final double rate) {
-        return rate <= 0 ? "" : kind == Drawer.Kind.SOURCE ? "-" : "+";
+        return rate <= 0 || kind == Drawer.Kind.BUFFER ? "" : kind == Drawer.Kind.SOURCE ? "-" : "+";
     }
 
     // endregion
@@ -160,7 +165,16 @@ public final class DrawerPaint {
             case PRODUCT, BYPRODUCT -> round(CRATE * scale + grow, yc, bh);
             // The sides lean in toward the base.
             case TRASH -> Math.round(BIN * scale * (bh / Math.max(1, bh - 2 * grow)) * yc / bh);
+            // A barrel: its four corners cut straight, open to both sides.
+            case BUFFER -> cut(CUT * scale + grow, yc, bh);
         };
+    }
+
+    /** A corner cut at 45 degrees, {@code r} deep: how far in it is at height {@code yc} of a box {@code bh} tall. */
+    private static int cut(final float r, final float yc, final float bh) {
+        if (r <= 0) return 0;
+        final float edge = Math.min(yc, bh - yc);
+        return edge >= r ? 0 : Math.round(r - edge);
     }
 
     /** A round corner of radius {@code r}: how far in it is at height {@code yc} of a box {@code bh} tall. */

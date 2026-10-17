@@ -1,0 +1,927 @@
+{
+  "about": [
+    "Shared test vectors for live plan edits, protocol version 1. The website (src/lib/live/ops.ts, client-state.ts) and the game's Java engine both run every vector here and must pass all of them. Change a rule and this file changes with it.",
+    "",
+    "THE MODEL. A plan is a JSON object. The arrays named in 'collections' (below) are collections of things, each a JSON object with a string 'id'. Every other top-level field of the plan is meta, including arrays not in the list. An absent collection, or one that is not an array (null, a string), equals an empty one.",
+    "",
+    "OPS. {o:'put',c,id,v} inserts or replaces the whole thing: a new id is appended to the end of the collection (the collection is created when absent); an existing id is replaced in place; the stored thing always has id = the op's id. {o:'patch',c,id,f,d?} sets every top-level field named in f to its value, THEN deletes every field named in d; it never sets or deletes 'id'; it does nothing when the thing (or its collection) is absent. A patch replaces a field's whole value (no deep merge). {o:'del',c,id} removes the thing; nothing when it is absent. {o:'meta',f,d?} sets then deletes top-level plan fields; names of collections in f or d are ignored. A batch is a list of ops applied in order; later writes win. null is an ordinary value; an absent field is absent (a delete is always a name in d, never null).",
+    "",
+    "EQUALITY ('jsonEqual'): numbers by value (1 equals 1.0 equals 1.00e0), objects by key set and values regardless of key order, arrays element by element in order, strings by exact UTF-16 code units, null only equals null, true/false by value. PLAN EQUALITY ('plansEqual'): every meta field jsonEqual (absent equals absent only), and for every collection the same things by id regardless of order, each pair jsonEqual; an absent collection equals an empty one. Ids are unique inside a collection.",
+    "",
+    "DIFF of before -> after: for each collection in 'collections' order, a put for each thing only in after and a patch for each thing in both with any top-level field different (both in after's order), and a del for each thing only in before (in before's order). A patch's f holds each field added or changed (the after value, whole), its d the removed field names sorted by UTF-16 code units (Java's String.compareTo), and d is left out when empty; f is always present, possibly {}. Then one meta op, built the same way over the plan's top-level non-collection fields, only when something changed. The batch is ordered: every put (collections in list order), then every patch, then every del, then the meta. Collection order alone is never a change.",
+    "",
+    "INVERSE of a batch against the plan it was applied to: each op is inverted against the plan as it stood just before that op, and the inverses are listed in reverse order. put of a new id -> del; put over an existing thing -> put of the old thing; del of an existing thing -> put of the old thing; del of an absent thing -> nothing; patch -> patch restoring the old values of exactly the fields named in its f and d (old value in f; names the thing lacked go in d, sorted), nothing when the thing is absent; meta likewise over the plan's fields (collection names skipped). An inverse that would restore nothing is left out.",
+    "",
+    "FILE FORMAT. 'vectors' is a list; each has 'kind', 'name' (unique), 'rule' (what it pins) and kind-specific fields:",
+    "  jsonEqual: a, b, expect (boolean): jsonEqual(a, b).",
+    "  plansEqual: a, b, expect (boolean): plansEqual(a, b).",
+    "  apply: plan, ops, expect (plan): plansEqual(applyOps(plan, ops), expect). The expected collections are also listed in the exact order the rules give, for engines that check order too. applyOps must not change its inputs.",
+    "  diff: before, after, expect (ops): diffPlans(before, after) equals expect op for op, in order, each op compared with jsonEqual. Also plansEqual(applyOps(before, expect), after) must hold.",
+    "  invert: plan, ops, expect (ops): invertOps(plan, ops) equals expect op for op, in order (jsonEqual). Also plansEqual(applyOps(applyOps(plan, ops), expect), plan) must hold (the round trip).",
+    "  rebase: confirmed, pending (a list of batches), remote (a batch), expect (plan): the view after the remote batch lands, that is applyOps over confirmed of remote, then each pending batch in order.",
+    "  client: start {seq, plan}, steps. Run one client engine from the start snapshot; after each step check every key present in that step's 'expect' (keys left out are not checked). Steps:",
+    "    {do:'local', cid, ops}: a local edit made of exactly these ops, given this cid. It joins the end of pending; the view gains it.",
+    "    {do:'receive', seq, cid, by, ops}: a server ops frame. Apply ops to confirmed; seq becomes the larger of seq and the frame's seq; when cid names a pending batch, that batch leaves pending ('own' true). 'gap' is true when the frame's seq is more than the previous seq + 1.",
+    "    {do:'refuse', cid}: an error frame naming that cid: the batch leaves pending, nothing else changes.",
+    "    {do:'snapshot', seq, plan}: a fresh snapshot after joining again: it becomes confirmed and seq; 'resend' lists the pending cids, oldest first, to send again (pending is kept until echoed).",
+    "    {do:'undo', cid}: undo this client's last own local edit not yet undone: its inverse (computed against the view it was made on) becomes a new local edit with this cid; 'sent' is its ops.",
+    "  Step expect keys: seq (number), pending (cids, oldest first), confirmed (plan, plansEqual), view (plan, plansEqual: confirmed with pending applied), own, gap (booleans), resend (cids), sent (ops, compared op for op with jsonEqual)."
+  ],
+  "version": 1,
+  "collections": [
+    "recipes",
+    "nodes",
+    "storages",
+    "edges",
+    "annotations",
+    "pockets",
+    "fuelProfiles",
+    "productionGroups",
+    "tasks",
+    "taskItems",
+    "taskComments"
+  ],
+  "vectors": [
+    {
+      "kind": "jsonEqual",
+      "name": "numbers-by-value",
+      "rule": "1 equals 1.0 and 1.00e0",
+      "a": { "n": 1, "m": [2, 3.5], "e": 100 },
+      "b": { "n": 1.0, "m": [2.00, 3.50], "e": 1.00e2 },
+      "expect": true
+    },
+    {
+      "kind": "jsonEqual",
+      "name": "key-order-ignored",
+      "rule": "objects compare by keys regardless of order, deeply",
+      "a": { "x": 1, "y": { "p": true, "q": null } },
+      "b": { "y": { "q": null, "p": true }, "x": 1 },
+      "expect": true
+    },
+    {
+      "kind": "jsonEqual",
+      "name": "array-order-matters",
+      "rule": "arrays compare element by element in order",
+      "a": [1, 2],
+      "b": [2, 1],
+      "expect": false
+    },
+    {
+      "kind": "jsonEqual",
+      "name": "null-is-not-absent",
+      "rule": "a field holding null differs from an absent field",
+      "a": { "x": 1, "y": null },
+      "b": { "x": 1 },
+      "expect": false
+    },
+    {
+      "kind": "jsonEqual",
+      "name": "no-type-coercion",
+      "rule": "a number never equals a string or a boolean",
+      "a": [1, "1", true],
+      "b": ["1", 1, 1],
+      "expect": false
+    },
+    {
+      "kind": "plansEqual",
+      "name": "absent-collection-is-empty",
+      "rule": "an absent collection equals an empty one; a non-array collection is empty too",
+      "a": { "name": "P", "nodes": [], "tasks": null },
+      "b": { "name": "P", "taskItems": [] },
+      "expect": true
+    },
+    {
+      "kind": "plansEqual",
+      "name": "collection-order-ignored",
+      "rule": "collections compare by id regardless of order",
+      "a": { "nodes": [{ "id": "n1", "x": 1 }, { "id": "n2", "x": 2 }] },
+      "b": { "nodes": [{ "id": "n2", "x": 2.0 }, { "id": "n1", "x": 1 }] },
+      "expect": true
+    },
+    {
+      "kind": "plansEqual",
+      "name": "meta-array-order-matters",
+      "rule": "an array that is not a collection is meta and compares in order",
+      "a": { "checklist": { "cards": ["a", "b"], "edges": [] } },
+      "b": { "checklist": { "cards": ["b", "a"], "edges": [] } },
+      "expect": false
+    },
+    {
+      "kind": "apply",
+      "name": "put-new-appends",
+      "rule": "a put of a new id appends it to the end of the collection",
+      "plan": { "name": "P", "nodes": [{ "id": "n1", "machineCount": 1 }, { "id": "n2", "machineCount": 2 }] },
+      "ops": [{ "o": "put", "c": "nodes", "id": "n3", "v": { "id": "n3", "machineCount": 4 } }],
+      "expect": {
+        "name": "P",
+        "nodes": [{ "id": "n1", "machineCount": 1 }, { "id": "n2", "machineCount": 2 }, { "id": "n3", "machineCount": 4 }]
+      }
+    },
+    {
+      "kind": "apply",
+      "name": "put-replaces-whole-in-place",
+      "rule": "a put of an existing id replaces the whole thing in its place: fields missing from v are gone",
+      "plan": {
+        "nodes": [
+          { "id": "n1", "machineCount": 1, "colorTag": "red", "position": { "x": 0, "y": 0 } },
+          { "id": "n2", "machineCount": 2 }
+        ]
+      },
+      "ops": [{ "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "machineCount": 5 } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 5 }, { "id": "n2", "machineCount": 2 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "put-creates-absent-collection",
+      "rule": "a put into an absent collection creates it",
+      "plan": { "name": "P", "nodes": [] },
+      "ops": [
+        {
+          "o": "put",
+          "c": "tasks",
+          "id": "t1",
+          "v": { "id": "t1", "title": "Build the EBF", "status": "todo", "order": "a0" }
+        }
+      ],
+      "expect": {
+        "name": "P",
+        "nodes": [],
+        "tasks": [{ "id": "t1", "title": "Build the EBF", "status": "todo", "order": "a0" }]
+      }
+    },
+    {
+      "kind": "apply",
+      "name": "put-into-non-array-collection",
+      "rule": "a collection holding a non-array counts as empty; a put replaces it with a new array",
+      "plan": { "tasks": null },
+      "ops": [{ "o": "put", "c": "tasks", "id": "t1", "v": { "id": "t1", "title": "A", "status": "todo", "order": "a0" } }],
+      "expect": { "tasks": [{ "id": "t1", "title": "A", "status": "todo", "order": "a0" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "every-collection",
+      "rule": "all eleven collections take puts; a list of id-things outside the list is meta and untouched",
+      "plan": { "name": "P", "futureList": [{ "id": "x" }] },
+      "ops": [
+        { "o": "put", "c": "recipes", "id": "r", "v": { "id": "r", "name": "R" } },
+        { "o": "put", "c": "nodes", "id": "n", "v": { "id": "n", "recipeId": "r" } },
+        { "o": "put", "c": "storages", "id": "s", "v": { "id": "s", "kind": "item" } },
+        { "o": "put", "c": "edges", "id": "e", "v": { "id": "e", "source": "n", "target": "s" } },
+        { "o": "put", "c": "annotations", "id": "a", "v": { "id": "a", "kind": "text" } },
+        { "o": "put", "c": "pockets", "id": "p", "v": { "id": "p", "name": "Board" } },
+        { "o": "put", "c": "fuelProfiles", "id": "f", "v": { "id": "f", "name": "Fuel" } },
+        { "o": "put", "c": "productionGroups", "id": "g", "v": { "id": "g", "name": "Group" } },
+        { "o": "put", "c": "tasks", "id": "t", "v": { "id": "t", "title": "T", "status": "doing", "order": "a0" } },
+        { "o": "put", "c": "taskItems", "id": "ti", "v": { "id": "ti", "taskId": "t", "text": "Line", "done": false, "order": "a0" } },
+        { "o": "put", "c": "taskComments", "id": "tc", "v": { "id": "tc", "taskId": "t", "by": "u1", "byName": "ann", "at": "2026-10-14T10:00:00.000Z", "text": "Hi" } }
+      ],
+      "expect": {
+        "name": "P",
+        "futureList": [{ "id": "x" }],
+        "recipes": [{ "id": "r", "name": "R" }],
+        "nodes": [{ "id": "n", "recipeId": "r" }],
+        "storages": [{ "id": "s", "kind": "item" }],
+        "edges": [{ "id": "e", "source": "n", "target": "s" }],
+        "annotations": [{ "id": "a", "kind": "text" }],
+        "pockets": [{ "id": "p", "name": "Board" }],
+        "fuelProfiles": [{ "id": "f", "name": "Fuel" }],
+        "productionGroups": [{ "id": "g", "name": "Group" }],
+        "tasks": [{ "id": "t", "title": "T", "status": "doing", "order": "a0" }],
+        "taskItems": [{ "id": "ti", "taskId": "t", "text": "Line", "done": false, "order": "a0" }],
+        "taskComments": [{ "id": "tc", "taskId": "t", "by": "u1", "byName": "ann", "at": "2026-10-14T10:00:00.000Z", "text": "Hi" }]
+      }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-sets-fields",
+      "rule": "a patch sets the fields in f and keeps the others",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1, "overclockTier": "LV", "enabled": true }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3, "colorTag": "red" } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 3, "overclockTier": "LV", "enabled": true, "colorTag": "red" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-deletes-with-d",
+      "rule": "names in d are deleted; a name the thing lacks is fine",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1, "solvePin": 4, "colorTag": "red" }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": {}, "d": ["solvePin", "notThere"] }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "red" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-f-then-d",
+      "rule": "f is applied before d, so a name in both ends deleted",
+      "plan": { "nodes": [{ "id": "n1", "a": 1, "b": 2 }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "a": 5, "b": 6 }, "d": ["a"] }],
+      "expect": { "nodes": [{ "id": "n1", "b": 6 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-missing-thing-ignored",
+      "rule": "a patch on a thing that is gone does nothing",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n9", "f": { "machineCount": 3 } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 1 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-missing-collection-ignored",
+      "rule": "a patch into an absent collection does nothing",
+      "plan": { "name": "P" },
+      "ops": [{ "o": "patch", "c": "tasks", "id": "t1", "f": { "status": "done" } }],
+      "expect": { "name": "P" }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-never-touches-id",
+      "rule": "'id' in a patch's f or d is ignored",
+      "plan": { "edges": [{ "id": "e1", "source": "a", "target": "b" }] },
+      "ops": [{ "o": "patch", "c": "edges", "id": "e1", "f": { "id": "e9", "label": "x" }, "d": ["id"] }],
+      "expect": { "edges": [{ "id": "e1", "source": "a", "target": "b", "label": "x" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-replaces-nested-value",
+      "rule": "a patch replaces a field's whole value: no deep merge",
+      "plan": { "nodes": [{ "id": "n1", "position": { "x": 10, "y": 20 } }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "position": { "x": 15 } } }],
+      "expect": { "nodes": [{ "id": "n1", "position": { "x": 15 } }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-null-is-a-value",
+      "rule": "null in f is stored as null, not as a delete",
+      "plan": { "nodes": [{ "id": "n1", "colorTag": "red" }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "colorTag": null } }],
+      "expect": { "nodes": [{ "id": "n1", "colorTag": null }] }
+    },
+    {
+      "kind": "apply",
+      "name": "patch-numbers-by-value",
+      "rule": "numbers written as 2.50 or 1.0 are the numbers 2.5 and 1",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1.5, "position": { "x": 0.0, "y": 10 } }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2.50 } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 2.5, "position": { "x": 0, "y": 10.0 } }] }
+    },
+    {
+      "kind": "apply",
+      "name": "del-removes",
+      "rule": "a del removes the thing and keeps the others in order",
+      "plan": { "edges": [{ "id": "e1" }, { "id": "e2" }, { "id": "e3" }] },
+      "ops": [{ "o": "del", "c": "edges", "id": "e2" }],
+      "expect": { "edges": [{ "id": "e1" }, { "id": "e3" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "del-missing-is-noop",
+      "rule": "a del of a thing already gone does nothing",
+      "plan": { "edges": [{ "id": "e1" }] },
+      "ops": [{ "o": "del", "c": "edges", "id": "e7" }, { "o": "del", "c": "tasks", "id": "t1" }],
+      "expect": { "edges": [{ "id": "e1" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "meta-sets-and-deletes",
+      "rule": "meta sets f then deletes d on the plan's top-level fields",
+      "plan": { "name": "Old", "notes": "remove me", "solveMode": false, "nodes": [] },
+      "ops": [{ "o": "meta", "f": { "name": "New", "solveMode": true, "primaryView": "tasks" }, "d": ["notes"] }],
+      "expect": { "name": "New", "solveMode": true, "primaryView": "tasks", "nodes": [] }
+    },
+    {
+      "kind": "apply",
+      "name": "meta-ignores-collections",
+      "rule": "collection names in a meta's f or d are ignored",
+      "plan": { "name": "P", "nodes": [{ "id": "n1" }], "edges": [{ "id": "e1" }] },
+      "ops": [{ "o": "meta", "f": { "nodes": [], "name": "Q" }, "d": ["edges"] }],
+      "expect": { "name": "Q", "nodes": [{ "id": "n1" }], "edges": [{ "id": "e1" }] }
+    },
+    {
+      "kind": "apply",
+      "name": "meta-replaces-nested-value",
+      "rule": "meta replaces a field's whole value, gtnhplanner included",
+      "plan": { "gtnhplanner": { "v": 1, "balance": "auto", "pins": ["a"] } },
+      "ops": [{ "o": "meta", "f": { "gtnhplanner": { "v": 1, "pins": [] } } }],
+      "expect": { "gtnhplanner": { "v": 1, "pins": [] } }
+    },
+    {
+      "kind": "apply",
+      "name": "batch-put-then-patch",
+      "rule": "ops apply in order: a patch after a put lands on the new thing",
+      "plan": { "nodes": [] },
+      "ops": [
+        { "o": "put", "c": "nodes", "id": "n3", "v": { "id": "n3", "machineCount": 1 } },
+        { "o": "patch", "c": "nodes", "id": "n3", "f": { "machineCount": 6 } }
+      ],
+      "expect": { "nodes": [{ "id": "n3", "machineCount": 6 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "batch-del-then-put-appends",
+      "rule": "a put after a del of the same id is a new thing, appended at the end",
+      "plan": { "nodes": [{ "id": "n1", "a": 1 }, { "id": "n2", "a": 2 }] },
+      "ops": [
+        { "o": "del", "c": "nodes", "id": "n1" },
+        { "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "a": 9 } }
+      ],
+      "expect": { "nodes": [{ "id": "n2", "a": 2 }, { "id": "n1", "a": 9 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "batch-patch-after-del-ignored",
+      "rule": "a patch after a del of the same thing does nothing",
+      "plan": { "nodes": [{ "id": "n1", "a": 1 }, { "id": "n2", "a": 2 }] },
+      "ops": [
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "a": 3 } },
+        { "o": "del", "c": "nodes", "id": "n1" },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "a": 4 } }
+      ],
+      "expect": { "nodes": [{ "id": "n2", "a": 2 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "batch-later-write-wins",
+      "rule": "two writes to one field in a batch: the later wins",
+      "plan": { "name": "A", "nodes": [{ "id": "n1", "machineCount": 1 }] },
+      "ops": [
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } },
+        { "o": "meta", "f": { "name": "B" } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 7 } },
+        { "o": "meta", "f": { "name": "C" } }
+      ],
+      "expect": { "name": "C", "nodes": [{ "id": "n1", "machineCount": 7 }] }
+    },
+    {
+      "kind": "apply",
+      "name": "empty-batch",
+      "rule": "an empty batch changes nothing",
+      "plan": { "name": "P", "nodes": [{ "id": "n1" }] },
+      "ops": [],
+      "expect": { "name": "P", "nodes": [{ "id": "n1" }] }
+    },
+    {
+      "kind": "diff",
+      "name": "diff-identical",
+      "rule": "equal plans give an empty batch, even with keys reordered and numbers respelled",
+      "before": { "name": "P", "nodes": [{ "id": "n1", "machineCount": 1, "position": { "x": 0, "y": 20 } }] },
+      "after": { "nodes": [{ "position": { "y": 20.0, "x": 0.0 }, "machineCount": 1.0, "id": "n1" }], "name": "P" },
+      "expect": []
+    },
+    {
+      "kind": "diff",
+      "name": "diff-reorder-only",
+      "rule": "moving things around inside a collection is no change",
+      "before": { "nodes": [{ "id": "n1" }, { "id": "n2" }] },
+      "after": { "nodes": [{ "id": "n2" }, { "id": "n1" }] },
+      "expect": []
+    },
+    {
+      "kind": "diff",
+      "name": "diff-absent-vs-empty-collection",
+      "rule": "an absent collection and an empty one are the same; no meta op for collections",
+      "before": { "name": "P" },
+      "after": { "name": "P", "tasks": [], "taskItems": [] },
+      "expect": []
+    },
+    {
+      "kind": "diff",
+      "name": "diff-added-thing",
+      "rule": "a thing only in after is a put of the whole thing",
+      "before": { "nodes": [{ "id": "n1" }] },
+      "after": { "nodes": [{ "id": "n1" }, { "id": "n2", "machineCount": 2, "position": { "x": 5, "y": 5 } }] },
+      "expect": [{ "o": "put", "c": "nodes", "id": "n2", "v": { "id": "n2", "machineCount": 2, "position": { "x": 5, "y": 5 } } }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-removed-thing",
+      "rule": "a thing only in before is a del",
+      "before": { "edges": [{ "id": "e1" }, { "id": "e2" }] },
+      "after": { "edges": [{ "id": "e2" }] },
+      "expect": [{ "o": "del", "c": "edges", "id": "e1" }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-changed-field",
+      "rule": "a thing in both with a field changed is a patch of only that field, its whole new value",
+      "before": { "nodes": [{ "id": "n1", "machineCount": 1, "position": { "x": 0, "y": 0 }, "enabled": true }] },
+      "after": { "nodes": [{ "id": "n1", "machineCount": 1, "position": { "x": 40, "y": 0 }, "enabled": true }] },
+      "expect": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "position": { "x": 40, "y": 0 } } }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-removed-fields-sorted",
+      "rule": "removed fields go in d, sorted by UTF-16 code units (capitals first); f stays, empty",
+      "before": { "nodes": [{ "id": "n1", "zeta": 1, "alpha": 2, "Beta": 3, "keep": 4 }] },
+      "after": { "nodes": [{ "id": "n1", "keep": 4 }] },
+      "expect": [{ "o": "patch", "c": "nodes", "id": "n1", "f": {}, "d": ["Beta", "alpha", "zeta"] }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-added-and-removed-fields",
+      "rule": "one patch carries both the set fields and the deleted ones",
+      "before": { "storages": [{ "id": "s1", "targetPerSecond": 5, "targetMode": "exact" }] },
+      "after": { "storages": [{ "id": "s1", "drainMode": "byproduct", "targetMode": "at-least" }] },
+      "expect": [
+        { "o": "patch", "c": "storages", "id": "s1", "f": { "drainMode": "byproduct", "targetMode": "at-least" }, "d": ["targetPerSecond"] }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-null-vs-absent",
+      "rule": "a field going from absent to null is set to null; from a value to absent is a delete",
+      "before": { "description": "x", "nodes": [{ "id": "n1", "colorTag": "red" }] },
+      "after": { "nodes": [{ "id": "n1", "colorTag": "red", "solvePin": null }], "icon": null },
+      "expect": [
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "solvePin": null } },
+        { "o": "meta", "f": { "icon": null }, "d": ["description"] }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-array-field-order",
+      "rule": "an array inside a thing compares in order: reordered waypoints are a change",
+      "before": { "edges": [{ "id": "e1", "waypoints": [{ "x": 0, "y": 0 }, { "x": 10, "y": 0 }] }] },
+      "after": { "edges": [{ "id": "e1", "waypoints": [{ "x": 10, "y": 0 }, { "x": 0, "y": 0 }] }] },
+      "expect": [{ "o": "patch", "c": "edges", "id": "e1", "f": { "waypoints": [{ "x": 10, "y": 0 }, { "x": 0, "y": 0 }] } }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-meta",
+      "rule": "changed top-level fields make one meta op: set in f, removed in d (sorted)",
+      "before": { "name": "Old", "notes": "n", "view": { "rateUnit": "second" }, "solveMode": true },
+      "after": { "name": "New", "view": { "rateUnit": "second" }, "solveMode": true, "primaryView": "tasks" },
+      "expect": [{ "o": "meta", "f": { "name": "New", "primaryView": "tasks" }, "d": ["notes"] }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-batch-order",
+      "rule": "every put (collections in list order), then every patch, then every del, then the meta",
+      "before": {
+        "name": "A",
+        "recipes": [{ "id": "r1" }],
+        "nodes": [{ "id": "n1", "machineCount": 1 }],
+        "storages": [{ "id": "s1" }],
+        "edges": [{ "id": "e1", "label": "a" }],
+        "tasks": [{ "id": "t1", "title": "Old", "status": "todo", "order": "a0" }]
+      },
+      "after": {
+        "name": "B",
+        "recipes": [{ "id": "r1" }, { "id": "r2" }],
+        "nodes": [{ "id": "n1", "machineCount": 2 }],
+        "storages": [],
+        "edges": [{ "id": "e1", "label": "b" }, { "id": "e2" }],
+        "tasks": []
+      },
+      "expect": [
+        { "o": "put", "c": "recipes", "id": "r2", "v": { "id": "r2" } },
+        { "o": "put", "c": "edges", "id": "e2", "v": { "id": "e2" } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } },
+        { "o": "patch", "c": "edges", "id": "e1", "f": { "label": "b" } },
+        { "o": "del", "c": "storages", "id": "s1" },
+        { "o": "del", "c": "tasks", "id": "t1" },
+        { "o": "meta", "f": { "name": "B" } }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-thing-order",
+      "rule": "puts and patches follow after's order; dels follow before's order",
+      "before": { "nodes": [{ "id": "a", "v": 1 }, { "id": "x" }, { "id": "b", "v": 1 }, { "id": "y" }] },
+      "after": { "nodes": [{ "id": "q" }, { "id": "b", "v": 2 }, { "id": "p" }, { "id": "a", "v": 2 }] },
+      "expect": [
+        { "o": "put", "c": "nodes", "id": "q", "v": { "id": "q" } },
+        { "o": "put", "c": "nodes", "id": "p", "v": { "id": "p" } },
+        { "o": "patch", "c": "nodes", "id": "b", "f": { "v": 2 } },
+        { "o": "patch", "c": "nodes", "id": "a", "f": { "v": 2 } },
+        { "o": "del", "c": "nodes", "id": "x" },
+        { "o": "del", "c": "nodes", "id": "y" }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-collection-dropped",
+      "rule": "a collection that disappears is a del of each thing in it, never a meta",
+      "before": { "name": "P", "annotations": [{ "id": "a1" }, { "id": "a2" }] },
+      "after": { "name": "P" },
+      "expect": [
+        { "o": "del", "c": "annotations", "id": "a1" },
+        { "o": "del", "c": "annotations", "id": "a2" }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-id-change",
+      "rule": "a thing whose id changed is a put of the new id and a del of the old one",
+      "before": { "pockets": [{ "id": "old", "name": "Board" }] },
+      "after": { "pockets": [{ "id": "new", "name": "Board" }] },
+      "expect": [
+        { "o": "put", "c": "pockets", "id": "new", "v": { "id": "new", "name": "Board" } },
+        { "o": "del", "c": "pockets", "id": "old" }
+      ]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-meta-array",
+      "rule": "an array of id-things outside the collection list is meta, sent whole",
+      "before": { "futureList": [{ "id": "x", "a": 1 }] },
+      "after": { "futureList": [{ "id": "x", "a": 2 }] },
+      "expect": [{ "o": "meta", "f": { "futureList": [{ "id": "x", "a": 2 }] } }]
+    },
+    {
+      "kind": "diff",
+      "name": "diff-task-moves",
+      "rule": "task board edits are ordinary patches and puts",
+      "before": {
+        "tasks": [{ "id": "t1", "title": "Smelt", "status": "doing", "order": "a0" }],
+        "taskItems": [{ "id": "i1", "taskId": "t1", "text": "Coils", "done": false, "order": "a0" }]
+      },
+      "after": {
+        "tasks": [{ "id": "t1", "title": "Smelt", "status": "done", "order": "a1", "doneAt": "2026-10-14T12:00:00.000Z" }],
+        "taskItems": [{ "id": "i1", "taskId": "t1", "text": "Coils", "done": true, "order": "a0" }],
+        "taskComments": [{ "id": "c1", "taskId": "t1", "by": "u1", "byName": "ann", "at": "2026-10-14T12:00:01.000Z", "text": "Done" }]
+      },
+      "expect": [
+        { "o": "put", "c": "taskComments", "id": "c1", "v": { "id": "c1", "taskId": "t1", "by": "u1", "byName": "ann", "at": "2026-10-14T12:00:01.000Z", "text": "Done" } },
+        { "o": "patch", "c": "tasks", "id": "t1", "f": { "status": "done", "order": "a1", "doneAt": "2026-10-14T12:00:00.000Z" } },
+        { "o": "patch", "c": "taskItems", "id": "i1", "f": { "done": true } }
+      ]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-put-new",
+      "rule": "a put of a new thing inverts to a del",
+      "plan": { "nodes": [{ "id": "n1" }] },
+      "ops": [{ "o": "put", "c": "nodes", "id": "n2", "v": { "id": "n2", "machineCount": 1 } }],
+      "expect": [{ "o": "del", "c": "nodes", "id": "n2" }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-put-existing",
+      "rule": "a put over an existing thing inverts to a put of the old thing",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "red" }] },
+      "ops": [{ "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "machineCount": 3 } }],
+      "expect": [{ "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "machineCount": 1, "colorTag": "red" } }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-del",
+      "rule": "a del inverts to a put of the old thing",
+      "plan": { "edges": [{ "id": "e1", "source": "a", "target": "b" }, { "id": "e2" }] },
+      "ops": [{ "o": "del", "c": "edges", "id": "e1" }],
+      "expect": [{ "o": "put", "c": "edges", "id": "e1", "v": { "id": "e1", "source": "a", "target": "b" } }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-del-missing",
+      "rule": "a del of a thing already gone inverts to nothing",
+      "plan": { "edges": [{ "id": "e1" }] },
+      "ops": [{ "o": "del", "c": "edges", "id": "e9" }],
+      "expect": []
+    },
+    {
+      "kind": "invert",
+      "name": "invert-patch",
+      "rule": "a patch inverts to a patch restoring exactly its fields: old values in f, fields that were absent in d",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1, "solvePin": 4, "enabled": true }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2, "colorTag": "blue", "zz": 0 }, "d": ["solvePin"] }],
+      "expect": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 1, "solvePin": 4 }, "d": ["colorTag", "zz"] }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-patch-missing",
+      "rule": "a patch on a thing that is gone inverts to nothing",
+      "plan": { "nodes": [] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }],
+      "expect": []
+    },
+    {
+      "kind": "invert",
+      "name": "invert-patch-same-name-twice",
+      "rule": "a name in both f and d is restored once; 'id' is never restored",
+      "plan": { "nodes": [{ "id": "n1", "a": 1 }] },
+      "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "a": 2, "id": "zz" }, "d": ["a", "id"] }],
+      "expect": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "a": 1 } }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-meta",
+      "rule": "meta inverts to meta restoring its fields; collection names are skipped",
+      "plan": { "name": "Old", "notes": "keep", "nodes": [{ "id": "n1" }] },
+      "ops": [{ "o": "meta", "f": { "name": "New", "solveMode": true, "nodes": [] }, "d": ["notes"] }],
+      "expect": [{ "o": "meta", "f": { "name": "Old", "notes": "keep" }, "d": ["solveMode"] }]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-sequential",
+      "rule": "each op inverts against the plan just before it, and the inverses run in reverse order",
+      "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] },
+      "ops": [
+        { "o": "put", "c": "nodes", "id": "n3", "v": { "id": "n3", "machineCount": 1 } },
+        { "o": "patch", "c": "nodes", "id": "n3", "f": { "machineCount": 9 } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3 } }
+      ],
+      "expect": [
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 1 } },
+        { "o": "patch", "c": "nodes", "id": "n3", "f": { "machineCount": 1 } },
+        { "o": "del", "c": "nodes", "id": "n3" }
+      ]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-mixed-batch",
+      "rule": "a diff-shaped batch inverts in reverse: meta first, then the dels' puts, patches, and the puts' dels last",
+      "plan": {
+        "name": "A",
+        "nodes": [{ "id": "n1", "machineCount": 1 }],
+        "edges": [{ "id": "e1", "source": "n1", "target": "s1" }],
+        "storages": [{ "id": "s1", "kind": "item" }]
+      },
+      "ops": [
+        { "o": "put", "c": "nodes", "id": "n2", "v": { "id": "n2", "machineCount": 1 } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 4 } },
+        { "o": "del", "c": "edges", "id": "e1" },
+        { "o": "del", "c": "storages", "id": "s1" },
+        { "o": "meta", "f": { "name": "B" } }
+      ],
+      "expect": [
+        { "o": "meta", "f": { "name": "A" } },
+        { "o": "put", "c": "storages", "id": "s1", "v": { "id": "s1", "kind": "item" } },
+        { "o": "put", "c": "edges", "id": "e1", "v": { "id": "e1", "source": "n1", "target": "s1" } },
+        { "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 1 } },
+        { "o": "del", "c": "nodes", "id": "n2" }
+      ]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-del-then-put",
+      "rule": "a del followed by a put of the same id round-trips to the old thing",
+      "plan": { "nodes": [{ "id": "n1", "a": 1 }] },
+      "ops": [
+        { "o": "del", "c": "nodes", "id": "n1" },
+        { "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "a": 2 } }
+      ],
+      "expect": [
+        { "o": "del", "c": "nodes", "id": "n1" },
+        { "o": "put", "c": "nodes", "id": "n1", "v": { "id": "n1", "a": 1 } }
+      ]
+    },
+    {
+      "kind": "invert",
+      "name": "invert-empty",
+      "rule": "an empty batch inverts to an empty batch",
+      "plan": { "name": "P" },
+      "ops": [],
+      "expect": []
+    },
+    {
+      "kind": "rebase",
+      "name": "rebase-other-thing",
+      "rule": "a remote edit to another thing shows beside the pending edit",
+      "confirmed": { "nodes": [{ "id": "n1", "machineCount": 1 }, { "id": "n2", "machineCount": 1 }] },
+      "pending": [[{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }]],
+      "remote": [{ "o": "patch", "c": "nodes", "id": "n2", "f": { "machineCount": 5 } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 2 }, { "id": "n2", "machineCount": 5 }] }
+    },
+    {
+      "kind": "rebase",
+      "name": "rebase-same-field",
+      "rule": "pending edits go on top: the own value shows until the server orders it",
+      "confirmed": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "red" }] },
+      "pending": [[{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }]],
+      "remote": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 9, "colorTag": "blue" } }],
+      "expect": { "nodes": [{ "id": "n1", "machineCount": 2, "colorTag": "blue" }] }
+    },
+    {
+      "kind": "rebase",
+      "name": "rebase-remote-delete",
+      "rule": "a thing deleted remotely stays gone; the pending patch on it does nothing",
+      "confirmed": { "nodes": [{ "id": "n1", "machineCount": 1 }], "edges": [{ "id": "e1" }] },
+      "pending": [[{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }, { "o": "put", "c": "edges", "id": "e2", "v": { "id": "e2" } }]],
+      "remote": [{ "o": "del", "c": "nodes", "id": "n1" }],
+      "expect": { "nodes": [], "edges": [{ "id": "e1" }, { "id": "e2" }] }
+    },
+    {
+      "kind": "rebase",
+      "name": "rebase-two-pending",
+      "rule": "several pending batches re-apply in order over the remote batch",
+      "confirmed": { "name": "A", "tasks": [{ "id": "t1", "title": "T", "status": "todo", "order": "a0" }] },
+      "pending": [
+        [{ "o": "patch", "c": "tasks", "id": "t1", "f": { "status": "doing" } }],
+        [{ "o": "patch", "c": "tasks", "id": "t1", "f": { "status": "done" } }, { "o": "meta", "f": { "name": "Mine" } }]
+      ],
+      "remote": [{ "o": "meta", "f": { "name": "Theirs", "notes": "n" } }, { "o": "patch", "c": "tasks", "id": "t1", "f": { "title": "Renamed" } }],
+      "expect": { "name": "Mine", "notes": "n", "tasks": [{ "id": "t1", "title": "Renamed", "status": "done", "order": "a0" }] }
+    },
+    {
+      "kind": "client",
+      "name": "client-echo-acks",
+      "rule": "a local edit waits in pending until its own echo, which confirms it",
+      "start": { "seq": 4, "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] } },
+      "steps": [
+        {
+          "do": "local",
+          "cid": "a",
+          "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3 } }],
+          "expect": {
+            "seq": 4,
+            "pending": ["a"],
+            "confirmed": { "nodes": [{ "id": "n1", "machineCount": 1 }] },
+            "view": { "nodes": [{ "id": "n1", "machineCount": 3 }] }
+          }
+        },
+        {
+          "do": "receive",
+          "seq": 5,
+          "cid": "a",
+          "by": "me",
+          "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3 } }],
+          "expect": {
+            "own": true,
+            "gap": false,
+            "seq": 5,
+            "pending": [],
+            "confirmed": { "nodes": [{ "id": "n1", "machineCount": 3 }] },
+            "view": { "nodes": [{ "id": "n1", "machineCount": 3 }] }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-remote-while-pending",
+      "rule": "someone else's batch lands under the pending one; the echo then confirms the server's order",
+      "start": { "seq": 4, "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3 } }] },
+        {
+          "do": "receive",
+          "seq": 5,
+          "cid": "x",
+          "by": "them",
+          "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 9, "colorTag": "red" } }],
+          "expect": {
+            "own": false,
+            "gap": false,
+            "seq": 5,
+            "pending": ["a"],
+            "confirmed": { "nodes": [{ "id": "n1", "machineCount": 9, "colorTag": "red" }] },
+            "view": { "nodes": [{ "id": "n1", "machineCount": 3, "colorTag": "red" }] }
+          }
+        },
+        {
+          "do": "receive",
+          "seq": 6,
+          "cid": "a",
+          "by": "me",
+          "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 3 } }],
+          "expect": {
+            "own": true,
+            "seq": 6,
+            "pending": [],
+            "confirmed": { "nodes": [{ "id": "n1", "machineCount": 3, "colorTag": "red" }] },
+            "view": { "nodes": [{ "id": "n1", "machineCount": 3, "colorTag": "red" }] }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-reconnect-resends",
+      "rule": "after a reconnect the snapshot becomes confirmed and every pending batch is sent again, oldest first",
+      "start": { "seq": 2, "plan": { "name": "P", "nodes": [{ "id": "n1", "machineCount": 1 }] } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "put", "c": "nodes", "id": "n2", "v": { "id": "n2", "machineCount": 1 } }] },
+        { "do": "local", "cid": "b", "ops": [{ "o": "meta", "f": { "name": "Mine" } }], "expect": { "pending": ["a", "b"] } },
+        {
+          "do": "snapshot",
+          "seq": 7,
+          "plan": { "name": "Theirs", "nodes": [{ "id": "n1", "machineCount": 4 }] },
+          "expect": {
+            "seq": 7,
+            "resend": ["a", "b"],
+            "pending": ["a", "b"],
+            "confirmed": { "name": "Theirs", "nodes": [{ "id": "n1", "machineCount": 4 }] },
+            "view": { "name": "Mine", "nodes": [{ "id": "n1", "machineCount": 4 }, { "id": "n2", "machineCount": 1 }] }
+          }
+        },
+        {
+          "do": "receive",
+          "seq": 8,
+          "cid": "a",
+          "by": "me",
+          "ops": [{ "o": "put", "c": "nodes", "id": "n2", "v": { "id": "n2", "machineCount": 1 } }],
+          "expect": { "own": true, "gap": false, "pending": ["b"] }
+        },
+        {
+          "do": "receive",
+          "seq": 9,
+          "cid": "b",
+          "by": "me",
+          "ops": [{ "o": "meta", "f": { "name": "Mine" } }],
+          "expect": {
+            "pending": [],
+            "seq": 9,
+            "confirmed": { "name": "Mine", "nodes": [{ "id": "n1", "machineCount": 4 }, { "id": "n2", "machineCount": 1 }] }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-duplicate-ack",
+      "rule": "a batch the server already applied before the reconnect is acknowledged with no ops at the current seq",
+      "start": { "seq": 3, "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }] },
+        {
+          "do": "snapshot",
+          "seq": 4,
+          "plan": { "nodes": [{ "id": "n1", "machineCount": 2 }] },
+          "expect": { "resend": ["a"] }
+        },
+        {
+          "do": "receive",
+          "seq": 4,
+          "cid": "a",
+          "by": "me",
+          "ops": [],
+          "expect": {
+            "own": true,
+            "gap": false,
+            "seq": 4,
+            "pending": [],
+            "view": { "nodes": [{ "id": "n1", "machineCount": 2 }] }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-refused",
+      "rule": "a refused batch leaves pending and the view",
+      "start": { "seq": 1, "plan": { "nodes": [{ "id": "n1", "machineCount": 1 }] } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 2 } }] },
+        { "do": "local", "cid": "b", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "colorTag": "red" } }] },
+        {
+          "do": "refuse",
+          "cid": "a",
+          "expect": { "pending": ["b"], "seq": 1, "view": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "red" }] } }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-gap",
+      "rule": "a seq that jumps past the next one reports a gap (join again for a snapshot)",
+      "start": { "seq": 5, "plan": { "name": "P" } },
+      "steps": [
+        {
+          "do": "receive",
+          "seq": 7,
+          "cid": "x",
+          "by": "them",
+          "ops": [{ "o": "meta", "f": { "name": "Q" } }],
+          "expect": { "own": false, "gap": true, "seq": 7, "view": { "name": "Q" } }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-undo-own-only",
+      "rule": "undo sends the inverse of the own edit: only the fields it changed go back, others' edits stay",
+      "start": { "seq": 1, "plan": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "red" }] } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 5 } }] },
+        { "do": "receive", "seq": 2, "cid": "a", "by": "me", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 5 } }] },
+        { "do": "receive", "seq": 3, "cid": "x", "by": "them", "ops": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "colorTag": "blue" } }] },
+        {
+          "do": "undo",
+          "cid": "u",
+          "expect": {
+            "sent": [{ "o": "patch", "c": "nodes", "id": "n1", "f": { "machineCount": 1 } }],
+            "pending": ["u"],
+            "view": { "nodes": [{ "id": "n1", "machineCount": 1, "colorTag": "blue" }] }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "client",
+      "name": "client-undo-overwrites",
+      "rule": "undo restores the own field even when someone changed it since (Figma's rule)",
+      "start": { "seq": 1, "plan": { "name": "A" } },
+      "steps": [
+        { "do": "local", "cid": "a", "ops": [{ "o": "meta", "f": { "name": "B" } }] },
+        { "do": "receive", "seq": 2, "cid": "a", "by": "me", "ops": [{ "o": "meta", "f": { "name": "B" } }] },
+        { "do": "receive", "seq": 3, "cid": "x", "by": "them", "ops": [{ "o": "meta", "f": { "name": "C" } }] },
+        {
+          "do": "undo",
+          "cid": "u",
+          "expect": { "sent": [{ "o": "meta", "f": { "name": "A" } }], "view": { "name": "A" } }
+        }
+      ]
+    }
+  ]
+}

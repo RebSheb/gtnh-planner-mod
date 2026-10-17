@@ -1347,7 +1347,8 @@
         "fa90048a-62a3-49a5-9928-06203eadc54e": 133.33333333333334
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": [
       {

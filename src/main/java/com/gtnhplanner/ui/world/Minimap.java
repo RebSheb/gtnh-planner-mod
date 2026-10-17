@@ -180,6 +180,7 @@ public final class Minimap {
         final float ox = x0 + size / 2f - centreX * z, oy = y0 + size / 2f - centreY * z;
         clipBegin(x0, y0, size, circle, scissor);
         LABELS.clear();
+        drawGroups(snap.groups(), ox, oy, z);
         drawWires(snap.wires(), ox, oy, z, lit);
         if (zoom() > WHOLE_FROM) {
             // Close in, as the board: whole cards and drawers.
@@ -395,6 +396,23 @@ public final class Minimap {
             final float len = (float) Math.hypot(bx - ax, by - ay), vx = -(by - ay) / len * h, vy = (bx - ax) / len * h;
             Hyb.triangle(ax + vx, ay + vy, bx + vx, by + vy, bx - vx, by - vy, color);
             Hyb.triangle(ax + vx, ay + vy, bx - vx, by - vy, ax - vx, ay - vy, color);
+        }
+    }
+
+    /**
+     * Groups as the board draws them (docs/design/groups.md, the website's minimap the same): an open one its colour at
+     * 25% with a 1 px border in it, a collapsed one its summary card's box in 30% of it over the card surface.
+     */
+    private static void drawGroups(final List<PlanSnapshot.GroupBox> groups, final float ox, final float oy,
+        final float z) {
+        for (final PlanSnapshot.GroupBox g : groups) {
+            final float x = ox + g.x() * z, y = oy + g.y() * z, w = g.w() * z, h = g.h() * z;
+            if (g.collapsed()) {
+                Hyb.rect(x, y, w, h, Hyb.mix(g.color(), com.gtnhplanner.ui.card.CardPaint.SURFACE, 0.3f));
+                continue;
+            }
+            Hyb.rect(x, y, w, h, 0x40000000 | g.color() & 0xFFFFFF);
+            Hyb.ring(x, y, w, h, 1, g.color());
         }
     }
 

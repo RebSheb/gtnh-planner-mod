@@ -37,6 +37,7 @@ public final class PlannerKeys {
     public static final KeyBinding AR = new KeyBinding("key.gtnhplanner.ar", Keyboard.KEY_Y, CATEGORY);
     static final KeyBinding LINK = new KeyBinding("key.gtnhplanner.link", Keyboard.KEY_L, CATEGORY);
     public static final KeyBinding PIN_LIST = new KeyBinding("key.gtnhplanner.pinList", Keyboard.KEY_NONE, CATEGORY);
+    public static final KeyBinding TASK_SHOW = new KeyBinding("key.gtnhplanner.taskShow", Keyboard.KEY_NONE, CATEGORY);
 
     /**
      * The keys held with sneak to adjust a placed machine and the plan over the world (R also turns the machine being
@@ -157,7 +158,7 @@ public final class PlannerKeys {
 
     public static void register() {
         for (final KeyBinding k : new KeyBinding[] { MINIMAP, ZOOM_IN, ZOOM_OUT, PAN_UP, PAN_DOWN, PAN_LEFT, PAN_RIGHT,
-            RECENTRE, AR, LINK, PIN_LIST, ROTATE, PICK_UP, REMOVE, FOCUS, LABELS })
+            RECENTRE, AR, LINK, PIN_LIST, TASK_SHOW, ROTATE, PICK_UP, REMOVE, FOCUS, LABELS })
             ClientRegistry.registerKeyBinding(k);
     }
 
@@ -182,6 +183,11 @@ public final class PlannerKeys {
             PlannerSettings.setPinList(!PlannerSettings.pinList());
             (PlannerSettings.pinList() ? com.gtnhplanner.ui.sound.Sfx.TOGGLE_ON
                 : com.gtnhplanner.ui.sound.Sfx.TOGGLE_OFF).play();
+        }
+        while (TASK_SHOW.isPressed()) {
+            PlannerSettings.setTaskShow((PlannerSettings.taskShow() + 1) % PlannerSettings.TASK_SHOW_NAMES.length);
+            com.gtnhplanner.ui.sound.Sfx.TOGGLE_ON.play();
+            WorldView.say("Task locations: " + PlannerSettings.TASK_SHOW_NAMES[PlannerSettings.taskShow()]);
         }
         // Placing a machine takes [ and ] for its size.
         if (!PlannerSettings.minimap() || LinkPicker.active()) {

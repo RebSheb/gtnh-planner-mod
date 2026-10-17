@@ -16,12 +16,16 @@ import net.minecraft.item.ItemStack;
 
 import com.gtnhplanner.GtnhPlanner;
 import com.gtnhplanner.api.PlanAPI;
+import com.gtnhplanner.cloud.session.CloudSession;
+import com.gtnhplanner.cloud.session.LiveDoc;
 import com.gtnhplanner.data.flowchart.Drawer;
 import com.gtnhplanner.data.flowchart.Edge;
 import com.gtnhplanner.data.flowchart.Graph;
 import com.gtnhplanner.data.flowchart.Node;
 import com.gtnhplanner.data.flowchart.Plan;
 import com.gtnhplanner.data.flowchart.Port;
+import com.gtnhplanner.data.flowchart.TaskEdits;
+import com.gtnhplanner.data.flowchart.Tasks;
 import com.gtnhplanner.data.flowchart.balancer.BalanceMode;
 import com.gtnhplanner.data.flowchart.balancer.BalanceResult;
 import com.gtnhplanner.data.flowchart.balancer.DrawerReadout;
@@ -88,6 +92,9 @@ public final class BoardSession {
         solver.close();
         settleLive(true);
         PlanAPI.save();
+        // The others see this player go: no cursor, nothing selected.
+        presenceOut.leave();
+        peers.stop();
         if (current == this) current = null;
     }
 
@@ -236,12 +243,13 @@ public final class BoardSession {
             wired.add(portKey(e.sourceNodeId, true, e.sourceOutputIndex));
             wired.add(portKey(e.targetNodeId, false, e.targetInputIndex));
         }
-        for (final Drawer d : graph.getDrawers()) for (final Drawer.Link l : d.getLinks()) wired.add(
+        for (final Drawer d : graph.getDrawers()) for (final Drawer.Held h : d.held()) wired.add(
             portKey(
-                l.nodeId(),
-                !d.getKind()
-                    .linksInputs(),
-                l.portIndex()));
+                h.link()
+                    .nodeId(),
+                !h.input(),
+                h.link()
+                    .portIndex()));
         for (final Node n : graph.getNodes()) {
             n.targetOutputRates.keySet()
                 .removeIf(i -> wired.contains(portKey(n.id, true, i)));
@@ -510,6 +518,12 @@ public final class BoardSession {
         }
         final String now = Resources.key(port);
         for (final Drawer d : new ArrayList<>(graph.getDrawers())) {
+            // A buffer's user set to another item lets go of it: the buffer carries one item.
+            final Drawer.Link at = new Drawer.Link(node.id, index);
+            if (d.isTaker(at) && !now.equals(d.getResourceKey())) {
+                graph.unlinkDrawerPort(d.getId(), at, true);
+                continue;
+            }
             if (!d.getKind()
                 .linksInputs() || !d.isLinked(node.id, index) || now.equals(d.getResourceKey())) continue;
             if (d.getLinks()
@@ -643,36 +657,44 @@ public final class BoardSession {
     private boolean wired(final UUID nodeId) {
         for (final Edge e : graph.getEdges())
             if (e.sourceNodeId.equals(nodeId) || e.targetNodeId.equals(nodeId)) return true;
-        for (final Drawer d : graph.getDrawers()) for (final Drawer.Link link : d.getLinks()) if (link.nodeId()
+        for (final Drawer d : graph.getDrawers()) for (final Drawer.Held h : d.held()) if (h.link()
+            .nodeId()
             .equals(nodeId)) return true;
         return false;
     }
 
-    /** A port dragged onto a drawer: linked when the drawer holds the same resource on the same side. */
+    /**
+     * A port dragged onto a drawer: linked when the drawer holds the same resource on a side it takes. An input on a
+     * product, or an output on a source, makes it a buffer ({@code docs/design/buffer-drawers.md}); dropped again, it
+     * lets go, and a buffer left with one side is the end it still is.
+     */
     public boolean dropPortOnDrawer(final UUID fromNode, final boolean output, final int port, final Drawer drawer) {
         final Node node = graph.nodes.get(fromNode);
-        if (node == null || drawer.getKind()
-            .linksInputs() == output) return false;
+        if (node == null || !drawer.takesSide(!output)) return false;
         final String key = Resources.key((output ? node.outputs : node.inputs).get(port));
         // An input that takes the drawer's item as one of its others is set to it.
         final boolean pick = !key.equals(drawer.getResourceKey())
             && choiceKeys(node.id, output, port).contains(drawer.getResourceKey());
         if (!key.equals(drawer.getResourceKey()) && !pick) return false;
-        final boolean linked = drawer.isLinked(node.id, port);
+        final boolean linked = drawer.holds(node.id, port, !output);
+        final boolean ownSide = drawer.getKind()
+            .linksInputs() != output;
         final Double rate = portTarget(node, output, port);
         edit(() -> {
+            final Drawer.Link link = new Drawer.Link(node.id, port);
             if (pick) {
                 // The drawer it had goes, rather than following it to the new item: this one takes its place.
-                for (final Drawer other : graph.getDrawers()) if (other != drawer && other.getKind()
-                    .linksInputs() && other.isLinked(node.id, port))
-                    graph.unlinkDrawer(other.getId(), new Drawer.Link(node.id, port));
+                for (final Drawer other : new ArrayList<>(graph.getDrawers()))
+                    if (other != drawer && other.holds(node.id, port, true))
+                        graph.unlinkDrawerPort(other.getId(), link, true);
                 applyInputPick(node, port, drawer.getResourceKey());
             }
-            if (linked) graph.unlinkDrawer(drawer.getId(), new Drawer.Link(node.id, port));
+            if (linked) graph.unlinkDrawerPort(drawer.getId(), link, !output);
             else {
-                graph.linkDrawer(drawer.getId(), new Drawer.Link(node.id, port));
+                graph.linkDrawerPort(drawer.getId(), link, !output);
                 // A rate set on the port goes to a drawer with none; the port's own goes (it is wired now).
-                if (rate != null && drawer.effectiveRule() == Drawer.Rule.ANY
+                if (rate != null && ownSide
+                    && drawer.effectiveRule() == Drawer.Rule.ANY
                     && drawer.getKind()
                         .hasRule())
                     drawer.setTarget(Drawer.Rule.EXACTLY, rate);
@@ -721,12 +743,16 @@ public final class BoardSession {
 
     /** Whether a port already has a drawer on it: one per port, as on the website. */
     public boolean portHasDrawer(final UUID node, final boolean output, final int port) {
-        for (final Drawer d : graph.getDrawers()) {
-            if (d.getKind()
-                .linksInputs() == output) continue;
-            for (final Drawer.Link l : d.getLinks()) if (l.nodeId()
-                .equals(node) && l.portIndex() == port) return true;
-        }
+        for (final Drawer d : graph.getDrawers()) if (d.holds(node, port, !output)) return true;
+        return false;
+    }
+
+    /**
+     * Whether a port has an end of the plan on it: a drawer that is no buffer. What the solve sends out or brings in at
+     * a port linked to a buffer is no buffer's: it is the port's forced row, as on a plain wire.
+     */
+    public boolean portHasEndDrawer(final UUID node, final boolean output, final int port) {
+        for (final Drawer d : graph.getDrawers()) if (!d.isBuffer() && d.holds(node, port, !output)) return true;
         return false;
     }
 
@@ -917,12 +943,14 @@ public final class BoardSession {
     }
 
     public void unlinkDrawer(final Drawer drawer, final Drawer.Link link) {
-        edit(() -> graph.unlinkDrawer(drawer.getId(), link));
+        final boolean input = drawer.sideOf(link);
+        edit(() -> graph.unlinkDrawerPort(drawer.getId(), link, input));
         Sfx.cut(drawer.getResourceKey());
     }
 
+    /** Deletes a drawer, healing its wires or giving its rate back to its port ({@link Graph#removeDrawerAndHeal}). */
     public void deleteDrawer(final Drawer drawer) {
-        edit(() -> graph.removeDrawer(drawer.getId()));
+        edit(() -> graph.removeDrawerAndHeal(drawer.getId()));
         Sfx.REMOVE.play();
     }
 
@@ -1216,12 +1244,214 @@ public final class BoardSession {
         return note;
     }
 
+    /**
+     * Adds a box or an arrow (a {@code Note.BOX} or {@code Note.ARROW}) with its top left at a board point, as one
+     * undoable step, and selects it: a box 200 by 140, an arrow 160 long running level to the right, both blue.
+     */
+    public com.gtnhplanner.data.flowchart.Note addDrawing(final String kind, final int worldX, final int worldY) {
+        final com.gtnhplanner.data.flowchart.Note note = new com.gtnhplanner.data.flowchart.Note();
+        note.setKind(kind);
+        note.setColor("azure");
+        note.setX(snap(worldX));
+        note.setY(snap(worldY));
+        if (com.gtnhplanner.data.flowchart.Note.ARROW.equals(kind)) {
+            note.setWidth(160);
+            note.setHeight(0);
+            note.setArrowDirection("down-right");
+        } else {
+            note.setWidth(200);
+            note.setHeight(140);
+        }
+        editLayout(() -> graph.notes.put(note.getId(), note));
+        selection.clear();
+        selection.add(note.getId());
+        Sfx.NOTE_STICK.play();
+        return note;
+    }
+
     /** Deletes a sticky note, as one undoable step. */
     public void deleteNote(final UUID id) {
         selection.remove(id);
         if (!graph.notes.containsKey(id)) return;
         editLayout(() -> graph.notes.remove(id));
         Sfx.NOTE_CRUMPLE.play();
+    }
+
+    // endregion
+
+    // region Task board
+
+    /** Whether the open plan is a task board: a plan of its own kind, always on its tasks and never on cards. */
+    public boolean showsTasks() {
+        return Tasks.TASKS.equals(graph.getPrimaryView());
+    }
+
+    /**
+     * One undoable change to the task board: saved, never solved again (tasks take no part in the solve). Every task,
+     * checklist and comment edit goes through here.
+     */
+    public void editTasks(final Runnable change) {
+        editLayout(change);
+    }
+
+    /**
+     * The open plan's card as a task link: this plan's id and the card's id as the plan spells it (a card the website
+     * made keeps the website's).
+     */
+    public Tasks.Link linkOf(final UUID nodeId) {
+        final LiveDoc live = live();
+        return new Tasks.Link(graph.planId(), live != null ? live.planId("node", nodeId) : nodeId.toString());
+    }
+
+    /** The plan a link is on, among the player's plans; null when it is gone. */
+    @Nullable
+    public Graph planOf(final Tasks.Link link, final Graph holder) {
+        if (link.plan()
+            .isEmpty()) return holder;
+        for (final Graph g : slots()) if (g.isPlan(link.plan())) return g;
+        return null;
+    }
+
+    /** Shows a card on the open plan: the plan's board, the card centred and selected. */
+    public void focusCard(final UUID nodeId) {
+        if (!graph.nodes.containsKey(nodeId)) {
+            Sfx.DENY.play();
+            return;
+        }
+        justAdded = hostOf(nodeId);
+        focusAdded = true;
+    }
+
+    /**
+     * Opens the plan a task's link is on and centres its card, or says why not (the plan or the card is gone). The
+     * plan opens in a tab.
+     */
+    public void openLink(final Tasks.Link link) {
+        final Graph target = planOf(link, graph);
+        if (target == null) {
+            Sfx.DENY.play();
+            flash(Severity.WARN, "That plan is gone");
+            return;
+        }
+        final UUID node = com.gtnhplanner.cloud.map.PlanIds.uuid(link.node());
+        if (!target.nodes.containsKey(node)) {
+            Sfx.DENY.play();
+            flash(Severity.WARN, "That card is gone");
+            return;
+        }
+        if (target != graph) {
+            final Plan plan = Plan.getInstance();
+            plan.setActiveIndex(
+                plan.getGraphs()
+                    .indexOf(target));
+            follow();
+            PlanAPI.save();
+            Sfx.PAGE.play();
+        }
+        focusCard(node);
+    }
+
+    /** The task boards' statuses by card, as last worked out, and when it was last checked for being out of date. */
+    private Map<Tasks.Link, Tasks.Status> dots = Map.of();
+    private long dotsStamp = Long.MIN_VALUE, dotsChecked;
+
+    /**
+     * The status of the most pressing task a card is on, in any task board loaded here (any of its recipes), or null:
+     * the dot on its header.
+     */
+    @Nullable
+    public Tasks.Status taskStatus(final UUID nodeId) {
+        final long now = System.nanoTime();
+        if (now - dotsChecked > 100_000_000L) {
+            dotsChecked = now;
+            long stamp = slots().size();
+            for (final Graph g : slots()) if (!g.tasks.isEmpty()) stamp = stamp * 31 + g.version() * 7 + g.tasks.size();
+            if (stamp != dotsStamp) {
+                dotsStamp = stamp;
+                final Map<Tasks.Link, Tasks.Status> next = new HashMap<>();
+                for (final Graph g : slots()) {
+                    if (g.tasks.isEmpty()) continue;
+                    final Map<Tasks.Link, Tasks.Status> own = new HashMap<>();
+                    TaskEdits.statusByLink(g, own);
+                    for (final Map.Entry<Tasks.Link, Tasks.Status> e : own.entrySet()) {
+                        // By the plan's own id and the card's game id, whichever way the link spelled them.
+                        final Graph on = planOf(e.getKey(), g);
+                        next.merge(
+                            new Tasks.Link(
+                                on != null ? on.planId()
+                                    : e.getKey()
+                                        .plan(),
+                                com.gtnhplanner.cloud.map.PlanIds.uuid(
+                                    e.getKey()
+                                        .node())
+                                    .toString()),
+                            e.getValue(),
+                            (x, y) -> TaskEdits.urgency(x) >= TaskEdits.urgency(y) ? x : y);
+                    }
+                }
+                dots = next;
+            }
+        }
+        if (dots.isEmpty()) return null;
+        final String plan = graph.planId();
+        Tasks.Status most = null;
+        for (final UUID id : sectionsOf(nodeId)) {
+            final Tasks.Status s = dots.get(new Tasks.Link(plan, id.toString()));
+            if (s != null && (most == null || TaskEdits.urgency(s) > TaskEdits.urgency(most))) most = s;
+        }
+        return most;
+    }
+
+    /** The player's task boards that can be added to now (a plan whose body has not come yet cannot be). */
+    public List<Graph> taskBoards() {
+        final List<Graph> out = new ArrayList<>();
+        final CloudSession cloud = CloudSession.current();
+        for (final Graph g : slots()) {
+            if (!Tasks.TASKS.equals(g.getPrimaryView())) continue;
+            final LiveDoc d = cloud == null ? null : cloud.doc(g);
+            if (d != null && !d.known() && !d.creating()) continue;
+            out.add(g);
+        }
+        return out;
+    }
+
+    /**
+     * A new plan made as a task board, opened in a tab when {@code open}; it is a plan of the account like any other.
+     */
+    public Graph addTaskBoard(final boolean open) {
+        final Plan plan = Plan.getInstance();
+        final int size = plan.getGraphs()
+            .size();
+        int boards = 1;
+        for (final Graph g : plan.getGraphs()) if (Tasks.TASKS.equals(g.getPrimaryView())) boards++;
+        final Graph board = new Graph("Task board " + boards);
+        board.setPrimaryView(Tasks.TASKS);
+        plan.getGraphs()
+            .add(board);
+        if (open) {
+            plan.setActiveIndex(size);
+            follow();
+        } else board.setOpen(false);
+        PlanAPI.save();
+        Sfx.PAGE.play();
+        return board;
+    }
+
+    /** A new plan made as a task board, opened: it shows its tasks. */
+    public void addTaskBoard() {
+        addTaskBoard(true);
+    }
+
+    /** Opens a task board in its tab and the task in its box (once the board shows, laid out). */
+    public void openTask(final Graph board, final String taskId) {
+        final int i = slots().indexOf(board);
+        if (i < 0 || TaskEdits.task(board, taskId) == null) {
+            Sfx.DENY.play();
+            flash(Severity.WARN, "That task is gone");
+            return;
+        }
+        switchSlot(i);
+        com.gtnhplanner.ui.task.TaskPanel.openWhenShown(board, taskId);
     }
 
     // endregion
@@ -1250,6 +1480,11 @@ public final class BoardSession {
         return selection.contains(id);
     }
 
+    /** Lets go of one thing in the selection (gone out of sight, or off the plan). */
+    public void deselect(final UUID id) {
+        selection.remove(id);
+    }
+
     /**
      * Whether a card, drawer or note draws its selection outline: only when it is one of several selected, where the
      * outline says what a move or a delete takes. One thing alone is just the thing clicked.
@@ -1271,12 +1506,18 @@ public final class BoardSession {
         selection.clear();
     }
 
-    /** Every card, drawer and note on the board. */
+    /** Every card, drawer, note and group on the board (not what a collapsed group hides). */
     public void selectAll() {
         selection.clear();
-        selection.addAll(graph.nodes.keySet());
-        selection.addAll(graph.drawers.keySet());
-        selection.addAll(graph.notes.keySet());
+        for (final UUID id : graph.nodes.keySet())
+            if (!com.gtnhplanner.data.flowchart.Groups.hidden(graph, id)) selection.add(id);
+        for (final UUID id : graph.drawers.keySet())
+            if (!com.gtnhplanner.data.flowchart.Groups.hidden(graph, id)) selection.add(id);
+        for (final com.gtnhplanner.data.flowchart.Note n : graph.notes.values())
+            if (!n.isHidden() && !com.gtnhplanner.data.flowchart.Groups.hidden(graph, n.getId()))
+                selection.add(n.getId());
+        for (final com.gtnhplanner.data.flowchart.BoardGroup g : graph.boardGroups.values())
+            if (com.gtnhplanner.data.flowchart.Groups.shows(graph, g)) selection.add(g.getId());
         Sfx.CLICK.play(0.6f, 1.15f);
     }
 
@@ -1286,16 +1527,14 @@ public final class BoardSession {
         // A shared machine goes whole: every recipe on its card.
         final List<UUID> ids = new ArrayList<>();
         for (final UUID id : selection) for (final UUID s : sectionsOf(id)) if (!ids.contains(s)) ids.add(s);
+        // A group goes with everything in it, as deleting a board always did.
+        for (final UUID id : new ArrayList<>(ids)) if (graph.boardGroups.containsKey(id))
+            for (final UUID inside : com.gtnhplanner.data.flowchart.Groups.descendants(graph, id))
+                if (!ids.contains(inside)) ids.add(inside);
         selection.clear();
         final boolean notesOnly = ids.stream()
             .allMatch(graph.notes::containsKey);
-        edit(() -> {
-            for (final UUID id : ids) {
-                if (graph.nodes.containsKey(id)) graph.removeNode(id);
-                else if (graph.drawers.containsKey(id)) graph.removeDrawer(id);
-                else graph.notes.remove(id);
-            }
-        });
+        edit(() -> com.gtnhplanner.ui.group.GroupEdits.removeAll(graph, ids));
         (notesOnly ? Sfx.NOTE_CRUMPLE : Sfx.REMOVE).play();
     }
 
@@ -1304,17 +1543,33 @@ public final class BoardSession {
     // region Undo, plan slots, board keys
 
     public boolean canUndo() {
+        final LiveDoc shared = live();
+        if (shared != null) return shared.canUndo();
         return PlanAPI.undoHistory(graph)
             .canUndo();
     }
 
     public boolean canRedo() {
+        final LiveDoc shared = live();
+        if (shared != null) return shared.canRedo();
         return PlanAPI.undoHistory(graph)
             .canRedo();
     }
 
+    /**
+     * Undoes the last edit. On a cloud plan, only this player's own edits are undone (the inverse of each, sent as a
+     * new edit: a field someone changed since goes back too); a local plan goes back to the snapshot before.
+     */
     public void undo() {
         settleLive(true);
+        if (live() != null) {
+            if (CloudSession.current()
+                .undo(graph)) {
+                follow();
+                Sfx.UNDO.play();
+            } else Sfx.DENY.play();
+            return;
+        }
         if (!canUndo()) {
             Sfx.DENY.play();
             return;
@@ -1327,6 +1582,14 @@ public final class BoardSession {
 
     public void redo() {
         settleLive(true);
+        if (live() != null) {
+            if (CloudSession.current()
+                .redo(graph)) {
+                follow();
+                Sfx.REDO.play();
+            } else Sfx.DENY.play();
+            return;
+        }
         if (!canRedo()) {
             Sfx.DENY.play();
             return;
@@ -1336,6 +1599,54 @@ public final class BoardSession {
                 .redo(graph));
         Sfx.REDO.play();
     }
+
+    // region The open plan as a cloud plan (presence and sharing build on this)
+
+    /**
+     * The open plan as one of the signed-in account's cloud plans: its room, who is in it, presence out and in. Null
+     * for a plan on this computer (signed out, or the tour's).
+     */
+    @Nullable
+    public LiveDoc live() {
+        final CloudSession cloud = CloudSession.current();
+        return cloud == null ? null : cloud.doc(graph);
+    }
+
+    /** Whether something is in hand on the board (set by the canvas). */
+    private java.util.function.BooleanSupplier inHand = () -> false;
+
+    public void setInHand(final java.util.function.BooleanSupplier inHand) {
+        this.inHand = inHand;
+    }
+
+    /**
+     * Whether the board is in the middle of a change to {@code g}: a wheel spin not settled yet, or something in hand.
+     * Others' edits wait until it is at rest.
+     */
+    public boolean busyWith(final Graph g) {
+        return !closed && g == graph && (liveBefore != null || inHand.getAsBoolean());
+    }
+
+    private final com.gtnhplanner.ui.live.Peers peers = new com.gtnhplanner.ui.live.Peers();
+    private final com.gtnhplanner.ui.live.PresenceOut presenceOut = new com.gtnhplanner.ui.live.PresenceOut();
+
+    /** The other people in the open plan, following its room (nobody, for a plan on this computer). */
+    public com.gtnhplanner.ui.live.Peers peers() {
+        peers.follow(live());
+        return peers;
+    }
+
+    /** Where this player is on the board, for the others in the plan: the board samples it as it draws. */
+    public com.gtnhplanner.ui.live.PresenceOut presenceOut() {
+        return presenceOut;
+    }
+
+    /** Tells the open plan's room where this player is, when anything changed: at most ten times a second. */
+    public void sendPresence() {
+        presenceOut.update(live(), graph, selection);
+    }
+
+    // endregion
 
     /**
      * Puts a graph restored by undo or redo into the active slot. The view is not part of an edit, so it carries over;
@@ -1438,6 +1749,13 @@ public final class BoardSession {
         Sfx.PAGE.play();
     }
 
+    /** Puts the open plans' tabs in a new order (the open slots, in the order they should run) and saves it. */
+    public void reorderTabs(final List<Integer> order) {
+        if (!Plan.getInstance()
+            .reorderOpen(order)) return;
+        PlanAPI.save();
+    }
+
     /** Takes up the active plan when it changed (a tab, or the plan button on NEI's recipe page picking another). */
     private void follow() {
         final Graph active = Plan.getActiveGraph();
@@ -1466,19 +1784,64 @@ public final class BoardSession {
         Sfx.ADJUST.play();
     }
 
-    /** Removes a plan slot; the last one stays. */
+    /**
+     * Removes a plan slot; the last one stays. A cloud plan is deleted from the account, or left when it is shared with
+     * the player.
+     */
     public void deleteSlot(final int index) {
         final Plan plan = Plan.getInstance();
         if (index < 0 || index >= plan.getGraphs()
             .size()) return;
-        final String name = plan.getGraphs()
-            .get(index)
-            .getName();
+        final Graph g = plan.getGraphs()
+            .get(index);
+        final String name = g.getName();
+        final boolean leaving = shared(g);
+        final CloudSession cloud = CloudSession.current();
+        if (cloud != null && plan.getGraphs()
+            .size() > 1) cloud.deleting(g);
         plan.removeSlot(index);
         follow();
         PlanAPI.save();
         Sfx.NOTE_CRUMPLE.play();
-        flash(Severity.INFO, "Deleted '" + name + "'");
+        flash(Severity.INFO, (leaving ? "Left '" : "Deleted '") + name + "'");
+    }
+
+    /** Whether a plan is a cloud plan someone else shared with the player: theirs to leave, never to delete. */
+    public boolean shared(final Graph g) {
+        final CloudSession cloud = CloudSession.current();
+        return cloud != null && cloud.doc(g) != null && cloud.shared(g);
+    }
+
+    /**
+     * Makes a copy of a plan as a new plan of the player's, opened in a tab: everything but its placements in the
+     * world (a spot holds one card) and its post. Signed in, it becomes a new plan in the account.
+     */
+    public void copySlot(final int index) {
+        final Plan plan = Plan.getInstance();
+        if (index < 0 || index >= plan.getGraphs()
+            .size()) return;
+        final Graph from = plan.getGraphs()
+            .get(index);
+        final Graph copy;
+        try {
+            copy = com.gtnhplanner.data.flowchart.Serializer
+                .decode(com.gtnhplanner.data.flowchart.Serializer.encode(from));
+        } catch (final RuntimeException e) {
+            GtnhPlanner.LOG.warn("Could not copy '{}'", from.getName(), e);
+            flash(Severity.ERROR, "That plan could not be copied");
+            return;
+        }
+        for (final Node n : copy.getNodes()) n.worldLinks.clear();
+        copy.setName(from.getName() + " copy");
+        plan.getGraphs()
+            .add(copy);
+        plan.setActiveIndex(
+            plan.getGraphs()
+                .size() - 1);
+        follow();
+        PlanAPI.save();
+        Sfx.PAGE.play();
+        flash(Severity.INFO, "Made a copy of '" + from.getName() + "'");
     }
 
     /** Closes a plan's tab; the plan stays in the library's My plans. */
@@ -1510,10 +1873,12 @@ public final class BoardSession {
         if (index < 0 || index >= slots().size()) return;
         final String name = slots().get(index)
             .getName();
+        // A plan someone shared is theirs: the player leaves it, and it stays in its owner's account.
+        final boolean leave = shared(slots().get(index));
         final List<com.gtnhplanner.ui.popup.PickList.Entry> rows = List.of(
             new com.gtnhplanner.ui.popup.PickList.Entry(
                 null,
-                "Delete it",
+                leave ? "Leave it" : "Delete it",
                 "",
                 Hyb.RED_INK,
                 false,
@@ -1521,8 +1886,12 @@ public final class BoardSession {
             com.gtnhplanner.ui.popup.PickList.Entry.of("Keep it", () -> {}));
         com.gtnhplanner.ui.popup.Popup.open(
             panel,
-            com.gtnhplanner.ui.popup.PickList
-                .popup("gtnhplanner_delete", "Delete '" + name + "' for good?", rows, false, 150),
+            com.gtnhplanner.ui.popup.PickList.popup(
+                "gtnhplanner_delete",
+                leave ? "Leave '" + name + "'?" : "Delete '" + name + "' for good?",
+                rows,
+                false,
+                150),
             x,
             y);
     }
@@ -1839,16 +2208,16 @@ public final class BoardSession {
                 }
             }
             for (final Drawer d : graph.getDrawers()) {
-                final boolean input = d.getKind()
-                    .linksInputs();
-                for (final Drawer.Link link : new ArrayList<>(d.getLinks())) {
+                for (final Drawer.Held held : d.held()) {
+                    final Drawer.Link link = held.link();
+                    final boolean input = held.input();
                     if (!link.nodeId()
                         .equals(node.id)) continue;
                     final int at = input ? moved(ins, nowIns, link.portIndex())
                         : moved(outs, nowOuts, link.portIndex());
                     if (at == link.portIndex()) continue;
-                    graph.unlinkDrawer(d.getId(), link);
-                    if (at >= 0) graph.linkDrawer(d.getId(), new Drawer.Link(node.id, at));
+                    graph.unlinkDrawerPort(d.getId(), link, input);
+                    if (at >= 0) graph.linkDrawerPort(d.getId(), new Drawer.Link(node.id, at), input);
                 }
             }
         });
@@ -2306,9 +2675,10 @@ public final class BoardSession {
         sortByAmount(in);
         sortByAmount(out);
         sortByAmount(internal);
-        // A resource with a drawer stays listed at 0, so its rule and rate can be set from here.
+        // A resource with a drawer stays listed at 0, so its rule and rate can be set from here. A buffer is inside the
+        // plan: its resource is no input or output of it.
         for (final DrawerModel d : drawerModels.values()) {
-            if (d.kind == Drawer.Kind.TRASH) continue;
+            if (d.kind == Drawer.Kind.TRASH || d.kind == Drawer.Kind.BUFFER) continue;
             final String key = canonicalKey(d.drawer.getResourceKey());
             final List<TotalLine> side = d.kind == Drawer.Kind.SOURCE ? in : out;
             if (side.stream()
@@ -2358,7 +2728,7 @@ public final class BoardSession {
                     .nodeId();
                 final int index = e.port()
                     .portIndex();
-                if (e.ratePerSecond() <= 0 || portHasDrawer(node, output, index)) continue;
+                if (e.ratePerSecond() <= 0 || portHasEndDrawer(node, output, index)) continue;
                 out.merge(portKey(node, output, index), e.ratePerSecond(), Double::sum);
             }
         }
@@ -2420,7 +2790,8 @@ public final class BoardSession {
                 .add(e.sourceNodeId);
         }
         for (final Drawer d : graph.getDrawers()) {
-            final List<Drawer.Link> links = d.getLinks();
+            final List<Drawer.Link> links = new ArrayList<>(d.getLinks());
+            links.addAll(d.getTakers());
             for (int i = 1; i < links.size(); i++) {
                 near.computeIfAbsent(
                     links.get(0)
@@ -2466,7 +2837,9 @@ public final class BoardSession {
             if (!d.kind.hasRule() || d.rule == Drawer.Rule.ANY || d.rule != Drawer.Rule.AT_MOST && d.target <= 0)
                 continue;
             boolean linked = false;
-            for (final Drawer.Link l : d.drawer.getLinks()) linked |= reach.contains(l.nodeId());
+            for (final Drawer.Held h : d.drawer.held()) linked |= reach.contains(
+                h.link()
+                    .nodeId());
             if (!linked) continue;
             final String rule = switch (d.rule) {
                 case AT_LEAST -> "at least ";
@@ -2721,19 +3094,22 @@ public final class BoardSession {
             wired.add(portKey(e.targetNodeId, false, e.targetInputIndex));
         }
         for (final Drawer d : graph.getDrawers()) {
-            for (final Drawer.Link link : d.getLinks()) {
+            for (final Drawer.Held h : d.held()) {
                 wired.add(
                     portKey(
-                        link.nodeId(),
-                        !d.getKind()
-                            .linksInputs(),
-                        link.portIndex()));
+                        h.link()
+                            .nodeId(),
+                        !h.input(),
+                        h.link()
+                            .portIndex()));
             }
         }
         return wired;
     }
 
+    /** The lines along the top: on the task board only a flash, since the solver's notices are about the board. */
     public List<Notice> notices() {
+        final List<Notice> notices = showsTasks() ? List.of() : this.notices;
         if (flash == null) return notices;
         if (System.currentTimeMillis() > flashUntil) {
             flash = null;
@@ -2752,6 +3128,35 @@ public final class BoardSession {
     public void flash(final Severity severity, final String text) {
         flash = new Notice(severity, text, List.of());
         flashUntil = System.currentTimeMillis() + 7000;
+    }
+
+    /** As {@link #flash}, for {@code seconds}, with a key at the end of the row that runs {@code action}. */
+    public void flash(final Severity severity, final String text, final String label, final Runnable action,
+        final int seconds) {
+        flash = new Notice(severity, text, List.of(), label, action);
+        flashUntil = System.currentTimeMillis() + seconds * 1000L;
+    }
+
+    /**
+     * Opens the plan with this key (the account's plans, {@code <ownerId>:<designId>}) in a tab, as the open plan;
+     * false
+     * when it has not arrived in the planner (the account's list is asked again).
+     */
+    public boolean openPlanByKey(final String key) {
+        final Plan plan = Plan.getInstance();
+        for (int i = 0; i < plan.getGraphs()
+            .size(); i++) {
+            if (!plan.getGraphs()
+                .get(i)
+                .isPlan(key)) continue;
+            switchSlot(i);
+            if (plan.getActiveIndex() != i) return false;
+            return true;
+        }
+        final CloudSession cloud = CloudSession.current();
+        if (cloud != null) cloud.refreshList();
+        flash(Severity.INFO, "That plan is on its way: try again in a moment");
+        return false;
     }
 
     /**
@@ -2810,6 +3215,96 @@ public final class BoardSession {
             return;
         }
         flash(Severity.INFO, "Shared '" + graph.getName() + "' in chat");
+    }
+
+    /**
+     * The open plan as the website's project JSON, as posting it sends it, with the board's machine counts. Read on
+     * the client thread: it touches the game's items and NEI's recipes.
+     */
+    private com.google.gson.JsonObject websiteJson() {
+        return com.gtnhplanner.library.Posting.write(graph, graph.getName(), id -> {
+            final CardModel m = model(id);
+            return m == null ? null : m.machines;
+        });
+    }
+
+    /** The open plan's link on the website: its plan code after {@code #p=}, so it never reaches a server. */
+    @Nullable
+    private String websiteLink() {
+        try {
+            return com.gtnhplanner.importer.FfPlanCode.link(
+                com.gtnhplanner.library.CommunityApi.site(),
+                com.gtnhplanner.importer.FfPlanCode.encode(websiteJson().toString()));
+        } catch (final RuntimeException e) {
+            GtnhPlanner.LOG.warn("Could not write the plan out", e);
+            flash(Severity.WARN, "Couldn't write the plan out");
+            Sfx.DENY.play();
+            return null;
+        }
+    }
+
+    /** Copies the open plan's website link: it opens there, and pastes into any planner's + tab. */
+    public void copyPlanLink() {
+        final String link = websiteLink();
+        if (link == null) return;
+        net.minecraft.client.gui.GuiScreen.setClipboardString(link);
+        flash(Severity.INFO, "Copied the link to '" + graph.getName() + "'");
+    }
+
+    /** Opens the open plan on the website in the player's browser, as a new plan there. */
+    public void openInWebsite() {
+        final String link = websiteLink();
+        if (link == null) return;
+        if (!com.gtnhplanner.client.Browser.open(link)) {
+            flash(Severity.WARN, "This plan is too big for a link. Use Export plan file");
+            Sfx.DENY.play();
+            return;
+        }
+        flash(Severity.INFO, "Opening '" + graph.getName() + "' in your browser");
+    }
+
+    /**
+     * Writes the open plan to a file the website opens (its project JSON), in {@code gtnhplanner/exports} beside the
+     * game's other folders, and says where.
+     */
+    public void exportPlanFile() {
+        final String json;
+        try {
+            json = new com.google.gson.GsonBuilder().setPrettyPrinting()
+                .create()
+                .toJson(websiteJson());
+        } catch (final RuntimeException e) {
+            GtnhPlanner.LOG.warn("Could not write the plan out", e);
+            flash(Severity.WARN, "Couldn't write the plan out");
+            Sfx.DENY.play();
+            return;
+        }
+        final java.io.File dir = new java.io.File(
+            net.minecraft.client.Minecraft.getMinecraft().mcDataDir,
+            "gtnhplanner/exports");
+        final String base = exportName(graph.getName());
+        java.io.File file = new java.io.File(dir, base + ".json");
+        for (int n = 2; file.exists(); n++) file = new java.io.File(dir, base + " " + n + ".json");
+        try {
+            java.nio.file.Files.createDirectories(dir.toPath());
+            java.nio.file.Files.write(file.toPath(), json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (final java.io.IOException e) {
+            GtnhPlanner.LOG.warn("Could not save the plan file", e);
+            flash(Severity.WARN, "Couldn't save the plan file");
+            Sfx.DENY.play();
+            return;
+        }
+        flash(Severity.INFO, "Saved gtnhplanner/exports/" + file.getName());
+    }
+
+    /** A plan's name as a file name: what no file system takes left out, never empty. */
+    static String exportName(@Nullable final String name) {
+        final String clean = name == null ? ""
+            : name.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "")
+                .trim();
+        final String cut = clean.length() > 60 ? clean.substring(0, 60)
+            .trim() : clean;
+        return cut.isEmpty() || cut.startsWith(".") ? "plan" : cut;
     }
 
     /** True when the solver had nothing to scale the plan by: no product rate and no pinned count. */

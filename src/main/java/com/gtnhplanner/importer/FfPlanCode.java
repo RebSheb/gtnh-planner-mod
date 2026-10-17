@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import javax.annotation.Nullable;
@@ -30,6 +31,28 @@ public final class FfPlanCode {
         final String trimmed = text.trim();
         if (trimmed.startsWith("{")) return trimmed;
         return decode(trimmed);
+    }
+
+    /** A plan code for the plan JSON, as the website writes one: the website opens it, and so does {@link #decode}. */
+    public static String encode(final String json) {
+        final Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, true);
+        try {
+            deflater.setInput(json.getBytes(StandardCharsets.UTF_8));
+            deflater.finish();
+            final ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, json.length() / 4));
+            final byte[] buffer = new byte[8192];
+            while (!deflater.finished()) out.write(buffer, 0, deflater.deflate(buffer));
+            return PREFIX + Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(out.toByteArray());
+        } finally {
+            deflater.end();
+        }
+    }
+
+    /** The website's link that opens a code: the code after {@code #p=}, where it never reaches a server. */
+    public static String link(final String site, final String code) {
+        return site + "/#p=" + code;
     }
 
     /** The JSON in a plan code or a link carrying one ({@code ...#p=<code>}). */

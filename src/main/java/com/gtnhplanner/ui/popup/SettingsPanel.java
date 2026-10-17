@@ -121,6 +121,7 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
 
     /** Opens the settings in the middle of the screen. */
     public static void open(final ModularPanel parent) {
+        if (Popup.toggled("settings")) return;
         final SettingsPanel settings = new SettingsPanel(sections());
         final int H = settings.h;
         final int wide = settings.width();
@@ -134,6 +135,7 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
                 CardPaint.surface(getArea().width, getArea().height);
             }
         };
+        popup.toggledBy("settings");
         popup.child(settings.pos(0, 0));
         Popup.open(parent, popup, (PlannerScale.width() - wide) / 2, (PlannerScale.height() - H) / 2);
     }
@@ -163,7 +165,7 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
     }
 
     /** A new size lays the planner out again at once, as a resized window would (NEI's list keeps its own). */
-    private static void setSize(final int size) {
+    public static void setSize(final int size) {
         if (size == PlannerSettings.size()) return;
         PlannerSettings.setSize(size);
         final Minecraft mc = Minecraft.getMinecraft();
@@ -348,6 +350,29 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
                     choice("Range", "blocks", ranges, PlannerSettings::arRangeIndex, PlannerSettings::setArRangeIndex)
                         .about("Hides machines farther away than this."))));
 
+        final String[] near = new String[PlannerSettings.TASK_DISTANCES.length];
+        for (int i = 0; i < near.length; i++) near[i] = Integer.toString(PlannerSettings.TASK_DISTANCES[i]);
+        out.add(
+            new Section(
+                "Task locations",
+                List.of(
+                    choice(
+                        "Locations",
+                        key(PlannerKeys.TASK_SHOW),
+                        PlannerSettings.TASK_SHOW_NAMES,
+                        PlannerSettings::taskShow,
+                        PlannerSettings::setTaskShow).about("What shows when you haven't pressed Show."),
+                    choice(
+                        "Distance",
+                        "blocks",
+                        near,
+                        PlannerSettings::taskDistanceIndex,
+                        PlannerSettings::setTaskDistanceIndex).about("Sets how close you must be for When near."),
+                    toggle("Beam", null, PlannerSettings::taskBeam, PlannerSettings::setTaskBeam)
+                        .about("Stands a beam on each location."),
+                    toggle("Label", null, PlannerSettings::taskLabel, PlannerSettings::setTaskLabel)
+                        .about("Names each location with its distance."))));
+
         out.add(
             new Section(
                 "Keys",
@@ -379,7 +404,16 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
 
     /** A setting's height: a line, and its explanation's lines under it. */
     private static int rowH(final Row row) {
-        return row.about() == null ? ROW : ROW + aboutLines(row).size() * ABOUT_LINE + 2;
+        return (row.about() == null ? ROW : ROW + aboutLines(row).size() * ABOUT_LINE + 2) + stackedH(row);
+    }
+
+    /** Whether a picker is too wide to sit beside its label: it goes on a line of its own under it. */
+    private static boolean stacked(final Row row) {
+        return row.kind() == Kind.CHOICE && RIGHT - choicesWidth(row) < SIDE + 10 + Hyb.width(row.label()) + 8;
+    }
+
+    private static int stackedH(final Row row) {
+        return stacked(row) ? CHOICE_H + 4 : 0;
     }
 
     private static List<String> aboutLines(final Row row) {
@@ -450,7 +484,8 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
             case SWITCH -> new int[] { RIGHT - SWITCH_W, y + (ROW - SWITCH_H) / 2, SWITCH_W, SWITCH_H };
             case CHOICE -> {
                 final int w = choicesWidth(row);
-                yield new int[] { RIGHT - w, y + (ROW - CHOICE_H) / 2, w, CHOICE_H };
+                yield stacked(row) ? new int[] { SIDE + 10, y + ROW - 2, w, CHOICE_H }
+                    : new int[] { RIGHT - w, y + (ROW - CHOICE_H) / 2, w, CHOICE_H };
             }
             case SLIDER -> new int[] { RIGHT - VALUE_W - 6 - TRACK_W, y + 4, TRACK_W, ROW - 8 };
             case CORNER -> new int[] { RIGHT - SCREEN_W, y + (ROW - SCREEN_H) / 2, SCREEN_W, SCREEN_H };
@@ -606,12 +641,17 @@ public final class SettingsPanel extends Widget<SettingsPanel> implements Intera
             if (i > 0 || s.intro() != null) Hyb.rect(SIDE + 8, y, W - SIDE - 16, 1, CardPaint.HAIR);
             if (row.about() != null) {
                 final List<String> about = aboutLines(row);
-                for (int k = 0; k < about.size(); k++)
-                    Hyb.text(about.get(k), SIDE + 10, y + ROW - 3 + k * ABOUT_LINE, ABOUT_SCALE, Hyb.MUTED);
+                for (int k = 0; k < about.size(); k++) Hyb.text(
+                    about.get(k),
+                    SIDE + 10,
+                    y + ROW - 3 + stackedH(row) + k * ABOUT_LINE,
+                    ABOUT_SCALE,
+                    Hyb.MUTED);
             }
             Hyb.text(row.label(), SIDE + 10, y + (ROW - 8) / 2f + 1, Hyb.INK);
             final int hintX = SIDE + 10 + Hyb.width(row.label()) + 5;
-            if (row.hint() != null && hintX + Hyb.width(row.hint()) + 6 <= controlRect(row, y)[0])
+            if (row.hint() != null
+                && hintX + Hyb.width(row.hint()) + 6 <= (stacked(row) ? RIGHT : controlRect(row, y)[0]))
                 Hyb.text(row.hint(), hintX, y + (ROW - 8) / 2f + 1, Hyb.MUTED);
             drawControl(row, y, rowHot, mx, my);
         }

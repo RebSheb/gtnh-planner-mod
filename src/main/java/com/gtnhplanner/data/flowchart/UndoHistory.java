@@ -22,14 +22,35 @@ public final class UndoHistory {
 
     private final Deque<String> undoStack = new ArrayDeque<>();
     private final Deque<String> redoStack = new ArrayDeque<>();
+    /** Keeps nothing: a cloud plan's undo is its own edits' inverses ({@code cloud/session/LiveDoc}). */
+    private final boolean off;
+
+    public UndoHistory() {
+        this(false);
+    }
+
+    private UndoHistory(final boolean off) {
+        this.off = off;
+    }
+
+    private static final UndoHistory OFF = new UndoHistory(true);
+
+    /**
+     * A history that keeps nothing and never has anything to undo, for plans whose undo is kept elsewhere: every edit
+     * counts as a change (the plan finds out for itself whether it was one).
+     */
+    public static UndoHistory off() {
+        return OFF;
+    }
 
     /** Captures the state about to be edited; pass the token to {@link #commitEdit}. */
     public String beginEdit(final Graph graph) {
-        return encodeNormalized(graph);
+        return off ? "" : encodeNormalized(graph);
     }
 
     /** Records the pre-edit state; no-op edits leave no trace. Whether the edit changed anything. */
     public boolean commitEdit(final String before, final Graph graph) {
+        if (off) return before != null;
         if (before == null || before.equals(encodeNormalized(graph))) return false;
         undoStack.push(before);
         if (undoStack.size() > MAX_DEPTH) undoStack.removeLast();

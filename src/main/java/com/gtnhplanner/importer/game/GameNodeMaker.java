@@ -136,7 +136,11 @@ public final class GameNodeMaker implements NodeMaker {
         return Node.power(com.gtnhplanner.power.FluidTank.ID, settings, 0, 0);
     }
 
-    /** Only the settings the node's machine profile has: a crafting card takes its machine count and nothing else. */
+    /**
+     * Only the settings the node's machine profile has, and the website's own a card keeps beside them: the coil, the
+     * hatch type and the machine options ({@code machine:<id>}, machines/game/WebSettings) and a modelled machine's
+     * (the TGS's, the vat's, a bee's, a crop's); a crafting card takes its machine count and nothing else.
+     */
     @Override
     public void applySettings(final Node node, final Map<String, Object> settings) {
         final MachineConfig cfg = node.machineConfig;
@@ -144,8 +148,12 @@ public final class GameNodeMaker implements NodeMaker {
         for (final SettingDef<?> def : cfg.getProfile()
             .settings()) known.add(def.key);
         known.add(Settings.MACHINES.key());
+        final boolean machine = CardModel.GT_PROFILE.equals(cfg.profileId)
+            || com.gtnhplanner.machines.game.MachineModels.isModelled(node);
         for (final Map.Entry<String, Object> e : settings.entrySet()) {
-            if (known.contains(e.getKey())) cfg.settings.put(e.getKey(), e.getValue());
+            final String key = e.getKey();
+            if (known.contains(key) || machine && (com.gtnhplanner.machines.game.WebSettings.isKey(key)
+                || com.gtnhplanner.importer.FfSettings.modelled(key))) cfg.settings.put(key, e.getValue());
         }
         if (CardModel.GT_PROFILE.equals(cfg.profileId)) retier(node);
         // What the settings decide at refresh (a modelled machine's multipliers, machines/game/MachineModels).

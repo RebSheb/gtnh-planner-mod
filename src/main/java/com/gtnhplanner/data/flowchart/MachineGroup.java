@@ -62,6 +62,12 @@ public class MachineGroup extends Group {
         setHeader("Machine Group");
     }
 
+    /** A machine group with a known id (one a shared plan's card gives it). */
+    public MachineGroup(final java.util.UUID id) {
+        super(id);
+        setHeader("Machine Group");
+    }
+
     @Override
     public String getType() {
         return TYPE;

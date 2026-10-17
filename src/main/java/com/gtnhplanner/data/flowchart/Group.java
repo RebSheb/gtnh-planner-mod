@@ -41,6 +41,18 @@ public class Group extends GraphData {
         super(UUID.randomUUID());
     }
 
+    /**
+     * A group with a known id (one a shared plan's card gives it), coloured by its id: read again, as a shared plan is
+     * on every change, it looks the same.
+     */
+    protected Group(final UUID id) {
+        super(id);
+        final Random byId = new Random(id.getMostSignificantBits() ^ id.getLeastSignificantBits());
+        color = 0x7F000000 | (int) (byId.nextFloat() * 255) << 16
+            | (int) (byId.nextFloat() * 255) << 8
+            | (int) (byId.nextFloat() * 255);
+    }
+
     @Override
     public String getType() {
         return "group";

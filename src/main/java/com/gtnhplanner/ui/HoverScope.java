@@ -56,13 +56,9 @@ public final class HoverScope {
             }
         }
         for (final Drawer d : graph.getDrawers()) {
-            if (d.getKind()
-                .linksInputs() == output) continue;
-            for (final Drawer.Link l : d.getLinks()) if (l.nodeId()
-                .equals(node) && l.portIndex() == index) {
-                    s.drawers.add(d.getId());
-                    s.links.add(link(d.getId(), node, index));
-                }
+            if (!d.holds(node, index, !output)) continue;
+            s.drawers.add(d.getId());
+            s.links.add(link(d.getId(), node, index));
         }
         return s;
     }
@@ -82,11 +78,22 @@ public final class HoverScope {
     public static HoverScope ofDrawer(final Drawer d) {
         final HoverScope s = new HoverScope(null);
         s.drawers.add(d.getId());
-        final boolean inputs = d.getKind()
-            .linksInputs();
-        for (final Drawer.Link l : d.getLinks()) {
-            s.links.add(link(d.getId(), l.nodeId(), l.portIndex()));
-            s.ports.add(port(l.nodeId(), !inputs, l.portIndex()));
+        // Both sides of a buffer: its makers' outputs and its users' inputs.
+        for (final Drawer.Held h : d.held()) {
+            s.links.add(
+                link(
+                    d.getId(),
+                    h.link()
+                        .nodeId(),
+                    h.link()
+                        .portIndex()));
+            s.ports.add(
+                port(
+                    h.link()
+                        .nodeId(),
+                    !h.input(),
+                    h.link()
+                        .portIndex()));
         }
         return s;
     }
@@ -105,12 +112,7 @@ public final class HoverScope {
         final HoverScope s = new HoverScope(null);
         s.drawers.add(d.getId());
         s.links.add(link(d.getId(), l.nodeId(), l.portIndex()));
-        s.ports.add(
-            port(
-                l.nodeId(),
-                !d.getKind()
-                    .linksInputs(),
-                l.portIndex()));
+        s.ports.add(port(l.nodeId(), !d.sideOf(l), l.portIndex()));
         return s;
     }
 

@@ -97,6 +97,8 @@ class PlanExportTest {
 
     @Test
     void aFluidTankPostsAsTheWebsitesTank() {
+        // Its card runs as a machine profile does, whichever test ran first.
+        GtnhFlowLoader.ensureDefaultMachineProfile();
         // Emptying oxygen cells: a cell in, its oxygen and the empty cell out, 40 cells a second.
         final Graph g = new Graph("Tank");
         final Node tank = new Node(java.util.UUID.randomUUID(), 0, 0);
@@ -618,25 +620,24 @@ class PlanExportTest {
             t.get("text")
                 .getAsString());
         assertEquals(
-            380,
+            320,
             t.getAsJsonObject("position")
                 .get("x")
                 .getAsInt(),
-            "placed as a card is: 320 at 380/320");
+            "placed as a card is: one to one");
         assertEquals(
-            100,
+            60,
             t.getAsJsonObject("position")
                 .get("y")
-                .getAsInt(),
-            "and 60 at 1/0.6");
+                .getAsInt());
         assertEquals(
-            240,
+            202,
             t.getAsJsonObject("size")
                 .get("width")
                 .getAsInt(),
-            "202 at 380/320, to whole 20 px cells");
+            "sized as the board has it, to the pixel");
         assertEquals(
-            80,
+            48,
             t.getAsJsonObject("size")
                 .get("height")
                 .getAsInt());
@@ -656,13 +657,13 @@ class PlanExportTest {
             u.get("fontSize")
                 .getAsInt());
         assertEquals(
-            220,
+            180,
             u.getAsJsonObject("size")
                 .get("width")
                 .getAsInt(),
             "a new note's 180 x 120");
         assertEquals(
-            200,
+            120,
             u.getAsJsonObject("size")
                 .get("height")
                 .getAsInt());
@@ -670,6 +671,83 @@ class PlanExportTest {
         final Path out = Path.of("build", "tmp", "gtnhplanner-export-notes.json");
         Files.createDirectories(out.getParent());
         Files.writeString(out, p.toString(), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void drawingsBecomeTheirOwnAnnotations() {
+        final Graph g = GtnhFlowLoader.load("mk1")
+            .graph();
+        final Note box = new Note();
+        box.setKind(Note.BOX);
+        box.setX(0);
+        box.setY(0);
+        box.setWidth(200);
+        box.setHeight(120);
+        box.setColor("azure");
+        box.setBorder("dashed");
+        box.setFill("solid");
+        box.setMarks("grid");
+        g.notes.put(box.getId(), box);
+        final Note zone = new Note();
+        zone.setKind(Note.ZONE);
+        zone.setWidth(100);
+        zone.setHeight(60);
+        zone.setPoints(List.of(new int[] { 0, 0 }, new int[] { 100, 0 }, new int[] { 50, 60 }));
+        g.notes.put(zone.getId(), zone);
+        final Note arrow = new Note();
+        arrow.setKind(Note.ARROW);
+        arrow.setArrowDirection("up-left");
+        arrow.setWidth(100);
+        arrow.setHeight(60);
+        g.notes.put(arrow.getId(), arrow);
+        final Note image = new Note();
+        image.setKind(Note.IMAGE);
+        image.setColor("");
+        image.setImageUrl("https://example.com/p.png");
+        image.setJoined("A caption");
+        image.setWidth(120);
+        image.setHeight(80);
+        g.notes.put(image.getId(), image);
+
+        final JsonArray annotations = PlanExport.project(g, "Test plan", WORLD)
+            .getAsJsonArray("annotations");
+        assertEquals(4, annotations.size());
+        for (final JsonElement a : annotations) fitsTheSchema(a.getAsJsonObject());
+        final JsonObject b = annotation(annotations, box);
+        assertEquals(
+            "box",
+            b.get("kind")
+                .getAsString());
+        assertEquals(
+            "dashed",
+            b.getAsJsonObject("style")
+                .get("border")
+                .getAsString());
+        assertEquals(
+            "solid",
+            b.getAsJsonObject("style")
+                .get("fill")
+                .getAsString());
+        assertFalse(b.has("fontSize"), "only a note has a text size");
+        final JsonObject z = annotation(annotations, zone);
+        assertEquals(
+            100,
+            z.getAsJsonArray("points")
+                .get(1)
+                .getAsJsonObject()
+                .get("x")
+                .getAsInt(),
+            "an outline placed as the card layout is");
+        assertEquals(
+            "up-left",
+            annotation(annotations, arrow).get("arrowDirection")
+                .getAsString());
+        final JsonObject i = annotation(annotations, image);
+        assertFalse(i.has("colorTag"), "a picture with no colour stays without one");
+        assertEquals(
+            "A caption",
+            i.get("text")
+                .getAsString());
     }
 
     private static JsonObject annotation(final JsonArray annotations, final Note note) {
@@ -691,15 +769,33 @@ class PlanExportTest {
             a.get("id")
                 .getAsString()
                 .isEmpty());
-        assertEquals(
-            "text",
-            a.get("kind")
-                .getAsString());
+        final String kind = a.get("kind")
+            .getAsString();
+        assertTrue(
+            Set.of("text", "box", "zone", "arrow", "image")
+                .contains(kind),
+            "a kind the site knows");
         if (a.has("colorTag")) assertTrue(
             SITE_COLOR_TAGS.contains(
                 a.get("colorTag")
                     .getAsString()),
             "a colour tag the site knows");
+        if (!"text".equals(kind)) {
+            if (a.has("style")) for (final Map.Entry<String, JsonElement> s : a.getAsJsonObject("style")
+                .entrySet())
+                assertTrue(
+                    Set.of("border", "borderColor", "fill", "fillColor", "fillTheme", "marks")
+                        .contains(s.getKey()),
+                    "unknown style key " + s.getKey());
+            if ("zone".equals(kind)) assertTrue(
+                a.getAsJsonArray("points")
+                    .size() >= 3);
+            if ("image".equals(kind)) assertTrue(
+                a.get("imageUrl")
+                    .getAsString()
+                    .startsWith("http"));
+            return;
+        }
         assertTrue(
             a.get("text")
                 .getAsJsonPrimitive()

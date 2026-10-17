@@ -52,7 +52,8 @@
         "df46d804-c0fa-4b59-bf6c-742fc0d53161": 5.2432E8
       },
       "unmet": [],
-      "shortfalls": []
+      "shortfalls": [],
+      "ports": {}
     },
     "spares": []
   },

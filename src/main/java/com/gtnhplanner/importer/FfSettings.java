@@ -186,6 +186,26 @@ public final class FfSettings {
     }
 
     /**
+     * Whether the website's card keeps a setting (its tier, amps, coil, hatches, machine options, a crop's harvester,
+     * a bee's housing): what {@link #map} puts on a node. Any other setting is the game's own.
+     */
+    public static boolean carried(final String key) {
+        return Settings.VOLTAGE.key()
+            .equals(key)
+            || Settings.AMP.key()
+                .equals(key)
+            || Settings.GT_MULTIBLOCK.key()
+                .equals(key)
+            || COIL.equals(key)
+            || HATCH_TYPE.equals(key)
+            || key.startsWith(MACHINE)
+            || modelled(key)
+            || com.gtnhplanner.machines.CropsNh.HARVESTER.equals(key)
+            || com.gtnhplanner.machines.Bees.HOUSING.equals(key)
+            || com.gtnhplanner.machines.Bees.SPEED.equals(key);
+    }
+
+    /**
      * Whether a machine option is one of the modelled machines' (machines/), kept under its own key; every other
      * machine's goes under {@code machine:<id>}.
      */
